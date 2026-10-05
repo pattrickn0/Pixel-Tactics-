@@ -5,5 +5,5 @@ extends RefCounted
 
 const TEXELS_PER_UNIT: int = 32
 const PIXEL_SIZE: float = 1.0 / TEXELS_PER_UNIT
-## Altura de 1 nível de degrau (a lateral de 1 nível é uma textura 32×32 inteira).
-const LEVEL_HEIGHT: float = 1.0
+## Altura de 1 nível de degrau (corte pela metade: 0.5).
+const LEVEL_HEIGHT: float = 0.5

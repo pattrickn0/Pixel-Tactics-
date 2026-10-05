@@ -205,8 +205,8 @@ const T_ACCENT: int = 4
 const T_CREVICE: int = 5
 
 
-# bubbles: [cx, cy, r, nível] (nível 0 = topo, mais luz). tones: shadow, base, light, shine, accent, crevice
-static func paint_canopy(cv: Canvas, bubbles: Array, tones: Dictionary, clip_bottom: int) -> void:
+# bubbles: [cx, cy, r, nível] (nível 0 = topo, mais luz). tones: Dictionary ou Array de Dictionaries por nível
+static func paint_canopy(cv: Canvas, bubbles: Array, tones: Variant, clip_bottom: int) -> void:
 	var order: Array = bubbles.duplicate()
 	order.sort_custom(func(a: Array, b: Array) -> bool: return a[1] < b[1])
 	var owner_idx: PackedInt32Array = PackedInt32Array()
@@ -236,51 +236,56 @@ static func paint_canopy(cv: Canvas, bubbles: Array, tones: Dictionary, clip_bot
 			var cy: float = b[1]
 			var r: float = b[2]
 			var lvl: int = b[3]
+			var tone_dict: Dictionary = tones[mini(lvl, tones.size() - 1)] if tones is Array else tones
 			var px: float = x + 0.5
 			var py: float = y + 0.5
-			# Calota de luz no topo-esquerda, base no meio, sombra em crescente embaixo-direita
+			# Calota de luz no topo-esquerda generosa (estilo cartoon), base no meio, sombra em crescente embaixo-direita
 			var t: int = T_BASE
-			if not _in_circle(px, py, cx - 0.14 * r, cy - 0.2 * r, r * 0.97):
+			if not _in_circle(px, py, cx - 0.16 * r, cy - 0.18 * r, r * 0.94):
 				t = T_SHADOW
-			elif _in_circle(px, py, cx - 0.2 * r, cy - 0.72 * r, r * (0.82 - 0.1 * lvl)):
+			elif _in_circle(px, py, cx - 0.22 * r, cy - 0.30 * r, r * (0.80 - 0.08 * lvl)):
 				t = T_LIGHT
-				if lvl == 0 and _in_circle(px, py, cx - 0.32 * r, cy - 0.98 * r, r * 0.56):
+				if _in_circle(px, py, cx - 0.30 * r, cy - 0.44 * r, r * (0.56 - 0.08 * lvl)):
 					t = T_SHINE
-					if tones.has("accent") and _in_circle(px, py, cx - 0.4 * r, cy - 1.14 * r, r * 0.38):
+					if tone_dict.has("accent") and _in_circle(px, py, cx - 0.38 * r, cy - 0.58 * r, r * 0.35):
 						t = T_ACCENT
 			tone[y * cv.w + x] = t
-	# Tufos de folha dentro da área de base: arco claro em cima-esquerda e escuro embaixo-direita
+	# Tufos internos de folha dentro da área de base e luz: dão textura e volume de folhagem cartoon
 	for i: int in order.size():
 		var b: Array = order[i]
 		var r: float = b[2]
-		if r < 11.0:
+		if r < 10.0:
 			continue
 		var n: int = 3 if r >= 14.0 else 2
 		for k: int in n:
 			var ang: float = 0.5 + k * TAU / n + b[0] * 0.05
 			var sx: float = b[0] + cos(ang) * r * 0.42
-			var sy: float = b[1] + sin(ang) * r * 0.42 + r * 0.1
-			var rs: float = r * 0.3
-			for y: int in range(floori(sy - rs - 1), ceili(sy + rs + 2)):
-				for x: int in range(floori(sx - rs - 1), ceili(sx + rs + 2)):
+			var sy: float = b[1] + sin(ang) * r * 0.42 + r * 0.08
+			var rs: float = r * 0.32
+			for y: int in range(maxi(0, floori(sy - rs - 1)), mini(cv.h, ceili(sy + rs + 2))):
+				for x: int in range(maxi(0, floori(sx - rs - 1)), mini(cv.w, ceili(sx + rs + 2))):
 					if not cv.inside(x, y) or owner_idx[y * cv.w + x] != i:
 						continue
 					var k_idx: int = y * cv.w + x
-					if tone[k_idx] != T_BASE:
-						continue
 					var px: float = x + 0.5
 					var py: float = y + 0.5
 					if not _in_circle(px, py, sx, sy, rs):
 						continue
-					# Só o arco de cima-esquerda, como a beirada iluminada de um tufo de folhas
-					if py < sy + 0.5 and px < sx + rs * 0.6 and not _in_circle(px, py, sx + 0.9, sy + 1.3, rs):
-						tone[k_idx] = T_LIGHT
+					if tone[k_idx] == T_BASE:
+						if py < sy + 0.5 and px < sx + rs * 0.6 and not _in_circle(px, py, sx + 0.9, sy + 1.2, rs):
+							tone[k_idx] = T_LIGHT
+					elif tone[k_idx] == T_LIGHT:
+						if py < sy + 0.2 and px < sx + rs * 0.4 and not _in_circle(px, py, sx + 0.8, sy + 1.0, rs):
+							tone[k_idx] = T_SHINE
 	var keys: Array[String] = ["shadow", "base", "light", "shine", "accent", "crevice"]
 	for y: int in cv.h:
 		for x: int in cv.w:
 			var i: int = owner_idx[y * cv.w + x]
 			if i < 0:
 				continue
+			var b: Array = order[i]
+			var lvl: int = b[3]
+			var tone_dict: Dictionary = tones[mini(lvl, tones.size() - 1)] if tones is Array else tones
 			var t: int = tone[y * cv.w + x]
 			# Fenda escura onde uma bolha da frente encosta nesta
 			for d: Vector2i in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
@@ -291,12 +296,12 @@ static func paint_canopy(cv: Canvas, bubbles: Array, tones: Dictionary, clip_bot
 				if owner_idx[ny * cv.w + nx] > i:
 					t = T_CREVICE
 					break
-			cv.put(x, y, tones[keys[t]], M_LEAF)
+			cv.put(x, y, tone_dict[keys[t]], M_LEAF)
 
 
 
 # ---------------------------------------------------------------------------
-# Tronco com raízes
+# Tronco com raízes e musgo
 # ---------------------------------------------------------------------------
 
 # Desenha tronco centrado em cx, de top_y até bottom_y, meia largura hw; raízes abrem embaixo
@@ -344,6 +349,21 @@ static func paint_trunk(cv: Canvas, cx: float, top_y: int, bottom_y: int, hw: fl
 		for k: int in int(b[2]):
 			if cv.m_at(bx, by + k) == M_WOOD:
 				cv.put(bx, by + k, P.WOOD_0, M_WOOD)
+	# Musgo nas raízes e base (referência da clareira: troncos cobertos de musgo vivo)
+	for y: int in range(bottom_y - flare_h + 1, bottom_y + 1):
+		var t_m: float = float(y - (bottom_y - flare_h + 1)) / float(flare_h)
+		var half: float = hw + spread * t_m * t_m
+		for x: int in cv.w:
+			if cv.m_at(x, y) != M_WOOD:
+				continue
+			var px: float = x + 0.5
+			var u: float = px - cx
+			var is_edge: bool = absf(absf(u) - half) <= 1.4
+			# Musgo na borda esquerda do tronco e na base das raízes
+			if y >= bottom_y - 2 and (x + y) % 2 == 0:
+				cv.put(x, y, P.GRASS_1 if u < 0 else P.GRASS_0, M_WOOD)
+			elif is_edge and u < 0:
+				cv.put(x, y, P.GRASS_1, M_WOOD)
 
 
 # Sombra da copa no tronco + linha de contorno da copa por cima do tronco
@@ -366,20 +386,63 @@ static func shade_trunk_under_canopy(cv: Canvas, band: int) -> void:
 # Árvores
 # ---------------------------------------------------------------------------
 
-const BIG_TONES: Dictionary = {
-	"shadow": P.CANOPY_0, "base": P.CANOPY_1, "light": P.CANOPY_2,
-	"shine": P.CANOPY_3, "accent": P.CANOPY_4, "crevice": P.CANOPY_0,
-}
-const SMALL_TONES: Dictionary = {
-	"shadow": P.CANOPY_1, "base": P.CANOPY_2, "light": P.CANOPY_3,
-	"shine": P.CANOPY_4, "crevice": P.CANOPY_1,
-}
+# Cores ricas cartoon: topo ensolarado verde-limão -> corpo esmeralda -> base bosque profundo
+const BIG_TREE_TONES: Array = [
+	# Nível 0: Topo ensolarado
+	{
+		"accent": P.GRASS_3,
+		"shine": P.GRASS_3,
+		"light": P.GRASS_2,
+		"base": P.GRASS_1,
+		"shadow": P.GRASS_0,
+		"crevice": P.CANOPY_3,
+	},
+	# Nível 1: Miolo da copa
+	{
+		"accent": P.GRASS_3,
+		"shine": P.GRASS_2,
+		"light": P.GRASS_1,
+		"base": P.CANOPY_4,
+		"shadow": P.GRASS_0,
+		"crevice": P.CANOPY_1,
+	},
+	# Nível 2: Sombra / understory
+	{
+		"accent": P.GRASS_2,
+		"shine": P.GRASS_1,
+		"light": P.CANOPY_4,
+		"base": P.CANOPY_3,
+		"shadow": P.CANOPY_1,
+		"crevice": P.CANOPY_0,
+	},
+]
+
+const SMALL_TREE_TONES: Array = [
+	# Nível 0: Topo
+	{
+		"accent": P.GRASS_3,
+		"shine": P.GRASS_3,
+		"light": P.GRASS_2,
+		"base": P.GRASS_1,
+		"shadow": P.GRASS_0,
+		"crevice": P.CANOPY_3,
+	},
+	# Nível 1: Base
+	{
+		"accent": P.GRASS_2,
+		"shine": P.GRASS_1,
+		"light": P.CANOPY_4,
+		"base": P.CANOPY_3,
+		"shadow": P.CANOPY_1,
+		"crevice": P.CANOPY_0,
+	},
+]
 
 
 static func tree_big(variant: int) -> Image:
 	var cv: Canvas = Canvas.new(96, 128)
 	var bubbles: Array = []
-	var trunk_top: int = 80
+	var trunk_top: int = 76
 	match variant:
 		0: # redonda e larga
 			bubbles = [
@@ -395,32 +458,33 @@ static func tree_big(variant: int) -> Image:
 				[30.0, 70.0, 14.0, 1], [64.0, 72.0, 14.0, 2],
 				[46.0, 82.0, 15.0, 2],
 			]
-			trunk_top = 86
+			trunk_top = 82
 		_: # assimétrica (pende para a esquerda)
 			bubbles = [
 				[30.0, 26.0, 15.0, 0], [53.0, 20.0, 14.0, 0],
 				[16.0, 50.0, 12.0, 1], [41.0, 46.0, 18.0, 0], [69.0, 40.0, 13.0, 1],
 				[26.0, 72.0, 15.0, 2], [52.0, 72.0, 16.0, 1], [74.0, 64.0, 11.0, 2],
 			]
-	paint_trunk(cv, 48.0, trunk_top, 126, 6.5, 7.0, 11, 3)
-	paint_canopy(cv, bubbles, BIG_TONES, 110)
+			trunk_top = 78
+	paint_trunk(cv, 48.0, trunk_top, 126, 7.5, 8.5, 13, 3)
+	paint_canopy(cv, bubbles, BIG_TREE_TONES, 110)
 	shade_trunk_under_canopy(cv, 5)
 	cv.smooth_silhouette(2)
-	cv.clean_orphans([P.CANOPY_4, P.CANOPY_3, P.OUTLINE_FOREST])
-	cv.outline({M_LEAF: P.OUTLINE_FOREST, M_WOOD: P.OUTLINE_STONE}, [M_LEAF, M_WOOD])
+	cv.clean_orphans([P.CANOPY_4, P.CANOPY_3, P.GRASS_3, P.GRASS_2, P.GRASS_1, P.GRASS_0, P.OUTLINE_FOREST])
+	cv.outline({M_LEAF: P.OUTLINE_FOREST, M_WOOD: P.OUTLINE_FOREST}, [M_LEAF, M_WOOD])
 	return cv.img
 
 
 static func tree_small(variant: int) -> Image:
 	var cv: Canvas = Canvas.new(64, 96)
 	var bubbles: Array = []
-	var trunk_top: int = 56
+	var trunk_top: int = 52
 	match variant:
 		0:
 			bubbles = [
 				[32.0, 19.0, 13.0, 0],
 				[18.0, 37.0, 11.0, 1], [32.0, 40.0, 14.0, 0], [46.0, 36.0, 11.0, 1],
-				[32.0, 56.0, 12.0, 2],
+				[32.0, 56.0, 12.0, 1],
 			]
 		_:
 			bubbles = [
@@ -428,19 +492,29 @@ static func tree_small(variant: int) -> Image:
 				[20.0, 34.0, 12.0, 0], [43.0, 31.0, 12.0, 1],
 				[32.0, 50.0, 13.0, 1],
 			]
-			trunk_top = 50
-	paint_trunk(cv, 32.0, trunk_top, 94, 4.0, 4.5, 8, 2)
-	paint_canopy(cv, bubbles, SMALL_TONES, 78)
+			trunk_top = 48
+	paint_trunk(cv, 32.0, trunk_top, 94, 4.5, 5.5, 9, 2)
+	paint_canopy(cv, bubbles, SMALL_TREE_TONES, 78)
 	shade_trunk_under_canopy(cv, 3)
 	cv.smooth_silhouette(2)
-	cv.clean_orphans([P.CANOPY_4, P.OUTLINE_FOREST])
-	cv.outline({M_LEAF: P.OUTLINE_FOREST, M_WOOD: P.OUTLINE_STONE}, [M_LEAF, M_WOOD])
+	cv.clean_orphans([P.CANOPY_4, P.GRASS_3, P.GRASS_2, P.GRASS_1, P.OUTLINE_FOREST])
+	cv.outline({M_LEAF: P.OUTLINE_FOREST, M_WOOD: P.OUTLINE_FOREST}, [M_LEAF, M_WOOD])
 	return cv.img
 
 
 # ---------------------------------------------------------------------------
 # Arbustos
 # ---------------------------------------------------------------------------
+
+const BUSH_TONES: Dictionary = {
+	"accent": P.GRASS_3,
+	"shine": P.GRASS_3,
+	"light": P.GRASS_2,
+	"base": P.GRASS_1,
+	"shadow": P.GRASS_0,
+	"crevice": P.CANOPY_3,
+}
+
 
 static func bush(variant: int) -> Image:
 	var cv: Canvas = Canvas.new(32, 32)
@@ -449,18 +523,25 @@ static func bush(variant: int) -> Image:
 		0:
 			bubbles = [[11.5, 22.0, 8.0, 1], [20.5, 21.0, 8.5, 1], [16.0, 14.0, 7.5, 0]]
 		1:
-			bubbles = [[10.5, 23.0, 6.5, 1], [16.0, 17.0, 8.0, 0], [21.5, 22.0, 6.5, 1], [16.0, 26.0, 6.0, 2]]
+			bubbles = [[10.5, 23.0, 6.5, 1], [16.0, 17.0, 8.0, 0], [21.5, 22.0, 6.5, 1], [16.0, 26.0, 6.0, 1]]
 		_:
 			bubbles = [[11.5, 20.0, 8.0, 0], [20.5, 19.0, 8.0, 0], [16.0, 25.0, 7.0, 1]]
-	paint_canopy(cv, bubbles, SMALL_TONES, 30)
-	# Base reta: preenche a última linha útil entre as bordas laterais
-	_flatten_base(cv, 30, M_LEAF, P.CANOPY_1)
-	if variant == 2:
-		var fl: Dictionary = {"F": P.FLOWER_LILAC_1, "D": P.FLOWER_LILAC_0}
+	paint_canopy(cv, bubbles, BUSH_TONES, 30)
+	_flatten_base(cv, 30, M_LEAF, P.GRASS_0)
+	if variant == 0:
+		var fl: Dictionary = {"W": P.FLOWER_WHITE, "Y": P.FLOWER_YELLOW}
+		for p: Vector2i in [Vector2i(10, 15), Vector2i(20, 13), Vector2i(15, 21), Vector2i(23, 22)]:
+			L.stamp(cv.img, ["WW", "WY"], p.x, p.y, fl, false)
+	elif variant == 1:
+		var fl: Dictionary = {"Y": P.FLOWER_YELLOW, "D": P.DIRT_1}
+		for p: Vector2i in [Vector2i(9, 16), Vector2i(18, 12), Vector2i(22, 19), Vector2i(13, 23)]:
+			L.stamp(cv.img, ["YY", "YD"], p.x, p.y, fl, false)
+	elif variant == 2:
+		var fl: Dictionary = {"F": P.FLOWER_LILAC_1, "D": P.FLOWER_LILAC_0, "P": P.FLOWER_PINK}
 		for p: Vector2i in [Vector2i(9, 14), Vector2i(19, 11), Vector2i(24, 18), Vector2i(13, 21), Vector2i(19, 24)]:
-			L.stamp(cv.img, ["FF.", "FFD", ".DD"], p.x, p.y, fl, false)
+			L.stamp(cv.img, ["FF.", "FPD", ".DD"], p.x, p.y, fl, false)
 	cv.smooth_silhouette(2)
-	cv.clean_orphans([P.CANOPY_4, P.FLOWER_LILAC_0, P.FLOWER_LILAC_1])
+	cv.clean_orphans([P.GRASS_3, P.FLOWER_LILAC_0, P.FLOWER_LILAC_1, P.FLOWER_WHITE, P.FLOWER_YELLOW, P.FLOWER_PINK])
 	cv.outline({M_LEAF: P.OUTLINE_FOREST}, [M_LEAF])
 	return cv.img
 

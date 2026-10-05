@@ -184,59 +184,67 @@ static func scatter_grid(img: Image, occ: PackedByteArray, rng: RandomNumberGene
 
 
 static func _arena_tufts() -> Array:
-	var c: Dictionary = {"L": P.GRASS_3, "S": P.GRASS_1, "X": P.GRASS_0}
+	var c: Dictionary = {"L": P.GRASS_3, "M": P.GRASS_2, "S": P.GRASS_1, "X": P.GRASS_0}
 	return [
 		stamp_cells([
-			".L..L.",
-			"LLL.LL",
-			".LLLLS",
-			"..SSXX",
+			".L..L..L.",
+			"LL.LLL.LL",
+			".MMMMMMM.",
+			"..SSSSX..",
 		], c),
 		stamp_cells([
-			"L.L.",
-			"LLLL",
-			".LLS",
-			"..SS",
+			"..L..L..",
+			".LL.LLL.",
+			"LLMMMMMM",
+			".SSSSXX.",
 		], c),
 		stamp_cells([
-			".L.L..",
-			"LL.LL.",
-			"LLLLLS",
-			".SSSXX",
+			".L....L.",
+			"LLL..LLL",
+			".MMMMMM.",
+			"..SSSS..",
 		], c),
 	]
 
 
-# Marquinhas em "v" (folhas de grama vistas de cima), tom de sombra
+# Tufos menores em leque
 static func _arena_marks() -> Array:
-	var c: Dictionary = {"S": P.GRASS_1}
+	var c: Dictionary = {"L": P.GRASS_3, "S": P.GRASS_1, "X": P.GRASS_0}
 	return [
-		stamp_cells(["S.S", ".S."], c),
-		stamp_cells(["S..S", ".SS."], c),
+		stamp_cells([
+			"L..L",
+			"LLLL",
+			".SS.",
+		], c),
+		stamp_cells([
+			".L.",
+			"LLL",
+			".S.",
+		], c),
 	]
 
 
 static func _arena_patches() -> Array:
 	var c: Color = P.GRASS_1
 	return [
-		blob_cells([Vector3(0, 0, 3.2), Vector3(2.5, 1.0, 2.6), Vector3(-1.5, 1.8, 2.2)], c),
-		blob_cells([Vector3(0, 0, 2.8), Vector3(2.0, -1.0, 2.2)], c),
-		blob_cells([Vector3(0, 0, 3.6), Vector3(-2.0, 1.5, 2.4), Vector3(2.4, 1.6, 2.0)], c),
+		blob_cells([Vector3(0, 0, 3.2), Vector3(2.2, 1.0, 2.5)], c),
+		blob_cells([Vector3(0, 0, 2.8), Vector3(-1.8, 1.2, 2.2)], c),
+		blob_cells([Vector3(0, 0, 3.5), Vector3(1.8, -1.0, 2.4)], c),
 	]
 
 
-# Detalhes que cruzam a borda: iguais em todas as variantes
+# Detalhes que cruzam a borda: iguais em todas as variantes (faixa de 3 px)
 static func _arena_shared(img: Image, occ: PackedByteArray) -> void:
 	var patches: Array = _arena_patches()
 	var tufts: Array = _arena_tufts()
 	var marks: Array = _arena_marks()
 	var items: Array = [
 		[patches[0], 30, 1],
-		[tufts[0], 13, 29],
-		[tufts[1], 29, 16],
-		[patches[1], 17, 31],
+		[tufts[0], 12, 28],
+		[tufts[1], 28, 15],
+		[patches[1], 16, 31],
 		[marks[0], 4, 30],
-		[marks[1], 30, 25],
+		[marks[1], 30, 24],
 	]
 	for it: Array in items:
 		draw_cells(img, it[0], it[1], it[2])
@@ -246,21 +254,22 @@ static func _arena_shared(img: Image, occ: PackedByteArray) -> void:
 static func grass_arena(variant: int) -> Image:
 	var rng: RandomNumberGenerator = rng_for("grass_arena_%d" % variant)
 	var best: Image = null
-	for attempt: int in 60:
+	for attempt: int in 80:
 		var img: Image = L.new_image(N, N, P.GRASS_2)
 		var occ: PackedByteArray = PackedByteArray()
 		occ.resize(N * N)
 		_arena_shared(img, occ)
-		scatter_core(img, occ, rng, _arena_patches(), 1, 1)
-		scatter_grid(img, occ, rng, _arena_tufts(), 2, 0.8, 1)
-		scatter_grid(img, occ, rng, _arena_marks(), 2, 0.6, 1)
+		# Cada variante recebe manchas suaves e tufos com distribuição orgânica
+		scatter_core(img, occ, rng, _arena_patches(), 2, 2)
+		scatter_core(img, occ, rng, _arena_tufts(), 2, 2)
+		scatter_core(img, occ, rng, _arena_marks(), 2, 1)
 		if variant == 3:
 			var fc: Dictionary = {"Y": P.FLOWER_YELLOW, "W": P.FLOWER_WHITE, "S": P.GRASS_1}
 			var flowers: Array = [
-				stamp_cells(["YY.", "YYS"], fc),
-				stamp_cells(["WW.", "WWS"], fc),
+				stamp_cells(["YY", "YS"], fc),
+				stamp_cells(["WW", "WS"], fc),
 			]
-			scatter_core(img, occ, rng, flowers, 3, 1)
+			scatter_core(img, occ, rng, flowers, 3, 2)
 		best = img
 		var d: Vector2 = luma_halves(img)
 		if d.x <= MAX_LUMA_DIFF and d.y <= MAX_LUMA_DIFF:
@@ -529,38 +538,37 @@ static func _in_round_rect(i: int, j: int, w: int, h: int, r: float) -> bool:
 
 
 static func _draw_boulder(img: Image, x0: int, y0: int, w: int, h: int, cap_frac: float, rng: RandomNumberGenerator) -> void:
-	var r: float = 4.5
+	var r: float = 4.8
 	var half: float = w / 2.0
 	for j: int in h:
 		for i: int in w:
 			if not _in_round_rect(i, j, w, h, r):
 				continue
-			# Topo do bloco (luz) em forma de cúpula
 			var u: float = (i + 0.5 - half) / half
-			var cap: float = h * cap_frac * (1.0 - 0.45 * u * u)
-			var c: Color = P.ESTONE_1
-			if j < cap:
+			var cap: float = h * cap_frac * (1.0 - 0.40 * u * u)
+			var c: Color = P.ESTONE_2
+			if j < cap * 0.75:
 				c = P.ESTONE_3
 			elif j < cap + 2.0:
 				c = P.ESTONE_2
+			else:
+				c = P.ESTONE_1
 			# Borda de baixo/direita em sombra
 			if not _in_round_rect(i + 1, j, w, h, r) or not _in_round_rect(i, j + 1, w, h, r):
-				if j >= cap:
-					c = P.ESTONE_0
+				c = P.ESTONE_0
 			L.put_wrap(img, x0 + i, y0 + j, c)
-	# Brilho em cima-esquerda
-	var gx: int = int(w * 0.22) + rng.randi_range(0, 1)
-	var gw: int = maxi(3, int(w * 0.28))
+	# Brilho arredondado em cima-esquerda (calota de highlight cartoon)
+	var gx: int = int(w * 0.20) + rng.randi_range(0, 1)
+	var gw: int = maxi(3, int(w * 0.32))
 	for i: int in gw:
 		L.put_wrap(img, x0 + gx + i, y0 + 1, P.ESTONE_4)
-	for i: int in gw - 2:
+	for i: int in gw - 1:
 		L.put_wrap(img, x0 + gx + i, y0 + 2, P.ESTONE_4)
-	# Uma fenda curta na face
-	var fx: int = rng.randi_range(int(w * 0.45), int(w * 0.7))
-	var fy: int = int(h * 0.62)
+	# Fenda sutil na face da rocha
+	var fx: int = rng.randi_range(int(w * 0.45), int(w * 0.65))
+	var fy: int = int(h * 0.58)
 	L.put_wrap(img, x0 + fx, y0 + fy, P.ESTONE_0)
 	L.put_wrap(img, x0 + fx + 1, y0 + fy + 1, P.ESTONE_0)
-	L.put_wrap(img, x0 + fx + 1, y0 + fy + 2, P.ESTONE_0)
 
 
 # ---------------------------------------------------------------------------
@@ -592,7 +600,9 @@ static func step_side_grass(base: Image) -> Image:
 		var bottom: int = bottoms[x]
 		for y: int in bottom:
 			var c: Color = P.GRASS_1
-			if y < 2:
+			if y == 0:
+				c = P.GRASS_3 if (x % 3 != 0) else P.GRASS_2
+			elif y < 3:
 				c = P.GRASS_2
 			# Contorno de baixo da franja (inclui a lateral das gotas)
 			var edge: bool = y >= bottom - 1
@@ -603,12 +613,17 @@ static func step_side_grass(base: Image) -> Image:
 			if edge:
 				c = P.GRASS_0
 			L.put_wrap(img, x, y, c)
+		# Sombra projetada pela franja de grama na rocha logo abaixo (só nas linhas < 16)
+		if bottom < 15:
+			L.put_wrap(img, x, bottom, P.ESTONE_0)
+			if bottom + 1 < 16:
+				L.put_wrap(img, x, bottom + 1, P.ESTONE_0)
 	# Brilho no lado esquerdo das gotas maiores e tufinhos claros na faixa
-	var tc: Dictionary = {"T": P.GRASS_2}
-	L.stamp(img, ["T", "T", "T"], 2, 3, tc, true)
-	L.stamp(img, ["T", "T", "T", "T"], 17, 3, tc, true)
-	L.stamp(img, ["T.T", "TTT"], 9, 1, tc, true)
-	L.stamp(img, ["T.T", "TTT"], 25, 1, tc, true)
+	var tc: Dictionary = {"T": P.GRASS_3, "L": P.GRASS_2}
+	L.stamp(img, ["TT", "LL"], 2, 2, tc, true)
+	L.stamp(img, ["TTT", "LLL"], 18, 2, tc, true)
+	L.stamp(img, ["T.T", "LLL"], 9, 1, tc, true)
+	L.stamp(img, ["T.T", "LLL"], 26, 1, tc, true)
 	return img
 
 
