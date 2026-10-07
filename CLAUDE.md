@@ -1,29 +1,32 @@
 # Pixel Chess — Regras do Projeto
 
-Jogo **auto chess multiplayer** (até 8 jogadores, estilo TFT) em **2.5D estilo HD-2D** (como Octopath Traveler, com identidade própria), **pixel art cartoon 32×32**, feito em **Godot 4.7 + GDScript**.
+Jogo **auto chess multiplayer** (até 8 jogadores, estilo TFT) em **2.5D: mundo 3D low-poly com texturas de pixel art minimalista** (alvo: `docs/reference/Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`), **pixel art de 32 texels por unidade**, feito em **Godot 4.7 + GDScript**.
 Cada partida gera um mapa procedural novo a partir de uma **seed**. Fase atual: **geração de mapa (planície/floresta, com relevo e degraus)** com um botão "Gerar mapa".
 
-## Estilo visual: HD-2D híbrido (decidido pelo usuário)
+## Estilo visual: 2.5D com pixel art minimalista (decidido pelo usuário em 2026-10-06)
 
-- **Mundo 3D de verdade** (`Node3D`), com texturas em pixel art. O que tem volume é **modelo 3D** gerado em código ou simples: chão, **relevo e degraus**, rampas, borda da arena, pedras grandes, construções.
-- **Sprites 2D em pé** (`Sprite3D`, billboard), desenhados em pixel art **vistos de frente**: árvores, arbustos, capim, flores e, no futuro, as peças.
-- **Câmera fixa:** ângulo inclinado fixo, perspectiva. **Só zoom** (com limite mínimo e máximo), **sempre mirando o centro da arena**, sem arrastar a câmera (pan). **Nunca gira.** Por isso os sprites em pé nunca são vistos de lado.
-- **Efeitos do estilo:** luz direcional com sombras reais (sprites também projetam sombra), bloom/glow, desfoque de profundidade (tilt-shift), névoa leve. Tudo via `WorldEnvironment`/`CameraAttributes`, sem addons.
-- **Escala única:** 1 tile = **1 unidade 3D** = **32 texels**. Sprites usam `pixel_size = 1.0 / 32.0` para manter a mesma densidade de pixel do chão. Filtro **Nearest** em tudo.
-- **Pixel art cartoon:** contorno escuro colorido, cores saturadas, formas simples e arredondadas, poucos tons por material. Pós-processamento mais leve que no Octopath. Referência de estilo: a imagem da clareira em `docs/reference/`; referência de composição do mapa: `ref-floresta-vila.png` e `ref-ruinas-planicie.png`.
+- **Mundo 3D de verdade** (`Node3D`). **Todo o cenário é modelo 3D low-poly** gerado em código, com textura pixel art: chão, terraços e muros de pedra, escadas, pedras, **árvores, arbustos, troncos caídos, tocos, monólitos, capim, flores e cogumelos** (capim, flores e cogumelos em quads cruzados fixos, sem billboard).
+- **Sprites 2D em pé** (`Sprite3D`, billboard só no eixo Y, vistos de frente): **só as peças**, no futuro.
+- **Câmera orbital:** perspectiva com inclinação fixa, **sempre mirando o centro da arena**, sem pan. **Gira 360°** em torno do centro **só pelo teclado** (A/D); **Espaço** volta ao padrão. **Sem giro pelo mouse** (o mouse fica livre para as peças). **Zoom** com limite mínimo e máximo. Como a câmera gira, os modelos mostram todos os lados e a arte não traz luz lateral pintada. Árvores e monólitos entre a câmera e a arena ficam semitransparentes (dither), para a arena nunca ficar escondida.
+- **Luz de dia claro e pós leve:** sol neutro levemente quente, com sombras reais em tudo (inclusive a sombra recortada das copas); sombras suaves esverdeadas; névoa azulada só ao fundo; bloom fraco; desfoque bem sutil só no fundo distante; **sem vinheta**; imagem limpa e nítida. Tudo via `WorldEnvironment`/`CameraAttributes`/`DirectionalLight3D` e shaders próprios, sem addons.
+- **Escala única:** 1 tile = **1 unidade 3D** = **32 texels** em toda superfície (UV em unidades do mundo). 1 nível de degrau = 0,5 unidade = 16 texels. Peças usarão `pixel_size = 1.0 / 32.0`. Filtro **Nearest** em toda textura pixel art.
+- **Pixel art minimalista:** chão com poucos tons (2 a 4), grandes áreas quase lisas e detalhe esparso; manchas de luz e bordas de terra recortadas em pixel, feitas por máscara no código (nunca seguindo o grid de tiles); muros de pedra seca com topo de musgo; árvores e props com mais detalhe que o chão. Sem contorno preto. Normal maps só em pedra e madeira, e fracos. Referência única: `docs/reference/Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`.
 
 ## Design do jogo (regras fixas)
 
 - **Mapa por seed.** Cada partida tem uma seed (`int`). Mesma seed → mesmo mapa, sempre. A seed aparece na tela e pode ser reutilizada para reproduzir um mapa.
-- **Arena.** Todo mapa gerado define uma **arena**: a área de luta, delimitada e visível no mapa. O que fica fora dela é cenário (floresta, decoração) e não é jogável.
-  - Padrão atual: arena = clareira aberta de planície **muito grande** no centro (cerca de 60–70% da largura e da altura do mapa), com floresta e decoração ao redor como moldura.
+- **Arena.** Todo mapa tem uma **arena**: a área de luta, delimitada e visível. O que fica fora dela não é área de luta.
+  - **Formato fixo, sem aleatoriedade:** retângulo no centro do mapa, cerca de 10% mais largo que alto (padrão 20 × 18 unidades, mapa 44 × 44). Mesmo formato e tamanho em toda seed.
+  - **Reservas (bench estilo TFT):** nos dois lados compridos, fixas. Na câmera padrão, a minha reserva fica embaixo e a do inimigo em cima. Cada reserva é um terraço plano **2 níveis (1,0 unidade) acima do chão da arena**, com muro de pedra e musgo e escadas descendo para a arena. Peças na reserva não lutam. A mecânica de reserva (slots, regras) ainda será definida; o mapa só reserva o espaço e expõe os dados (`MapData.benches`).
+  - **Lados curtos:** muro de pedra com musgo e anéis de terraço subindo para a floresta, fechando um anfiteatro retangular. As trilhas entram pelas escadas.
   - **Um único mapa por partida**, gerado pela seed da partida e usado por todos os jogadores em todas as rodadas. Não existe arena por jogador.
-  - O gerador expõe o formato da arena nos dados do mapa (ex.: `MapData.arena`) e funções como `is_inside_arena(pos: Vector2) -> bool` e `clamp_to_arena(pos: Vector2) -> Vector2`.
+  - O mapa expõe a arena e as reservas nos dados (`MapData.arena_rect`, `MapData.benches`) e funções como `is_inside_arena(pos: Vector2) -> bool`, `clamp_to_arena(pos: Vector2) -> Vector2` e `get_height_at(pos: Vector2) -> float`.
 - **Posicionamento livre das peças.** Diferente dos auto chess tradicionais, **não existe grid de posicionamento**: a peça pode ser colocada em **qualquer ponto dentro da arena** (posição contínua `Vector2` no plano do chão, eixos X/Z do 3D; a altura vem do terreno), mas **nunca fora dela**. Arrastar para fora → a peça é limitada à borda (clamp) ou o posicionamento é recusado.
   - As peças têm um raio de colisão e não se sobrepõem.
-  - Ainda a definir com o usuário (não implementar sem pedido): divisão da arena por time/lado, obstáculos dentro da arena, e se degrau alto bloqueia movimento ou se a peça sobe por rampa.
-- **Tudo é procedural, a cada partida:** relevo, degraus e escadas, formato da arena, muro, trilhas, vegetação e decoração são gerados a partir da seed da partida. Nenhum mapa é feito à mão nem fixo.
-- **Relevo e degraus:** o terreno tem níveis de altura em degraus (incluindo dentro da arena). O grid de **tiles** (células de 1 unidade, textura 32×32) serve para gerar e desenhar o terreno e as alturas. Ele não limita onde as peças ficam.
+  - Ainda a definir com o usuário (não implementar sem pedido): regras da divisão da arena por time (o mapa já expõe as duas metades), obstáculos dentro da arena, se o degrau bloqueia movimento ou se a peça sobe pela escada, e as mecânicas de terreno alto (dano extra, cobertura, bloqueio de habilidade).
+- **Mapa único canônico (decidido em 2026-10-07):** Em vez de mapas procedurais variáveis a cada partida, o jogo utiliza um **mapa único canônico esculpido fielmente 1:1 à imagem de referência** (`docs/reference/Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`).
+- **Arena plana (sem alturas no meio):** Dentro da arena, todo o chão de combate fica no nível base (nível 0 / altura 0,0), sem morros ou plataformas elevadas no meio. O relevo em degraus (níveis 1 e 2) fica exclusivamente nos anéis de terraços/arquibancadas do anfiteatro que circundam a arena.
+- **Anfiteatro em terraços:** Dois anéis de terraços com muros de pedra seca, topo de musgo e escadas ligando a arena ao calçamento exterior e à floresta.
 
 ## Multiplayer (estrutura; rede só na fase própria)
 
@@ -44,8 +47,8 @@ O trabalho é feito por quatro papéis do Claude, mais um colaborador externo (p
 | **Lead Orchestrator** | `lead-orchestrator.md` | Recebe o pedido do usuário, divide em tarefas, delega, integra e reporta | Não |
 | **Lead Project** | `lead-project.md` | Escreve specs e tarefas de arte, define critérios de aceite, revisa entregas | Não (só `docs/` e `antigravity/tarefas|revisoes/`) |
 | **Developer** | `developer.md` | Implementa a spec, integra artes aprovadas, valida no Godot | Sim |
-| **Artist** | `artist.md` | Produz a arte do jogo (texturas e sprites) com scripts geradores em GDScript | Só `tools/art/`, `assets/textures/`, `assets/sprites/`, `docs/art-preview/` |
-| **Artista externo (Antigravity / Gemini)** — **pausado** | `antigravity/INSTRUCOES.md` | Gerava artes de referência e sprites candidatos | Só `antigravity/entregas/` e `antigravity/ferramentas/` |
+| **Artist** | `artist.md` | Produz a arte do jogo (texturas, normal maps e cartões) com scripts geradores em GDScript | Só `tools/art/`, `assets/textures/`, `assets/sprites/`, `docs/art-preview/` |
+| **Artista externo (Antigravity / Gemini)**: **pausado, não edita o projeto** | `antigravity/INSTRUCOES.md` | Gerava artes de referência. Hoje toda a arte do jogo é do `artist` | Nada no projeto. Se o usuário reativar: só `antigravity/entregas/` e `antigravity/ferramentas/` |
 
 **Sessão principal = Lead Orchestrator.** Se você é a sessão principal (não foi invocado como subagente), siga `.claude/agents/lead-orchestrator.md`. Subagentes não criam outros subagentes.
 
@@ -70,6 +73,8 @@ Tarefas triviais (renomear, ajustar uma cor, corrigir typo) podem pular a spec: 
 Gerar de novo: `"$G" --headless --path . --script tools/art/<script>.gd`. A arte é reproduzível: mesmo script → mesmos PNG.
 
 ### Fluxo de arte externo (Antigravity, **pausado**: cota de imagens do Gemini esgotada)
+
+O Gemini não edita nada fora de `antigravity/` (código, cenas, `assets/`, `tools/`, `docs/`). Decisão do usuário em 2026-10-05.
 
 Mantido para quando o usuário reativar. O artista é um modelo Gemini rodando no Antigravity, **em paralelo** e **sem comunicação direta**. Toda troca acontece por arquivos em `antigravity/`. **Cada arquivo tem um único dono:**
 
@@ -122,9 +127,9 @@ res://
   tools/
     art/           # scripts geradores de arte (rodam headless, gravam em assets/)
   assets/
-    textures/      # texturas 32×32 do terreno 3D (topo, lateral de degrau, borda)
-    sprites/       # sprites em pé (árvores, arbustos, capim, flores...)
-    models/        # modelos 3D simples, se houver (pedras, borda)
+    textures/      # texturas 32×32 do terreno e dos modelos 3D (+ normal maps *_n.png); cards/ = cartões com alfa
+    sprites/       # sprites em pé das peças (futuro); hoje ainda os sprites cartoon antigos, até a spec 006
+    models/        # modelos 3D em arquivo, se algum dia houver (hoje tudo é gerado em código)
     fonts/
   docs/            # NÃO importado pelo Godot (.gdignore)
     direcao-de-arte.md   # fonte única de estilo, paleta e medidas
@@ -142,7 +147,7 @@ res://
 - Geração **determinística por seed**: usar `RandomNumberGenerator` com seed explícita e `FastNoiseLite` com `seed` setada. Nunca usar `randi()`/`randf()` globais na geração.
 - `TEXELS_PER_UNIT = 32` (1 tile = 1 unidade 3D = 32 texels) definido em um único lugar e reutilizado.
 - Posições de peças em coordenadas contínuas (`Vector2` no plano X/Z, em unidades do mundo 3D), nunca em índice de tile.
-- Câmera: ângulo fixo; só a distância (zoom) muda, entre limites `@export`. Nenhum código gira a câmera.
+- Câmera: inclinação fixa; mudam só o yaw (giro de 360° em torno do centro da arena, pelo teclado) e a distância (zoom, entre limites `@export`). Sem pan e sem giro pelo mouse. Nenhuma regra de jogo depende do ângulo da câmera.
 - Parâmetros ajustáveis como `@export` (tamanho do mapa, tamanho da arena, densidade de árvores, frequência do noise...).
 - Comunicação entre sistemas por **sinais** (ex.: `map_generated(map_data)`), não por caminhos de nó frágeis (`get_node("../../X")`).
 - Comentários em **português**, curtos, só onde o "porquê" não é óbvio. Identificadores em **inglês**.
@@ -150,10 +155,10 @@ res://
 
 ## Direção de arte
 
-A fonte única é **`docs/direcao-de-arte.md`** (estilo, paleta em hex, medidas, iluminação). Ela vale tanto para os placeholders em código quanto para o artista. Resumo:
-- HD-2D híbrido: terreno/relevo 3D com textura pixel art 32×32; vegetação e peças como sprites em pé vistos de frente. Filtro **Nearest**.
-- Luz direcional vinda de cima-esquerda (em relação à câmera), com sombras reais. Árvores maiores que um tile e sobrepostas.
-- Placeholders gerados em código seguem a paleta. Nada de cor chapada: texturas com ruído/detalhe e sprites com forma.
+A fonte única é **`docs/direcao-de-arte.md`** (estilo, paleta em hex, medidas, iluminação, fronteira entre arte e código). Ela vale tanto para os placeholders em código quanto para o artista. Resumo:
+- 2.5D: cenário todo em modelos 3D low-poly com textura pixel art de 32 texels por unidade (o `artist` faz texturas, normal maps de pedra e madeira e cartões; o `developer` faz forma, UV, materiais e as máscaras do chão); só as peças são sprites em pé. Filtro **Nearest**.
+- Pixel art minimalista no chão (poucos tons, detalhe esparso, bordas orgânicas recortadas em pixel feitas por máscara no código); detalhe maior nas árvores, nos muros e nos props. Dia claro, sombras suaves esverdeadas, névoa azulada ao fundo, pós leve.
+- Placeholders gerados em código seguem a paleta. Nada de ruído por pixel nem de cor chapada sem forma.
 
 ## Definição de pronto
 

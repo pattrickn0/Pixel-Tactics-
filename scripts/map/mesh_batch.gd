@@ -98,5 +98,8 @@ func commit(mesh: ArrayMesh, material: Material) -> void:
 	arrays[Mesh.ARRAY_VERTEX] = vertices
 	arrays[Mesh.ARRAY_NORMAL] = normals
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
-	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	var st := SurfaceTool.new()
+	st.create_from_arrays(arrays)
+	st.generate_tangents()
+	st.commit(mesh)
 	mesh.surface_set_material(mesh.get_surface_count() - 1, material)

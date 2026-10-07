@@ -1,7 +1,9 @@
 class_name Hud
 extends CanvasLayer
-## HUD do mapa. Só emite a intenção map_requested e mostra o estado recebido.
-## Nunca chama o gerador nem o renderer.
+## HUD do mapa. Só emite intenções (map_requested e os pedidos de giro da câmera) e
+## mostra o estado recebido. Nunca chama o gerador, o renderer nem a câmera.
+## Os botões não pegam foco (focus_mode = none na cena): Espaço/Enter não acionam botão,
+## e A/D/Espaço ficam para a câmera.
 
 signal map_requested(map_seed: int)
 signal rotate_left_requested()
@@ -16,9 +18,9 @@ const INVALID_SEED_TEXT: String = "Seed inválida"
 @onready var _seed_input: LineEdit = %SeedInput
 @onready var _use_seed_button: Button = %UseSeedButton
 @onready var _status_label: Label = %StatusLabel
-@onready var _rotate_left_button: Button = get_node_or_null("%RotateLeftButton")
-@onready var _rotate_right_button: Button = get_node_or_null("%RotateRightButton")
-@onready var _reset_rotate_button: Button = get_node_or_null("%ResetRotateButton")
+@onready var _rotate_left_button: Button = %RotateLeftButton
+@onready var _rotate_right_button: Button = %RotateRightButton
+@onready var _reset_rotate_button: Button = %ResetRotateButton
 
 # RNG próprio do HUD: só escolhe a seed, não gera o mapa (por isso randomize é permitido aqui).
 var _rng := RandomNumberGenerator.new()
@@ -29,12 +31,9 @@ func _ready() -> void:
 	_generate_button.pressed.connect(request_random_map)
 	_use_seed_button.pressed.connect(_on_use_seed)
 	_seed_input.text_submitted.connect(_on_seed_submitted)
-	if _rotate_left_button != null:
-		_rotate_left_button.pressed.connect(func(): rotate_left_requested.emit())
-	if _rotate_right_button != null:
-		_rotate_right_button.pressed.connect(func(): rotate_right_requested.emit())
-	if _reset_rotate_button != null:
-		_reset_rotate_button.pressed.connect(func(): reset_rotation_requested.emit())
+	_rotate_left_button.pressed.connect(rotate_left_requested.emit)
+	_rotate_right_button.pressed.connect(rotate_right_requested.emit)
+	_reset_rotate_button.pressed.connect(reset_rotation_requested.emit)
 	_status_label.text = ""
 
 
@@ -57,6 +56,8 @@ func _on_seed_submitted(text: String) -> void:
 
 
 func _submit_seed_text(text: String) -> void:
+	# Solta o foco do campo: A/D/Espaço voltam para a câmera.
+	_seed_input.release_focus()
 	var clean: String = text.strip_edges()
 	if not is_valid_seed_text(clean):
 		_status_label.text = INVALID_SEED_TEXT

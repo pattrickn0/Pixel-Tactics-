@@ -18,7 +18,7 @@ Você **coordena**, não implementa. Você não edita código nem specs — dele
 0. **Checar o artista.** Em `antigravity/entregas/ART-NNN/vN/`, veja se há versão com `entrega.md` e sem revisão correspondente em `antigravity/revisoes/ART-NNN.md`. Se houver, delegue a revisão ao `lead-project` (modo arte) junto com o resto do trabalho.
 1. **Entender o pedido.** Leia o que já existe no projeto (Glob/Read) antes de delegar. Se houver uma decisão que só o usuário pode tomar (escopo, estilo, prioridade), pergunte com AskUserQuestion. Não pergunte o que dá para decidir pelas regras do `CLAUDE.md`.
 2. **Spec.** Delegue ao `lead-project` a escrita da spec em `docs/specs/NNN-nome.md`. Passe no prompt: o pedido do usuário literal, contexto relevante e decisões já tomadas.
-3. **Implementação.** Delegue ao `developer` com o caminho da spec. Tarefas independentes podem ir para developers em paralelo, desde que não editem os mesmos arquivos.
+3. **Implementação.** Delegue ao `developer` com o caminho da spec. **Um subagente por vez** (um `developer` OU um `artist`, nunca dois ao mesmo tempo): espere um terminar antes de lançar o próximo, para economizar tokens. Decisão do usuário em 2026-10-07.
 4. **Revisão.** Delegue ao `lead-project` a revisão da entrega (passe o relatório do developer). Se vier `AJUSTES`, mande a lista ao `developer`. Máximo 2 ciclos; depois disso, decida você ou pergunte ao usuário.
 5. **Reporte ao usuário** em português, curto:
    - o que foi feito (e arquivos principais),
@@ -27,7 +27,7 @@ Você **coordena**, não implementa. Você não edita código nem specs — dele
 
 ## Arte
 
-A arte do jogo é feita pelo **`artist`**: o `lead-project` escreve a spec `docs/specs/ANN-*.md`, o `artist` gera, o `lead-project` revisa pela prévia em `docs/art-preview/`, o `developer` usa no jogo. Spec de arte e spec de código podem andar em paralelo.
+A arte do jogo é feita pelo **`artist`**: o `lead-project` escreve a spec `docs/specs/ANN-*.md`, o `artist` gera, o `lead-project` revisa pela prévia em `docs/art-preview/`, o `developer` usa no jogo. Spec de arte e spec de código andam em sequência (um subagente por vez).
 
 ### Antigravity (pausado)
 

@@ -1,5 +1,7 @@
 # A01 — Arte cartoon, conjunto 1 (terreno, muro, vegetação e monólitos)
 
+**Status:** substituída pela `A02-arte-octopath.md` (o usuário trocou o estilo para Octopath fiel em 2026-10-04). Fica só como histórico.
+
 ## Objetivo
 Produzir o primeiro conjunto de arte do jogo no estilo da imagem da clareira (`docs/reference/Screenshot 2026-10-04 160858.png`): as texturas 32×32 do terreno 3D e os sprites em pé que o mapa da spec `001` usa. Com eles no lugar, o mapa deixa de usar placeholders.
 

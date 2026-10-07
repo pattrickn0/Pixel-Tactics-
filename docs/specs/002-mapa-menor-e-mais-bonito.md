@@ -31,3 +31,19 @@ O mapa deve perder a aparência "vazia e bloco-por-bloco" mostrada nas imagens d
 - [ ] A mata ao redor (fora da arena) parece mais fechada e densa que antes (menos buracos), sem bloquear a visão frontal (sul).
 - [ ] A proporção de decorações (ruínas, monólitos) continua equilibrada para o novo tamanho (sem o mapa ficar lotado).
 - [ ] O projeto passa na validação headless sem erros de parse ou de execução.
+
+## Revisão (Lead Project, 2026-10-04)
+
+**Veredito: AJUSTES.** As correções estão em `docs/specs/003-correcoes-pos-gemini.md`.
+
+A entrega foi feita fora do fluxo, pelo Gemini direto no código (commits `d255b03` e `98205b5`), sem relatório do developer e sem screenshots. Ela também trouxe mudanças fora do escopo desta spec:
+- já decididas pelo usuário: câmera 360°, `LEVEL_HEIGHT = 0.5`, ruínas fora da arena;
+- sem spec: regiões elevadas em bolha, chanfro nas quinas do relevo e árvores escaladas 1,6×.
+
+| Critério | Status | Evidência |
+|---|---|---|
+| Mapa 32×32 | OK | `MapGenConfig.map_size = Vector2i(32, 32)`; o mapa gerado tem `size = (32, 32)`. |
+| Arena no centro, orgânica, com muro/degrau em volta | PARCIAL | A arena passa nos testes de caixa, conexão, buracos e anel. Mas: (1) blocos de muro soltos na boca das trilhas em 69 das seeds 1–100 (spec 003, A5); (2) terraços com partes de 1–2 células, que violam o bloco 3×3 da spec 001, em 46 das seeds 1–100 (A1); (3) escadas em só 2 das seeds 1–20 (A2). |
+| Mata mais fechada, sem bloquear a visão frontal (sul) | OK | Densidade maior (`tree_spacing` 0,6) e faixa sul respeitada em yaw 0 (o teste da faixa sul passa). Com a câmera 360°, a mata dos outros lados tapa a arena: isso não é critério desta spec e é tratado pela 006 (dither de oclusão). |
+| Decoração equilibrada (ruínas, monólitos) | FALHA | Ruínas desligadas na config (decisão do usuário, OK). Monólitos: `monolith_min_spacing` caiu para 3,0, quando a regra da spec 001 é 6. O teste falha nas seeds 13 (4,53) e 14 (3,87) (003, A4). |
+| Validação headless sem erros | PARCIAL | `--editor --quit` e `--quit-after 300` limpos. `test_main_scene.gd` passa (21). `test_map_generation.gd` falha em 3 de 32, e a definição de pronto exige os testes passando. |

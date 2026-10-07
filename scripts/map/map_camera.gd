@@ -1,48 +1,55 @@
 class_name MapCamera
 extends Camera3D
-## Câmera do mapa: órbita em perspectiva ao redor do centro da arena.
-## Suporta zoom (distância) e rotação (yaw/azimute) suave.
-## Controle de rotação via botão direito/meio do mouse (arrastar), teclas Q/E ou setas, e botões da HUD.
+## Câmera do mapa: órbita em perspectiva ao redor do centro da arena, inclinação fixa.
+## Mudam só o yaw (giro de 360°) e a distância (zoom), os dois com suavização.
+## Giro só pelo teclado (A/D) e pelos botões do HUD; Espaço volta ao padrão.
+## Zoom pela roda do mouse. Nenhum botão do mouse gira a câmera (fica livre para as peças).
+
+## Emitido sempre que o yaw (animado) muda; a atmosfera usa para o sol acompanhar a câmera.
+signal yaw_changed(yaw_degrees: float)
 
 ## Inclinação para baixo, em graus (fixa).
-@export_range(15.0, 70.0, 0.5) var pitch_degrees: float = 27
+@export_range(15.0, 70.0, 0.5) var pitch_degrees: float = 34.0
 ## Campo de visão vertical, em graus.
-@export_range(15.0, 70.0, 0.5) var fov_degrees: float = 35.0
+@export_range(15.0, 70.0, 0.5) var fov_degrees: float = 32.0
 @export var min_distance: float = 8.0
-@export var max_distance: float = 32.0
-@export var start_distance: float = 28.0
+@export var max_distance: float = 40.0
+@export var start_distance: float = 32.0
 ## Quanto cada clique da roda muda a distância.
 @export var zoom_step: float = 3.0
 ## Suavização do zoom (0 = instantâneo).
 @export var zoom_smoothing: float = 12.0
 ## Suavização da rotação (0 = instantâneo).
 @export var rotation_smoothing: float = 12.0
-## Ângulo de giro em graus por passo (teclas Q/E ou botões).
+## Ângulo de giro em graus por passo (teclas A/D ou botões do HUD).
 @export var rotation_step: float = 45.0
-## Sensibilidade ao arrastar com o mouse (graus por pixel).
-@export var mouse_sensitivity: float = 0.35
 ## No zoom máximo, o alvo desce esta fração da profundidade da arena para o sul.
 @export_range(0.0, 0.4, 0.01) var focus_south_ratio: float = 0.0
-## Folga em volta da arena (muro, monólitos) que precisa ficar nítida.
-@export var sharp_margin: float = 3.0
-## Altura até onde a borda da arena precisa ficar nítida (monólitos).
-@export var sharp_height: float = 3.0
-@export var dof_near_transition: float = 6.0
-@export var dof_far_transition: float = 18.0
-## A névoa começa logo depois da arena e chega no máximo após esta distância.
-@export var fog_length: float = 22.0
+## Altura acima do chão mais alto do mapa que precisa ficar nítida (copas).
+@export var sharp_height: float = 6.0
+## O desfoque de longe começa pelo menos esta distância depois do ponto mais longe do anfiteatro.
+@export var dof_amphitheater_margin: float = 4.0
+## Transição longa do desfoque de longe (do nítido ao desfoque máximo).
+@export var dof_far_transition: float = 40.0
+## A névoa começa depois da borda do mapa e chega no máximo após esta distância (30 a 50).
+@export_range(30.0, 50.0, 1.0) var fog_length: float = 30.0
 
 var distance: float = 0.0
 var target_distance: float = 0.0
+## Yaw atual (animado) e alvo, em graus. O alvo fica sempre em [-180, 180); o atual
+## anda junto quando o alvo dá a volta, então a diferença (o caminho que falta) se mantém.
 var yaw_degrees: float = 0.0
 var target_yaw_degrees: float = 0.0
 
 var _arena_center: Vector2 = Vector2.ZERO
 var _arena_size: Vector2 = Vector2.ZERO
 var _base_height: float = 0.0
+## Caixa do mapa e do anfiteatro (plano X/Z) e altura do chão mais alto do mapa.
+var _map_rect: Rect2 = Rect2()
+var _amphitheater_rect: Rect2 = Rect2()
+var _map_top_height: float = 0.0
 var _environment: Environment = null
 var _attributes: CameraAttributesPractical = null
-var _is_dragging_rotation: bool = false
 
 
 func _ready() -> void:
@@ -62,9 +69,10 @@ func _apply_basis() -> void:
 	var pitch_rad: float = -deg_to_rad(pitch_degrees)
 	var yaw_rad: float = deg_to_rad(yaw_degrees)
 	basis = Basis(Vector3.UP, yaw_rad) * Basis(Vector3.RIGHT, pitch_rad)
+	yaw_changed.emit(yaw_degrees)
 
 
-## Recebe o ambiente e os atributos de câmera para manter DOF e névoa em volta da arena.
+## Recebe o ambiente e os atributos de câmera para manter DOF e névoa além do mapa.
 func setup_effects(environment_res: Environment, attributes_res: CameraAttributesPractical) -> void:
 	_environment = environment_res
 	_attributes = attributes_res
@@ -75,8 +83,25 @@ func setup_effects(environment_res: Environment, attributes_res: CameraAttribute
 func focus_on_map(map_data: MapData) -> void:
 	_arena_center = map_data.arena_center
 	_arena_size = map_data.arena_rect.size
-	_base_height = map_data.arena_base_level * WorldScale.LEVEL_HEIGHT
+	_base_height = map_data.arena_floor_level * WorldScale.LEVEL_HEIGHT
+	_map_rect = Rect2(Vector2.ZERO, Vector2(map_data.size))
+	_amphitheater_rect = _built_bounds(map_data)
+	_map_top_height = map_data.get_level_range().y * WorldScale.LEVEL_HEIGHT
 	_apply_position()
+
+
+## Caixa das células do anfiteatro (built_mask); a arena se não houver nenhuma.
+static func _built_bounds(map_data: MapData) -> Rect2:
+	var lo := Vector2i(map_data.size)
+	var hi := Vector2i(-1, -1)
+	for cz in map_data.size.y:
+		for cx in map_data.size.x:
+			if map_data.built_mask[cz * map_data.size.x + cx] == 1:
+				lo = Vector2i(mini(lo.x, cx), mini(lo.y, cz))
+				hi = Vector2i(maxi(hi.x, cx), maxi(hi.y, cz))
+	if hi.x < 0:
+		return map_data.arena_rect
+	return Rect2(Vector2(lo), Vector2(hi - lo + Vector2i.ONE))
 
 
 ## "min", "max" ou "default".
@@ -105,22 +130,38 @@ func rotate_right() -> void:
 	rotate_by(rotation_step)
 
 
+## Giro relativo: soma ao alvo (apertar D duas vezes seguidas gira 2 passos).
 func rotate_by(delta_degrees: float, immediate: bool = false) -> void:
-	set_target_yaw(target_yaw_degrees + delta_degrees, immediate)
+	target_yaw_degrees += delta_degrees
+	_finish_yaw_change(immediate)
 
 
+## Yaw absoluto: vai pelo caminho mais curto (no máximo 180°) até o ângulo pedido.
 func set_target_yaw(value_degrees: float, immediate: bool = false) -> void:
-	target_yaw_degrees = value_degrees
-	if immediate or rotation_smoothing <= 0.0:
-		yaw_degrees = target_yaw_degrees
-		_apply_basis()
-		_apply_position()
+	target_yaw_degrees = yaw_degrees + wrapf(value_degrees - yaw_degrees, -180.0, 180.0)
+	_finish_yaw_change(immediate)
 
 
-## Reseta a câmera para a posição e rotação padrão (Norte e zoom inicial).
+## Volta ao padrão: yaw 0 (pelo caminho mais curto) e zoom inicial.
 func reset_to_default(immediate: bool = false) -> void:
 	set_target_yaw(0.0, immediate)
 	set_target_distance(start_distance, immediate)
+
+
+func _finish_yaw_change(immediate: bool) -> void:
+	if immediate or rotation_smoothing <= 0.0:
+		yaw_degrees = target_yaw_degrees
+	_wrap_yaw()
+	_apply_basis()
+	_apply_position()
+
+
+## Mantém o alvo em [-180, 180) somando o mesmo múltiplo de 360 no atual: o ângulo na
+## tela não muda (sem salto) e o yaw não acumula voltas.
+func _wrap_yaw() -> void:
+	var shift: float = wrapf(target_yaw_degrees, -180.0, 180.0) - target_yaw_degrees
+	target_yaw_degrees += shift
+	yaw_degrees += shift
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -132,16 +173,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN and mb.pressed:
 			set_target_distance(target_distance + zoom_step)
 			get_viewport().set_input_as_handled()
-		elif mb.button_index == MOUSE_BUTTON_LEFT or mb.button_index == MOUSE_BUTTON_RIGHT or mb.button_index == MOUSE_BUTTON_MIDDLE:
-			_is_dragging_rotation = mb.pressed
-			get_viewport().set_input_as_handled()
-	elif event is InputEventMouseMotion and _is_dragging_rotation:
-		var mm := event as InputEventMouseMotion
-		target_yaw_degrees -= mm.relative.x * mouse_sensitivity
-		yaw_degrees = target_yaw_degrees
-		_apply_basis()
-		_apply_position()
-		get_viewport().set_input_as_handled()
 	elif event is InputEventKey:
 		var k := event as InputEventKey
 		if k.pressed and not k.echo:
@@ -151,7 +182,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			elif k.keycode == KEY_D:
 				rotate_right()
 				get_viewport().set_input_as_handled()
-			elif k.keycode == KEY_SPACE or k.keycode == KEY_R:
+			elif k.keycode == KEY_SPACE:
 				reset_to_default()
 				get_viewport().set_input_as_handled()
 
@@ -197,29 +228,35 @@ func _apply_position() -> void:
 	_update_depth_effects()
 
 
-## DOF: nítido de pouco antes da arena até pouco depois dela (com muro e monólitos).
-## Névoa: começa depois da arena.
+## DOF: só o fundo distante desfoca. Começa depois do ponto mais longe do mapa inteiro
+## (anfiteatro e mata), e nunca antes do anfiteatro + dof_amphitheater_margin.
+## Névoa: começa depois do ponto mais longe do chão do mapa (em distância, como a névoa do Godot).
 func _update_depth_effects() -> void:
-	if _arena_size == Vector2.ZERO:
+	if _map_rect.size == Vector2.ZERO:
 		return
 	var view := Transform3D(basis, position).affine_inverse()
-	var near_depth: float = INF
-	var far_depth: float = 0.0
-	var far_dist: float = 0.0
-	var lo := _arena_center - _arena_size * 0.5 - Vector2.ONE * sharp_margin
-	var hi := _arena_center + _arena_size * 0.5 + Vector2.ONE * sharp_margin
-	for corner: Vector2 in [lo, Vector2(hi.x, lo.y), hi, Vector2(lo.x, hi.y)]:
-		for h: float in [_base_height, _base_height + sharp_height]:
-			var p := Vector3(corner.x, h, corner.y)
-			var depth: float = -(view * p).z
-			near_depth = minf(near_depth, depth)
-			far_depth = maxf(far_depth, depth)
-			far_dist = maxf(far_dist, position.distance_to(p))
+	var heights: Array[float] = [_base_height, _map_top_height + sharp_height]
+	var map_depth: float = 0.0
+	for p: Vector3 in _box_corners(_map_rect, heights):
+		map_depth = maxf(map_depth, -(view * p).z)
+	# A névoa usa o chão do mapa (sem as copas): assim ela já aparece logo além da borda.
+	var map_dist: float = 0.0
+	for p: Vector3 in _box_corners(_map_rect, [_base_height, _map_top_height] as Array[float]):
+		map_dist = maxf(map_dist, position.distance_to(p))
+	var amph_dist: float = 0.0
+	for p: Vector3 in _box_corners(_amphitheater_rect, heights):
+		amph_dist = maxf(amph_dist, position.distance_to(p))
 	if _attributes != null:
-		_attributes.dof_blur_near_distance = maxf(near_depth, 0.05)
-		_attributes.dof_blur_near_transition = clampf(near_depth * 0.5, 0.01, dof_near_transition)
-		_attributes.dof_blur_far_distance = far_depth
+		_attributes.dof_blur_far_distance = maxf(map_depth, amph_dist + dof_amphitheater_margin)
 		_attributes.dof_blur_far_transition = dof_far_transition
 	if _environment != null:
-		_environment.fog_depth_begin = far_dist
-		_environment.fog_depth_end = far_dist + fog_length
+		_environment.fog_depth_begin = map_dist
+		_environment.fog_depth_end = map_dist + fog_length
+
+
+static func _box_corners(rect: Rect2, heights: Array[float]) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	for corner: Vector2 in [rect.position, Vector2(rect.end.x, rect.position.y), rect.end, Vector2(rect.position.x, rect.end.y)]:
+		for h: float in heights:
+			out.append(Vector3(corner.x, h, corner.y))
+	return out

@@ -15,6 +15,7 @@ const SPRITE_SIZES: Dictionary = {
 	"flower": Vector2i(16, 16),
 	"monolith_0": Vector2i(32, 96),
 	"monolith_1": Vector2i(32, 64),
+	"mushroom": Vector2i(16, 16),
 }
 
 # Camadas de material usadas para escolher a cor do contorno.
@@ -49,6 +50,20 @@ static func make_image(art_name: String) -> Image:
 			return _wall_top(rng)
 		"rock":
 			return _rock(rng)
+		"moss":
+			var m := Image.create_empty(32, 32, false, Image.FORMAT_RGBA8)
+			m.fill(Color(0.25, 0.45, 0.15, 1.0))
+			return m
+		"bark_0":
+			var b := Image.create_empty(32, 32, false, Image.FORMAT_RGBA8)
+			b.fill(Color(0.35, 0.22, 0.14, 1.0))
+			return b
+		"wood_end":
+			var w := Image.create_empty(32, 32, false, Image.FORMAT_RGBA8)
+			w.fill(Color(0.55, 0.42, 0.28, 1.0))
+			return w
+	if art_name.begins_with("stone_path"):
+		return _ruin_tile(rng)
 	if art_name.begins_with("tree_big"):
 		return _tree(rng, SPRITE_SIZES["tree_big"], true)
 	if art_name.begins_with("tree_small"):
@@ -59,12 +74,24 @@ static func make_image(art_name: String) -> Image:
 		return _grass_tuft(rng, variant == 2)
 	if art_name.begins_with("flower"):
 		return _flower(rng, variant)
+	if art_name.begins_with("mushroom"):
+		var mush := Image.create_empty(16, 16, false, Image.FORMAT_RGBA8)
+		mush.fill(Color(0.4, 0.3, 0.7, 1.0))
+		return mush
 	if art_name.begins_with("monolith"):
 		var index: int = art_name.get_slice("_", 1).to_int()
 		var rune_only: bool = art_name.ends_with("_rune")
 		# A máscara usa a mesma seed do sprite, para as runas baterem.
 		rng.seed = ("monolith_%d" % index).hash()
 		return _monolith(rng, index, rune_only)
+	if art_name.ends_with("_n"):
+		var norm := Image.create_empty(32, 32, false, Image.FORMAT_RGBA8)
+		norm.fill(Color(0.5, 0.5, 1.0, 1.0))
+		return norm
+	if art_name.begins_with("grass_fringe") or art_name.begins_with("moss_fringe"):
+		var fringe := Image.create_empty(32, 16, false, Image.FORMAT_RGBA8)
+		fringe.fill(Color(0.2, 0.45, 0.18, 1.0))
+		return fringe
 	push_warning("PlaceholderArt: nome desconhecido '%s'" % art_name)
 	return _grass(rng, Palette.GRASS_2, Palette.GRASS_1, Palette.GRASS_3, Palette.GRASS_0, false)
 

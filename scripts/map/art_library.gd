@@ -5,15 +5,18 @@ extends RefCounted
 ## senão usa o placeholder de mesmo nome e tamanho (PlaceholderArt). Tudo fica em cache.
 
 const TEXTURE_DIR: String = "res://assets/textures/"
+const CARDS_DIR: String = "res://assets/textures/cards/"
 const SPRITE_DIR: String = "res://assets/sprites/"
 
 ## Famílias com variantes e quantas a A01 define.
 const TERRAIN_FAMILIES: Dictionary = {"grass_arena": 4, "grass_forest": 2, "dirt": 2}
 const SPRITE_FAMILIES: Dictionary = {
-	"tree_big": 3, "tree_small": 2, "bush": 3, "grass_tuft": 3, "flower": 3, "monolith": 2,
+	"tree_big": 3, "tree_small": 2, "bush": 3, "grass_tuft": 3, "flower": 3, "monolith": 2, "mushroom": 4,
 }
 ## Intensidade da emissão da runa (passa do limiar do glow; o resto da cena não).
 const RUNE_EMISSION: float = 4.0
+## Distância da camada da runa à frente do monólito, em z local do billboard (evita z-fighting).
+const RUNE_OFFSET: float = 0.02
 
 ## Ignora os PNG do disco (para testar só com placeholders).
 var force_placeholders: bool = false
@@ -33,7 +36,8 @@ func terrain_variant_name(family: String, variant: int) -> String:
 
 ## Nome do sprite da família para a variante (variant % variantes disponíveis).
 func sprite_variant_name(family: String, variant: int) -> String:
-	var names: PackedStringArray = _family_names(family, int(SPRITE_FAMILIES[family]), SPRITE_DIR)
+	var dir: String = CARDS_DIR if family == "mushroom" else SPRITE_DIR
+	var names: PackedStringArray = _family_names(family, int(SPRITE_FAMILIES[family]), dir)
 	return names[posmod(variant, names.size())]
 
 
@@ -42,6 +46,8 @@ func get_terrain_texture(art_name: String) -> Texture2D:
 
 
 func get_sprite_texture(art_name: String) -> Texture2D:
+	if art_name.begins_with("mushroom"):
+		return _get_texture(art_name, CARDS_DIR)
 	return _get_texture(art_name, SPRITE_DIR)
 
 
@@ -66,13 +72,19 @@ func is_from_disk(art_name: String) -> bool:
 	return bool(_from_disk.get(art_name, false))
 
 
-## Material opaco do terreno, muro e pedras.
+## Material opaco do terreno, muro e pedras com normal map da A02.
 func terrain_material(art_name: String) -> StandardMaterial3D:
 	var key: String = "terrain:" + art_name
 	if _materials.has(key):
 		return _materials[key]
 	var mat := _base_material(get_terrain_texture(art_name))
 	mat.texture_repeat = true
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var norm_tex: Texture2D = _get_texture(art_name + "_n", TEXTURE_DIR)
+	if norm_tex != null:
+		mat.normal_enabled = true
+		mat.normal_texture = norm_tex
+		mat.normal_scale = 0.5
 	_materials[key] = mat
 	return mat
 
@@ -116,24 +128,41 @@ func rune_material(monolith_name: String) -> StandardMaterial3D:
 	return mat
 
 
-## Quad em pé com o tamanho do sprite (1 px = 1/32 unidade), âncora no centro da base.
-## A normal aponta para cima: o sprite recebe a mesma luz que o chão em volta.
+## Quad em pé com o tamanho do sprite (1 px = 1/32 unidade, sem escala), âncora no
+## centro da base. A normal aponta para cima: o sprite recebe a mesma luz que o chão em volta.
+## A camada da runa fica RUNE_OFFSET à frente em z local: com o billboard, +z local aponta
+## para a câmera, então a runa fica na frente do monólito em qualquer ângulo.
 func sprite_mesh(art_name: String, rune_layer: bool = false) -> ArrayMesh:
 	var key: String = art_name + (":rune" if rune_layer else "")
 	if _sprite_meshes.has(key):
 		return _sprite_meshes[key]
 	var tex: Texture2D = get_sprite_texture(art_name)
-	var scale: float = 1.6 if art_name.begins_with("tree_") else 1.0
-	var w: float = tex.get_width() * WorldScale.PIXEL_SIZE * scale
-	var h: float = tex.get_height() * WorldScale.PIXEL_SIZE * scale
+	var w: float = tex.get_width() * WorldScale.PIXEL_SIZE
+	var h: float = tex.get_height() * WorldScale.PIXEL_SIZE
+	var z: float = RUNE_OFFSET if rune_layer else 0.0
 	var batch := MeshBatch.new()
 	batch.add_quad(
-		Vector3(-w * 0.5, h, 0.0), Vector3(w * 0.5, h, 0.0), Vector3(w * 0.5, 0.0, 0.0), Vector3(-w * 0.5, 0.0, 0.0),
+		Vector3(-w * 0.5, h, z), Vector3(w * 0.5, h, z), Vector3(w * 0.5, 0.0, z), Vector3(-w * 0.5, 0.0, z),
 		Vector3.UP, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
 	var mesh := ArrayMesh.new()
 	batch.commit(mesh, rune_material(art_name) if rune_layer else sprite_material(art_name))
 	_sprite_meshes[key] = mesh
 	return mesh
+
+
+## Material de cartão recortado 3D (ex: franja de grama, folhas, flores).
+func card_material(card_name: String) -> StandardMaterial3D:
+	var key: String = "card:" + card_name
+	if _materials.has(key):
+		return _materials[key]
+	var tex: Texture2D = _get_texture(card_name, CARDS_DIR)
+	var mat := _base_material(tex)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+	mat.alpha_scissor_threshold = 0.5
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.texture_repeat = true
+	_materials[key] = mat
+	return mat
 
 
 func _base_material(tex: Texture2D) -> StandardMaterial3D:
@@ -148,8 +177,9 @@ func _base_material(tex: Texture2D) -> StandardMaterial3D:
 
 
 func _get_texture(art_name: String, dir: String) -> Texture2D:
-	if _textures.has(art_name):
-		return _textures[art_name]
+	var cache_key: String = dir + art_name
+	if _textures.has(cache_key):
+		return _textures[cache_key]
 	var tex: Texture2D = null
 	if not force_placeholders:
 		tex = _load_from_disk(dir + art_name + ".png")
@@ -157,7 +187,7 @@ func _get_texture(art_name: String, dir: String) -> Texture2D:
 		_from_disk[art_name] = true
 	else:
 		tex = _image_texture(PlaceholderArt.make_image(art_name))
-	_textures[art_name] = tex
+	_textures[cache_key] = tex
 	return tex
 
 

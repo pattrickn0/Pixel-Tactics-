@@ -2,7 +2,7 @@ class_name MapObject
 extends RefCounted
 ## Objeto de decoração do mapa (dado puro). A posição é contínua no plano X/Z.
 
-enum ObjectKind { TREE_BIG, TREE_SMALL, BUSH, GRASS_TUFT, FLOWER, ROCK, MONOLITH }
+enum ObjectKind { TREE_BIG, TREE_SMALL, BUSH, GRASS_TUFT, FLOWER, ROCK, MONOLITH, MUSHROOM }
 
 ## Quantas variantes cada tipo tem (números da spec de arte A01; ROCK = formas 3D).
 const VARIANT_COUNTS: Dictionary = {
@@ -13,6 +13,7 @@ const VARIANT_COUNTS: Dictionary = {
 	ObjectKind.FLOWER: 3,
 	ObjectKind.ROCK: 3,
 	ObjectKind.MONOLITH: 2,
+	ObjectKind.MUSHROOM: 4,
 }
 
 var kind: ObjectKind = ObjectKind.TREE_BIG
