@@ -16,6 +16,13 @@ var xf: Transform3D = Transform3D.IDENTITY
 var color: Color = Color.WHITE
 ## Se y1 > y0, o canal r da cor vira o gradiente pela altura (y já transformado) entre y0 e y1.
 var gradient: Vector2 = Vector2.ZERO
+## AO do chão pela cor do vértice (canal g, spec 012 Fase 2): perto da borda de ao_rect fica ao_min e
+## volta a 1 em ao_width. ao_inside = a distância conta de dentro do retângulo (borda da arena); senão,
+## de fora (pé do muro externo). ao_width <= 0 desliga.
+var ao_rect: Rect2 = Rect2()
+var ao_width: float = 0.0
+var ao_min: float = 1.0
+var ao_inside: bool = false
 
 
 func batch(key: String) -> MeshBatch:
@@ -59,11 +66,22 @@ func tri(key: String, a: Vector3, b: Vector3, c: Vector3, na: Vector3, nb: Vecto
 
 
 func _vertex_color(p: Vector3) -> Color:
-	if gradient.y <= gradient.x:
-		return color
 	var c: Color = color
-	c.r = clampf((p.y - gradient.x) / (gradient.y - gradient.x), 0.0, 1.0)
+	if gradient.y > gradient.x:
+		c.r = clampf((p.y - gradient.x) / (gradient.y - gradient.x), 0.0, 1.0)
+	if ao_width > 0.0:
+		c.g = lerpf(ao_min, 1.0, smoothstep(0.0, ao_width, _ao_distance(Vector2(p.x, p.z))))
 	return c
+
+
+## Distância (no plano X/Z) até a borda de ao_rect: de dentro (ao_inside) ou de fora.
+func _ao_distance(q: Vector2) -> float:
+	var r: Rect2 = ao_rect
+	if ao_inside:
+		return maxf(0.0, minf(minf(q.x - r.position.x, r.end.x - q.x), minf(q.y - r.position.y, r.end.y - q.y)))
+	var dx: float = maxf(maxf(r.position.x - q.x, 0.0), q.x - r.end.x)
+	var dz: float = maxf(maxf(r.position.y - q.y, 0.0), q.y - r.end.y)
+	return Vector2(dx, dz).length()
 
 
 ## Triângulo de normal única (a normal pedida decide o lado visível).

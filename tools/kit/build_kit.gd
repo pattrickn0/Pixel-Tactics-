@@ -70,7 +70,7 @@ func _write_materials(defs: Dictionary) -> Dictionary:
 func _write_scatter(materials: Dictionary) -> int:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(SCATTER_DIR))
 	var total: int = 0
-	total += _save_scatter("tufts_arena", ScatterTables.ARENA_TUFTS, ScatterTables.ARENA_TUFT_SIZE, materials["tuft_grass"], false)
+	total += _save_scatter("tufts_arena", ScatterTables.ARENA_TUFTS, ScatterTables.ARENA_TUFT_SIZE, materials["tuft_grass_arena"], false)
 	total += _save_scatter("tufts_outer", ScatterTables.OUTER_TUFTS, ScatterTables.OUTER_TUFT_SIZE, materials["tuft_grass"], false)
 	total += _save_scatter("flowers", ScatterTables.FLOWERS, ScatterTables.FLOWER_SIZE, materials["tuft_flower"], true)
 	return total

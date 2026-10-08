@@ -1,6 +1,7 @@
 extends SceneTree
-## Testes da atmosfera de dia claro (spec 004, com os valores provisórios da spec 012 Fase 1: sol #FFE9C8 do
-## oeste-noroeste a 40-48°, céu próprio, ambiente lavanda e névoa lavanda; a Fase 2 completa o resto).
+## Testes da atmosfera de dia claro (spec 004 e spec 012 Fase 2: sol #FFE9C8 do oeste-noroeste a 40-48°, céu
+## próprio, ambiente lavanda, névoa de profundidade lavanda depois da borda e de altura abaixo de -3, SSAO e bloom
+## leves, desfoque fraco só no fundo, Filmic/AgX, MSAA 4x sem TAA/FXAA e sem vinheta).
 ## Rodar depois do comando de validação 1:
 ##   "$G" --headless --path . --script tools/tests/test_atmosphere.gd
 ## Imprime PASS/FAIL por verificação e sai com 0 (tudo passou) ou 1.
@@ -10,7 +11,8 @@ const SUN_COLOR: Color = Color8(0xFF, 0xE9, 0xC8)
 const AMBIENT_COLOR: Color = Color8(0xB8, 0xC4, 0xDC)
 const FOG_COLOR: Color = Color8(0xDC, 0xD6, 0xE6)
 const COLOR_TOLERANCE: float = 0.01
-const MAX_DOF_AMOUNT: float = 0.05
+## Fase 2 da 012: desfoque do fundo bem mais fraco que o da Fase 1 (0,04).
+const MAX_DOF_AMOUNT: float = 0.025
 const DOF_AMPHITHEATER_MARGIN: float = 4.0
 
 var _failures: int = 0
@@ -48,6 +50,7 @@ func _run() -> void:
 	_test_ssao_switch(main)
 	_test_sun_follow(main)
 	_test_no_vignette(main)
+	_test_phase2_post(main)
 
 	main.queue_free()
 	await _frames(SETTLE_FRAMES)
@@ -110,7 +113,7 @@ func _test_config(main: Node) -> void:
 	_check(env.glow_enabled and env.glow_hdr_threshold >= 1.0, "glow com limiar HDR >= 1,0 (%.2f)" % env.glow_hdr_threshold)
 	_check(not attrs.dof_blur_near_enabled, "DOF de perto desligado")
 	_check(attrs.dof_blur_far_enabled and attrs.dof_blur_amount <= MAX_DOF_AMOUNT,
-			"DOF de longe ligado com força <= 0,05 (%.3f)" % attrs.dof_blur_amount)
+			"DOF de longe ligado com força <= 0,025 (%.3f)" % attrs.dof_blur_amount)
 	_check(env.adjustment_color_correction == null, "sem adjustment_color_correction")
 	var eps: float = 0.001
 	_check(not env.adjustment_enabled or (env.adjustment_contrast >= 1.0 - eps and env.adjustment_contrast <= 1.05 + eps
@@ -236,3 +239,20 @@ func _test_no_vignette(main: Node) -> void:
 		for child: Node in node.get_children():
 			stack.append(child)
 	_check(found.is_empty(), "sem nó de vinheta na cena", str(found))
+
+
+## Fase 2 da 012: tonemap que preserva as cores, névoa de altura abaixo de -3, SSAO leve e antisserrilhado MSAA 4x
+## sem TAA nem FXAA (borram o pixel dos personagens).
+func _test_phase2_post(main: Node) -> void:
+	var env: Environment = _env(main)
+	_check(env.tonemap_mode == Environment.TONE_MAPPER_FILMIC or env.tonemap_mode == Environment.TONE_MAPPER_AGX,
+			"tonemap Filmic ou AgX (modo %d)" % env.tonemap_mode)
+	_check(env.fog_height_density > 0.0 and absf(env.fog_height + 3.0) <= 0.01,
+			"névoa de altura abaixo de -3 (altura %.2f, densidade %.3f)" % [env.fog_height, env.fog_height_density])
+	_check(env.ssao_enabled and env.ssao_intensity <= 2.0, "SSAO leve (intensidade %.2f)" % env.ssao_intensity)
+	_check(env.glow_enabled and env.glow_intensity <= 0.5 and env.glow_bloom <= 0.05,
+			"bloom leve (intensidade %.2f, bloom %.2f)" % [env.glow_intensity, env.glow_bloom])
+	var msaa: int = int(ProjectSettings.get_setting("rendering/anti_aliasing/quality/msaa_3d", 0))
+	var fxaa: int = int(ProjectSettings.get_setting("rendering/anti_aliasing/quality/screen_space_aa", 0))
+	var taa: bool = bool(ProjectSettings.get_setting("rendering/anti_aliasing/quality/use_taa", false))
+	_check(msaa == Viewport.MSAA_4X and fxaa == 0 and not taa, "MSAA 4x, sem FXAA e sem TAA (msaa %d, ssaa %d, taa %s)" % [msaa, fxaa, str(taa)])

@@ -1,0 +1,39 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/scenery_stone.gdshader" id="1_v2nru"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/foliage/bark.png" id="2_fvbp7"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/foliage/bark_n.png" id="3_fu76o"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_v2nru")
+shader_parameter/albedo_tex = ExtResource("2_fvbp7")
+shader_parameter/normal_tex = ExtResource("3_fu76o")
+shader_parameter/use_normal = true
+shader_parameter/normal_scale = 0.5
+shader_parameter/tint = null
+shader_parameter/uv_mode = 0
+shader_parameter/world_space = null
+shader_parameter/strip_axis = null
+shader_parameter/uv_scale = Vector2(0.125, 0.25)
+shader_parameter/uv_offset = null
+shader_parameter/v_top = null
+shader_parameter/alpha_cut = null
+shader_parameter/moss_color = null
+shader_parameter/moss_amount = null
+shader_parameter/shade_from_color = null
+shader_parameter/shade_amount = null
+shader_parameter/vertex_ao = null
+shader_parameter/dither_on = null
+shader_parameter/cam_pos = null
+shader_parameter/arena_rect = null
+shader_parameter/dither_density = null
+shader_parameter/dither_margin = null
+shader_parameter/haze_sun_from = null
+shader_parameter/haze_color = null
+shader_parameter/haze_strength = null
+shader_parameter/haze_distance = null
+shader_parameter/air_color = null
+shader_parameter/air_strength = null
+shader_parameter/air_start = null
+shader_parameter/air_distance = null

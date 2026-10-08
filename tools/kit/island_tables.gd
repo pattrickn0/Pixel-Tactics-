@@ -403,8 +403,26 @@ const SLAB_JITTER: Array = [0.04, -0.03, 0.06, -0.05, 0.02, -0.06, 0.05, -0.02]
 ## Caminho nordeste: linha central (x, z) e largura.
 const PATH_NE: PackedVector2Array = [Vector2(16.2, -4.5), Vector2(17.0, -8.0), Vector2(19.4, -14.3), Vector2(21.0, -19.5), Vector2(23.0, -24.1)]
 const PATH_NE_WIDTH: float = 2.75
-## Lajes soltas na arena (centro x, z, meio comprimento, meia largura, giro em graus).
-const ARENA_SLABS: Array = [
-	[-4.6, -2.8, 0.45, 0.3, 20.0], [-3.4, 1.9, 0.5, 0.28, -15.0], [3.9, -3.9, 0.4, 0.26, 35.0], [5.3, 0.6, 0.48, 0.3, -30.0],
-	[-1.6, -5.0, 0.35, 0.22, 60.0], [2.6, 2.7, 0.42, 0.25, 10.0], [-5.6, 0.3, 0.3, 0.2, -50.0], [1.2, -4.6, 0.3, 0.2, 75.0],
+## Centro do círculo de pedra da arena (Tabela B) e o tamanho de cada célula do atlas arena_slabs (unidades).
+const ARENA_RING_CENTER: Vector2 = Vector2(0.4, -0.9)
+const ARENA_STONE_CELL: float = 4.0
+## Anel externo quebrado (spec 012, Tabela B; arte A08 arena_slabs, células 0 a 4): [célula, ângulo em graus
+## (0 = leste, 90 = sul), raio]. O raio é o do arco pintado de cada pedra (lado convexo para fora); as falhas
+## ficam entre elas.
+const ARENA_RING_STONES: Array = [[0, -150.0, 4.3], [1, -62.0, 3.8], [3, 8.0, 4.4], [2, 58.0, 3.6], [4, 128.0, 4.0]]
+## Laje gasta (célula 5) e grupos de pedrinhas (6 e 7) soltos na terra: [célula, x, z, giro em graus].
+const ARENA_LOOSE_STONES: Array = [
+	[5, -4.6, -0.3, 20.0], [5, -3.6, 1.0, -35.0], [5, 4.6, -3.2, 70.0], [6, -2.2, 2.6, 0.0], [7, 3.2, 1.9, 40.0],
+	[6, 5.4, 0.8, 120.0], [7, -5.6, -2.6, 200.0],
+]
+
+# ---------------------------------------------------------------- feixes de luz (Fase 2, direção de arte: opcional)
+## De onde vem o sol (oposto à direção da luz do Sun em scenes/main.tscn: rotação -44°, -112,5°), normalizado.
+const SUN_FROM: Vector3 = Vector3(-0.664, 0.695, -0.275)
+## Feixes fracos sobre a mata do noroeste (nunca sobre a arena): [ponta na copa (mundo), largura, comprimento].
+## Curtos: a ponta de cima fica abaixo da órbita da câmera (regra da órbita da Tabela D).
+const SUN_SHAFTS: Array = [
+	[Vector3(-16.5, 0.5, -10.0), 3.6, 16.0],
+	[Vector3(-13.8, 1.0, -15.5), 2.6, 15.0],
+	[Vector3(-20.5, 0.5, -5.0), 3.0, 16.0],
 ]

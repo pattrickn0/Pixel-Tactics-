@@ -1,54 +1,39 @@
 shader_type spatial;
-render_mode cull_disabled, diffuse_lambert_wrap, specular_disabled;
-// Tufos de grama e flores PROVISÓRIOS (spec 012, Fase 1), em MultiMesh: cartões cruzados com as
-// folhas desenhadas por máscara no shader (seed fixa). Normal para cima (assenta no chão).
-// UV: fract = posição no cartão, floor(UV.y) = semente. Nas flores, a cor da instância pinta as pétalas.
+render_mode cull_disabled, diffuse_lambert_wrap, specular_disabled, alpha_to_coverage;
+// Tufos de grama e flores pintados (spec 012, Fase 2; arte A08), em MultiMesh: 3 cartões cruzados com
+// uma célula do atlas (grass_tufts 4x2, base embaixo; flowers 4x4 com 12 grupos). A célula sai do número
+// da instância e do cartão (fixo, sem sorteio). Normal para cima (assenta no chão, luz igual à do chão).
+// UV: x e fract(y) = posição no cartão (v = 0 em cima), floor(UV.y) = número do cartão.
 
-#include "res://assets/materials/scenery_noise.gdshaderinc"
+uniform sampler2D atlas : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
+uniform int atlas_cols = 4;
+uniform int atlas_rows = 2;
+uniform vec2 atlas_size = vec2(512.0, 256.0);
+// Células usadas: de first_cell a first_cell + cell_count - 1.
+uniform int first_cell = 0;
+uniform int cell_count = 4;
+uniform vec4 tint : source_color = vec4(1.0);
+uniform float alpha_cut = 0.5;
+uniform float alpha_edge = 0.3;
 
-uniform vec4 base_color : source_color = vec4(0.247, 0.373, 0.133, 1.0);
-uniform vec4 tip_color : source_color = vec4(0.659, 0.769, 0.278, 1.0);
-uniform bool flower_mode = false;
-
-varying float v_seed;
+varying flat int v_instance;
 
 void vertex() {
-	// Cada instância do MultiMesh desenha folhas diferentes.
-	v_seed = float(INSTANCE_ID) * 0.137;
+	v_instance = INSTANCE_ID;
 }
 
 void fragment() {
-	vec2 uv = fract(UV);
-	float seed = floor(UV.y) * 0.37 + v_seed;
-	// Folhas: 5 lâminas triangulares de alturas diferentes.
-	float h = 0.0;
-	for (int k = 0; k < 5; k++) {
-		float fk = float(k);
-		float cx = 0.12 + fk * 0.19 + (sn_hash2(vec2(fk, seed)) - 0.5) * 0.08;
-		float bh = 0.55 + sn_hash2(vec2(seed, fk + 3.0)) * 0.45;
-		float w = 0.11 + sn_hash2(vec2(fk + 7.0, seed)) * 0.05;
-		h = max(h, bh * (1.0 - abs(uv.x - cx) / w));
-	}
-	float up = 1.0 - uv.y;
-	float blade = h - up;
-	vec3 c = mix(base_color.rgb, tip_color.rgb, smoothstep(0.0, 0.9, up));
-	float a = blade;
-	if (flower_mode) {
-		// Flores: 3 cabecinhas redondas no alto, cabinho fino.
-		float petals = -1.0;
-		for (int k = 0; k < 3; k++) {
-			float fk = float(k);
-			vec2 cc = vec2(0.22 + fk * 0.28, 0.18 + sn_hash2(vec2(fk, seed + 1.0)) * 0.2);
-			petals = max(petals, 0.11 - length(uv - cc));
-		}
-		float stem = 0.035 - abs(fract(uv.x * 3.57 + 0.2) - 0.5) * 0.28;
-		stem = up < 0.75 ? stem : -1.0;
-		a = max(max(petals, stem), blade * 0.6 - 0.15);
-		c = petals > 0.0 ? COLOR.rgb : c;
-	}
-	ALPHA = a > 0.0 ? 1.0 : 0.0;
-	ALPHA_SCISSOR_THRESHOLD = 0.5;
-	ALBEDO = c;
+	int card = int(floor(UV.y));
+	int cell = first_cell + (v_instance * 3 + card * 5) % max(cell_count, 1);
+	vec2 inner = clamp(vec2(UV.x, fract(UV.y)), vec2(0.004), vec2(0.996));
+	vec2 cell_uv = (vec2(float(cell % atlas_cols), float(cell / atlas_cols)) + inner)
+			/ vec2(float(atlas_cols), float(atlas_rows));
+	vec4 t = texture(atlas, cell_uv);
+	ALBEDO = t.rgb * tint.rgb;
+	ALPHA = t.a;
+	ALPHA_SCISSOR_THRESHOLD = alpha_cut;
+	ALPHA_ANTIALIASING_EDGE = alpha_edge;
+	ALPHA_TEXTURE_COORDINATE = cell_uv * atlas_size;
 	ROUGHNESS = 1.0;
 	if (!FRONT_FACING) {
 		NORMAL = -NORMAL;

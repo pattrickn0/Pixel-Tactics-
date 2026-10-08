@@ -1,16 +1,24 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/scenery_foliage.gdshader" id="1_c26hx"]
+[ext_resource type="Shader" path="res://assets/materials/scenery_foliage.gdshader" id="1_d6vbu"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/foliage/leaf_clumps_mid.png" id="2_46v7l"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_c26hx")
-shader_parameter/color_low = Color(0.18039216, 0.26666668, 0.13333334, 1)
-shader_parameter/color_mid = Color(0.34509805, 0.47843137, 0.18039216, 1)
-shader_parameter/color_high = Color(0.627451, 0.7058824, 0.3137255, 1)
-shader_parameter/dapple_amount = null
+shader = ExtResource("1_d6vbu")
+shader_parameter/atlas = ExtResource("2_46v7l")
+shader_parameter/atlas_cols = 4
+shader_parameter/atlas_rows = 4
+shader_parameter/atlas_size = Vector2(1024, 1024)
+shader_parameter/shade_low = Color(0.38, 0.46, 0.58, 1)
+shader_parameter/shade_high = Color(1.12, 1.1, 0.84, 1)
+shader_parameter/core_color = Color(0.11764706, 0.19607843, 0.09411765, 1)
 shader_parameter/alpha_cut = null
-shader_parameter/wrap_light = null
+shader_parameter/alpha_edge = null
+shader_parameter/wrap_light = 0.35
+shader_parameter/rim_color = null
+shader_parameter/rim_amount = 0.5
+shader_parameter/backlight_color = null
 shader_parameter/sway_amount = null
 shader_parameter/sway_period = null
 shader_parameter/dither_on = true
@@ -18,3 +26,11 @@ shader_parameter/cam_pos = null
 shader_parameter/arena_rect = null
 shader_parameter/dither_density = null
 shader_parameter/dither_margin = 3.0
+shader_parameter/haze_sun_from = null
+shader_parameter/haze_color = null
+shader_parameter/haze_strength = null
+shader_parameter/haze_distance = null
+shader_parameter/air_color = null
+shader_parameter/air_strength = null
+shader_parameter/air_start = null
+shader_parameter/air_distance = null

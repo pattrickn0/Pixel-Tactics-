@@ -208,7 +208,7 @@ static func catalog() -> Array[Dictionary]:
 	out.append(_e("stair_pass_out_3", "stair_pass_out", Vector3(3, 0.75, 2), {"structural": true, "stair": [0.0, 3.0, 1.5, 3, -0.25]}))
 	out.append(_e("stair_crest_3", "stair_crest", Vector3(3, 1.0, 1), {"structural": true, "areas": [[0, 0, 0, 3, 1, 1.0]]}))
 	out.append(_e("stair_landing_3", "stair_landing", Vector3(1, 0.5, 3), {"structural": true, "areas": [[0, 0, 0, 1, 3, 0.5]]}))
-	out.append(_e("ground_inner", "ground", Vector3(20, 0, 18), {"material": "grass_painted_inner"}))
+	out.append(_e("ground_inner", "ground", Vector3(20, 0, 18), {"material": "grass_painted_inner", "ao_inside": true}))
 	out.append(_e("ground_outer", "ground", Vector3(48, 0, 48), {"material": "grass_painted"}))
 	for decal_name: String in DECAL_SIZES.keys():
 		var dsize: Vector2 = DECAL_SIZES[decal_name]

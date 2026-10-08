@@ -1,10 +1,17 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/scenery_tuft.gdshader" id="1_4cgbb"]
+[ext_resource type="Shader" path="res://assets/materials/scenery_tuft.gdshader" id="1_nb8p7"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/foliage/grass_tufts.png" id="2_1ofxr"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_4cgbb")
-shader_parameter/base_color = null
-shader_parameter/tip_color = null
-shader_parameter/flower_mode = null
+shader = ExtResource("1_nb8p7")
+shader_parameter/atlas = ExtResource("2_1ofxr")
+shader_parameter/atlas_cols = 4
+shader_parameter/atlas_rows = 2
+shader_parameter/atlas_size = Vector2(512, 256)
+shader_parameter/first_cell = 4
+shader_parameter/cell_count = 4
+shader_parameter/tint = null
+shader_parameter/alpha_cut = null
+shader_parameter/alpha_edge = null

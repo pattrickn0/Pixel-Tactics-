@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/scenery_decal.gdshader" id="1_ydckk"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/decals/arena_slabs.png" id="2_qkien"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_ydckk")
+shader_parameter/atlas = ExtResource("2_qkien")
+shader_parameter/atlas_size = null
+shader_parameter/tint = null
+shader_parameter/alpha_cut = null
+shader_parameter/alpha_edge = null

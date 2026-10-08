@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/light_shaft.gdshader" id="1_5xac7"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_5xac7")
+shader_parameter/shaft_color = null
+shader_parameter/intensity = null
+shader_parameter/proximity_fade = null

@@ -88,6 +88,7 @@
 [ext_resource type="PackedScene" path="res://scenes/kit/cloud_e.tscn" id="83_ivt0i"]
 [ext_resource type="PackedScene" path="res://scenes/kit/cloud_c.tscn" id="84_4ewnl"]
 [ext_resource type="PackedScene" path="res://scenes/kit/cloud_d.tscn" id="85_4v3bk"]
+[ext_resource type="PackedScene" path="res://scenes/kit/sun_shafts.tscn" id="86_shafts"]
 
 [node name="Map" type="Node3D" unique_id=1174681232]
 script = ExtResource("1_m335s")
@@ -1457,43 +1458,43 @@ size = Vector3(4.96, 5.03, 4.96)
 obstacle = true
 
 [node name="tree_broad_d_88" type="Node3D" parent="Forest" unique_id=1611169738 instance=ExtResource("49_nk0xt")]
-transform = Transform3D(0.9396926, 0, 0.34202012, 0, 1, 0, -0.34202012, 0, 0.9396926, 11, 0, -16)
+transform = Transform3D(1.033662, 0, 0.3762222, 0, 1.1, 0, -0.3762222, 0, 1.033662, 11, 0, -16)
 script = ExtResource("3_4b7dj")
 size = Vector3(5.84, 6.19, 5.84)
 obstacle = true
 
 [node name="tree_broad_b_89" type="Node3D" parent="Forest" unique_id=1783429064 instance=ExtResource("48_ul5ux")]
-transform = Transform3D(0.17364822, 0, 0.9848077, 0, 1, 0, -0.9848077, 0, 0.17364822, 11.4, 0, -19.6)
+transform = Transform3D(0.2257428, 0, 1.28025, 0, 1.3, 0, -1.28025, 0, 0.2257428, 11.4, 0, -19.6)
 script = ExtResource("3_4b7dj")
 size = Vector3(4.96, 5.03, 4.96)
 obstacle = true
 
 [node name="conifer_b_90" type="Node3D" parent="Forest" unique_id=2061518989 instance=ExtResource("43_hhjo3")]
-transform = Transform3D(0.76604444, 0, 0.6427876, 0, 1, 0, -0.6427876, 0, 0.76604444, 13.8, 0, -17.4)
+transform = Transform3D(0.8809511, 0, 0.7392057, 0, 1.15, 0, -0.7392057, 0, 0.8809511, 13.8, 0, -17.4)
 script = ExtResource("3_4b7dj")
 size = Vector3(3.32, 6.04, 3.32)
 obstacle = true
 
 [node name="tree_broad_a_91" type="Node3D" parent="Forest" unique_id=407910160 instance=ExtResource("44_r1ijr")]
-transform = Transform3D(-0.892708, 0, -0.32491913, 0, 0.95, 0, 0.32491913, 0, -0.892708, 14.2, 0, -20.8)
+transform = Transform3D(-1.31557, 0, -0.478828, 0, 1.399999, 0, 0.478828, 0, -1.31557, 14.2, 0, -20.8)
 script = ExtResource("3_4b7dj")
 size = Vector3(4.86, 4.46, 4.86)
 obstacle = true
 
 [node name="tree_broad_c_92" type="Node3D" parent="Forest" unique_id=1579734070 instance=ExtResource("45_kdeuw")]
-transform = Transform3D(-0.64278764, 0, 0.76604444, 0, 1, 0, -0.76604444, 0, -0.64278764, 16.2, 0, -15.6)
+transform = Transform3D(-0.7392058, 0, 0.8809511, 0, 1.15, 0, -0.8809511, 0, -0.7392058, 16.2, 0, -15.6)
 script = ExtResource("3_4b7dj")
 size = Vector3(5.36, 5.56, 5.36)
 obstacle = true
 
 [node name="tree_broad_d_93" type="Node3D" parent="Forest" unique_id=1136986268 instance=ExtResource("49_nk0xt")]
-transform = Transform3D(0.4499999, 0, -0.7794229, 0, 0.9, 0, 0.7794229, 0, 0.4499999, 16.6, 0, -18.8)
+transform = Transform3D(0.5499999, 0, -0.952628, 0, 1.1, 0, 0.952628, 0, 0.5499999, 16.6, 0, -18.8)
 script = ExtResource("3_4b7dj")
 size = Vector3(5.84, 6.19, 5.84)
 obstacle = true
 
 [node name="tree_small_a_94" type="Node3D" parent="Forest" unique_id=609823360 instance=ExtResource("68_7upxd")]
-transform = Transform3D(-0.64278764, 0, 0.76604444, 0, 1, 0, -0.76604444, 0, -0.64278764, 18.2, 0, -21.6)
+transform = Transform3D(-0.8677633, 0, 1.03416, 0, 1.35, 0, -1.03416, 0, -0.8677633, 18.2, 0, -21.6)
 script = ExtResource("3_4b7dj")
 size = Vector3(2.68, 2.2, 2.68)
 obstacle = true
@@ -2498,6 +2499,10 @@ script = ExtResource("3_4b7dj")
 size = Vector3(14, 4, 6)
 
 [node name="Fx" type="Node3D" parent="." unique_id=239158158]
+
+[node name="sun_shafts_1" type="Node3D" parent="Fx" instance=ExtResource("86_shafts")]
+script = ExtResource("3_4b7dj")
+size = Vector3(20, 20, 12)
 
 [node name="cloud_d_290" type="Node3D" parent="Fx" unique_id=1370183463 instance=ExtResource("85_4v3bk")]
 transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, -7.6, -12.5, -55.2)

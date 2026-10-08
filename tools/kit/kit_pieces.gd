@@ -8,6 +8,8 @@ const T: float = KitMesher.TEXEL
 ## Grama do topo do terraço e do degrau (material provisório pintado, spec 012).
 const GRASS: String = "grass_painted_inner"
 const FACE_HIGH: String = "wall_high_face"
+## Face externa do muro alto (pedra com musgo escorrendo, spec 012 Fase 2).
+const FACE_HIGH_OUT: String = "wall_high_face_out"
 const FACE_LOW: String = "wall_low_face"
 ## Altura do degrau baixo e do muro alto (topo).
 const STEP_H: float = 0.5
@@ -49,7 +51,10 @@ static func build(entry: Dictionary) -> KitMesher:
 		"stair_landing":
 			stair_landing(m, s)
 		"ground":
-			m.top(mat, -s.x * 0.5, -s.z * 0.5, s.x * 0.5, s.z * 0.5, 0.0)
+			if bool(entry.get("ao_inside", false)):
+				SceneryPieces.arena_ground_grid(m, mat, s)
+			else:
+				m.top(mat, -s.x * 0.5, -s.z * 0.5, s.x * 0.5, s.z * 0.5, 0.0)
 		"decal":
 			decal(m, s, mat)
 		"log":
@@ -122,15 +127,6 @@ static func slab_row(m: KitMesher, axis: int, start: float, edge: float, sgn: fl
 		a = a1
 
 
-## Musgo pendente preso no beiral: cartão contínuo ao longo do trecho, à frente da face.
-static func drape(m: KitMesher, axis: int, a0: float, a1: float, edge: float, sgn: float, top_y: float, key: String) -> void:
-	var y_top: float = top_y - KitTables.SLAB_THICKNESS * T + 2.0 * T
-	var y_bot: float = y_top - KitTables.DRAPE_HEIGHT
-	var b: float = edge + sgn * (2.0 * T + 0.01)
-	m.quad(key, _p(axis, a0, b, y_top), _p(axis, a1, b, y_top), _p(axis, a1, b, y_bot), _p(axis, a0, b, y_bot), _dir(axis, sgn),
-			Vector2(a0, 0.0), Vector2(a1, 0.0), Vector2(a1, KitTables.DRAPE_HEIGHT), Vector2(a0, KitTables.DRAPE_HEIGHT))
-
-
 # ================================================================ degrau baixo, terraço, muro
 
 static func step_low(m: KitMesher, s: Vector3) -> void:
@@ -191,14 +187,12 @@ static func wall(m: KitMesher, s: Vector3) -> void:
 	var yb: float = WALL_H - KitTables.SLAB_THICKNESS * T
 	var long_piece: bool = s.x > 1.5
 	m.wall_z(FACE_HIGH, -hx, hx, 0.5, yb, 0.5, 1.0)
-	m.wall_z(FACE_HIGH, -hx, hx, 0.0, yb, -0.5, -1.0)
+	m.wall_z(FACE_HIGH_OUT, -hx, hx, 0.0, yb, -0.5, -1.0)
 	m.top("wall_crest", -hx, -0.5, hx, 0.5, WALL_H, 0.0, 1.0)
 	slab_row(m, 0, -hx, 0.5, 1.0, KitTables.SLABS_WALL_2_INNER if long_piece else KitTables.SLABS_WALL_1_INNER,
 			WALL_H, "wall_cap", FACE_HIGH, false)
 	slab_row(m, 0, -hx, -0.5, -1.0, KitTables.SLABS_WALL_2_OUTER if long_piece else KitTables.SLABS_WALL_1_OUTER,
-			WALL_H, "wall_cap", FACE_HIGH, false)
-	drape(m, 0, -hx, hx, 0.5, 1.0, WALL_H, "moss_drape_1")
-	drape(m, 0, -hx, hx, -0.5, -1.0, WALL_H, "moss_drape_0")
+			WALL_H, "wall_cap", FACE_HIGH_OUT, false)
 
 
 ## Quina externa do muro alto (faces -X e -Z). As duas faces usam wall_quoin (32x48 = 1 x 1,5, coluna
@@ -239,11 +233,8 @@ static func wall_corner(m: KitMesher, _s: Vector3) -> void:
 	m.quad("wall_cap_z", Vector3(cx0, yb, cx0), Vector3(cx0, yb, cx1), Vector3(cx0, cyt, cx1), Vector3(cx0, cyt, cx0), Vector3(-1.0, 0.0, 0.0), side, side, side, side)
 	m.quad("wall_cap_z", Vector3(cx1, yb, cx0), Vector3(cx1, yb, cx1), Vector3(cx1, cyt, cx1), Vector3(cx1, cyt, cx0), Vector3(1.0, 0.0, 0.0), side, side, side, side)
 	m.quad("wall_cap", Vector3(cx0, yb, cx1), Vector3(cx1, yb, cx1), Vector3(cx1, cyt, cx1), Vector3(cx0, cyt, cx1), Vector3(0.0, 0.0, 1.0), side, side, side, side)
-	slab_row(m, 0, cx1, -0.5, -1.0, KitTables.SLABS_CORNER_Z, WALL_H, "wall_cap", FACE_HIGH, false)
-	slab_row(m, 1, cx1, -0.5, -1.0, KitTables.SLABS_CORNER_X, WALL_H, "wall_cap_z", FACE_HIGH, false)
-	# Musgo pendente: um cartão por face, sem se cruzarem na quina.
-	drape(m, 0, -0.5, 0.5, -0.5, -1.0, WALL_H, "moss_drape_0")
-	drape(m, 1, -0.5, 0.5, -0.5, -1.0, WALL_H, "moss_drape_1_z")
+	slab_row(m, 0, cx1, -0.5, -1.0, KitTables.SLABS_CORNER_Z, WALL_H, "wall_cap", FACE_HIGH_OUT, false)
+	slab_row(m, 1, cx1, -0.5, -1.0, KitTables.SLABS_CORNER_X, WALL_H, "wall_cap_z", FACE_HIGH_OUT, false)
 
 
 ## UV de wall_quoin (32x48 = 1 x 1,5): coluna 31 na aresta (u = 1 em -0,5), linha 0 no topo do muro;
@@ -343,7 +334,7 @@ static func stair_crest_in(m: KitMesher, s: Vector3) -> void:
 			Vector3(0.0, 0.0, -1.0), Vector2(0.0, 1.0), Vector2(1.0, 1.0), Vector2(1.0, 0.0), Vector2(0.0, 0.0))
 	for side in [-1.0, 1.0]:
 		var sg: float = side
-		m.wall_z(FACE_HIGH, minf(sg * hw, sg * (hw + 0.5)), maxf(sg * hw, sg * (hw + 0.5)), 0.0, yb, -hz, -1.0)
+		m.wall_z(FACE_HIGH_OUT, minf(sg * hw, sg * (hw + 0.5)), maxf(sg * hw, sg * (hw + 0.5)), 0.0, yb, -hz, -1.0)
 
 
 ## Passagem sul/norte, lance de fora: 3 degraus de 0,25 (0 -> 0,75) de z local +0,5 a -1,0, largura 3,
@@ -426,7 +417,10 @@ static func log_piece(m: KitMesher, s: Vector3) -> void:
 		var nrm := Vector3(0.0, cos(mid), sin(mid))
 		var v0: float = absf(wrapf(p0, -PI, PI)) / PI
 		var v1: float = absf(wrapf(p1, -PI, PI)) / PI
-		m.quad("log_bark", a0, b0, b1, a1, nrm, Vector2(0.0, v0), Vector2(s.x, v0), Vector2(s.x, v1), Vector2(0.0, v1))
+		# Casca pintada: fibras ao longo do tronco (v = comprimento, u = volta, em unidades).
+		var c0: float = v0 * PI * (ry + rz)
+		var c1: float = v1 * PI * (ry + rz)
+		m.quad("bark_log", a0, b0, b1, a1, nrm, Vector2(c0, 0.0), Vector2(c0, s.x), Vector2(c1, s.x), Vector2(c1, 0.0))
 	for end in [-1.0, 1.0]:
 		var e: float = end
 		var r_scale: float = 1.0 if e < 0.0 else 0.92
@@ -436,7 +430,7 @@ static func log_piece(m: KitMesher, s: Vector3) -> void:
 			var c := Vector3(e * half_len, ry, 0.0)
 			var q0 := Vector3(e * half_len, ry + cos(p0) * ry * r_scale, sin(p0) * rz * r_scale)
 			var q1 := Vector3(e * half_len, ry + cos(p1) * ry * r_scale, sin(p1) * rz * r_scale)
-			m.tri_flat("wood_end", c, q0, q1, Vector3(e, 0.0, 0.0), Vector2(0.5, 0.5),
+			m.tri_flat("wood_painted", c, q0, q1, Vector3(e, 0.0, 0.0), Vector2(0.5, 0.5),
 					Vector2(0.5 + sin(p0) * rz * r_scale, 0.5 + cos(p0) * ry * r_scale), Vector2(0.5 + sin(p1) * rz * r_scale, 0.5 + cos(p1) * ry * r_scale))
 
 
@@ -452,7 +446,7 @@ static func stump(m: KitMesher, s: Vector3) -> void:
 
 static func rock(m: KitMesher, s: Vector3, variant: int) -> void:
 	var t: Dictionary = KitTables.ROCKS[variant]
-	m.faceted("rock", Vector2.ZERO, Vector2(s.x * 0.5, s.z * 0.5), s.y, t["rings"], t["apex"], float(variant) * 0.35)
+	m.faceted("rock_painted", Vector2.ZERO, Vector2(s.x * 0.5, s.z * 0.5), s.y, t["rings"], t["apex"], float(variant) * 0.35)
 
 
 ## Caixa com UV 0..1 por face (lados) e no topo; as larguras das texturas vêm em `tex_units`.
@@ -478,15 +472,15 @@ static func bench(m: KitMesher, s: Vector3) -> void:
 	var seat_y0: float = s.y - 0.07
 	for zc in [-0.21, 0.0, 0.21]:
 		var z: float = zc
-		uv_box(m, "bench_floor_0", "bench_floor_0", Vector3(-hx, seat_y0, z - 0.09), Vector3(hx, s.y, z + 0.09))
+		uv_box(m, "wood_painted", "wood_painted", Vector3(-hx, seat_y0, z - 0.09), Vector3(hx, s.y, z + 0.09))
 	for side in [-1.0, 1.0]:
 		var x: float = side * (hx - 0.18)
-		uv_box(m, "bench_floor_0", "bench_floor_0", Vector3(x - 0.06, 0.0, -0.24), Vector3(x + 0.06, seat_y0, 0.24))
+		uv_box(m, "wood_painted", "wood_painted", Vector3(x - 0.06, 0.0, -0.24), Vector3(x + 0.06, seat_y0, 0.24))
 
 
 static func crate(m: KitMesher, at: Vector3, size: float) -> void:
 	var h: float = size * 0.5
-	uv_box(m, "crate_side", "crate_top", at + Vector3(-h, 0.0, -h), at + Vector3(h, size, h), Vector2(0.75, 0.75))
+	uv_box(m, "wood_painted", "wood_painted", at + Vector3(-h, 0.0, -h), at + Vector3(h, size, h), Vector2(0.75, 0.75))
 
 
 static func crate_stack(m: KitMesher, s: Vector3) -> void:

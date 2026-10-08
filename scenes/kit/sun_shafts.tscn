@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_iocwd"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/sun_shafts.res" id="2_fyiec"]
+
+[node name="sun_shafts" type="Node3D" unique_id=1903669282]
+script = ExtResource("1_iocwd")
+size = Vector3(20, 20, 12)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=960755429]
+cast_shadow = 0
+mesh = ExtResource("2_fyiec")

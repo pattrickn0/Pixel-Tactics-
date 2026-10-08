@@ -1,8 +1,8 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/kit_surface.gdshader" id="1_p7ih7"]
-[ext_resource type="Texture2D" path="res://assets/textures/wall/wall_cap_corner.png" id="2_ngjpj"]
-[ext_resource type="Texture2D" path="res://assets/textures/wall/wall_cap_corner_n.png" id="3_lbfns"]
+[ext_resource type="Shader" path="res://assets/materials/scenery_stone.gdshader" id="1_p7ih7"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/stone/wall_top.png" id="2_ngjpj"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/stone/wall_top_n.png" id="3_lbfns"]
 
 [resource]
 render_priority = 0
@@ -12,15 +12,28 @@ shader_parameter/normal_tex = ExtResource("3_lbfns")
 shader_parameter/use_normal = true
 shader_parameter/normal_scale = 0.5
 shader_parameter/tint = null
-shader_parameter/uv_mode = 0
+shader_parameter/uv_mode = 1
 shader_parameter/world_space = null
 shader_parameter/strip_axis = null
-shader_parameter/uv_scale = null
+shader_parameter/uv_scale = Vector2(0.125, 0.5)
+shader_parameter/uv_offset = null
 shader_parameter/v_top = null
 shader_parameter/alpha_cut = null
-shader_parameter/clamp_uv = null
+shader_parameter/moss_color = null
+shader_parameter/moss_amount = null
+shader_parameter/shade_from_color = null
+shader_parameter/shade_amount = null
+shader_parameter/vertex_ao = null
 shader_parameter/dither_on = null
 shader_parameter/cam_pos = null
 shader_parameter/arena_rect = null
 shader_parameter/dither_density = null
 shader_parameter/dither_margin = null
+shader_parameter/haze_sun_from = null
+shader_parameter/haze_color = null
+shader_parameter/haze_strength = null
+shader_parameter/haze_distance = null
+shader_parameter/air_color = null
+shader_parameter/air_strength = null
+shader_parameter/air_start = null
+shader_parameter/air_distance = null

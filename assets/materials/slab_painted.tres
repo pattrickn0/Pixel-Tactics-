@@ -1,27 +1,39 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/scenery_solid.gdshader" id="1_0eohn"]
+[ext_resource type="Shader" path="res://assets/materials/scenery_stone.gdshader" id="1_0o2gf"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/stone/slabs.png" id="2_na8pj"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/stone/slabs_n.png" id="3_ddm4x"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_0eohn")
-shader_parameter/color_low = Color(0.65882355, 0.57254905, 0.36862746, 1)
-shader_parameter/color_high = Color(0.8392157, 0.73333335, 0.5529412, 1)
-shader_parameter/color_patch = Color(0.5568628, 0.4862745, 0.3372549, 1)
-shader_parameter/patch_scale = 1.1
-shader_parameter/patch_amount = 0.4
-shader_parameter/stroke_scale = 3.0
-shader_parameter/stroke_amount = 0.07
-shader_parameter/top_color = null
-shader_parameter/top_amount = null
-shader_parameter/top_sharpness = null
-shader_parameter/world_gradient = null
-shader_parameter/world_gradient_range = null
+shader = ExtResource("1_0o2gf")
+shader_parameter/albedo_tex = ExtResource("2_na8pj")
+shader_parameter/normal_tex = ExtResource("3_ddm4x")
+shader_parameter/use_normal = true
+shader_parameter/normal_scale = 0.5
+shader_parameter/tint = null
+shader_parameter/uv_mode = 1
+shader_parameter/world_space = null
+shader_parameter/strip_axis = null
+shader_parameter/uv_scale = Vector2(0.125, 0.125)
+shader_parameter/uv_offset = null
+shader_parameter/v_top = null
+shader_parameter/alpha_cut = null
+shader_parameter/moss_color = null
+shader_parameter/moss_amount = 0.3
+shader_parameter/shade_from_color = true
+shader_parameter/shade_amount = null
 shader_parameter/vertex_ao = null
-shader_parameter/emission_color = null
-shader_parameter/emission_energy = null
 shader_parameter/dither_on = null
 shader_parameter/cam_pos = null
 shader_parameter/arena_rect = null
 shader_parameter/dither_density = null
 shader_parameter/dither_margin = null
+shader_parameter/haze_sun_from = null
+shader_parameter/haze_color = null
+shader_parameter/haze_strength = null
+shader_parameter/haze_distance = null
+shader_parameter/air_color = null
+shader_parameter/air_strength = null
+shader_parameter/air_start = null
+shader_parameter/air_distance = null

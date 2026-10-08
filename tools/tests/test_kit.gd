@@ -131,6 +131,7 @@ func _run() -> void:
 	_check_wall_continuity()
 	_check_slabs()
 	_check_trees()
+	_check_no_pixel_scenery()
 	await _check_decals()
 	print("")
 	if _failures == 0:
@@ -189,17 +190,25 @@ func _check_wall_continuity() -> void:
 		var mode: int = int(mat.get_shader_parameter("uv_mode"))
 		var world_space: Variant = mat.get_shader_parameter("world_space")
 		_check(mode == 1 and (world_space == null or world_space == true), "%s usa UV de mundo (projeção no mundo)" % key)
-	for key: String in ["wall_cap", "wall_crest", "moss_drape_0", "moss_drape_1"]:
+	for key: String in ["wall_cap", "wall_crest", "wall_cap_z", "wall_crest_z"]:
 		var mat := load(MATERIAL_DIR + key + ".tres") as ShaderMaterial
 		_check(int(mat.get_shader_parameter("uv_mode")) == 2, "%s corre contínuo em faixa (u de mundo)" % key)
-	var shader_text: String = FileAccess.get_file_as_string("res://assets/materials/kit_surface.gdshader")
+	# Fase 2 da 012: pedra pintada (scenery_stone) com filtro linear, mipmaps e anisotrópico, a 64 px por unidade.
+	var shader_text: String = FileAccess.get_file_as_string("res://assets/materials/scenery_stone.gdshader")
 	var filters_ok: bool = true
-	for hint: String in ["albedo_tex : source_color, filter_nearest_mipmap", "normal_tex : hint_normal, filter_nearest_mipmap"]:
+	for hint: String in ["albedo_tex : source_color, filter_linear_mipmap_anisotropic", "normal_tex : hint_normal, filter_linear_mipmap_anisotropic"]:
 		if not shader_text.contains(hint):
 			filters_ok = false
-	_check(filters_ok, "o shader do kit amostra com filtro Nearest")
+	_check(filters_ok, "a pedra pintada amostra com filtro linear, mipmaps e anisotrópico")
 	_check(shader_text.contains("cross(dFdx(v_pos), dFdy(v_pos))"), "o eixo da projeção vem da normal geométrica da face (não da normal da copa)")
-	for key: String in ["wall_cap", "wall_cap_z", "wall_cap_low", "wall_crest", "wall_crest_z", "wall_crest_corner", "wall_cap_corner", "wall_quoin", "rock"]:
+	var blocks := load(MATERIAL_DIR + "wall_high_face.tres") as ShaderMaterial
+	var want_scale := Vector2(float(WorldScale.SCENERY_TEXELS_PER_UNIT) / 512.0, float(WorldScale.SCENERY_TEXELS_PER_UNIT) / 128.0)
+	_check(WorldScale.SCENERY_TEXELS_PER_UNIT == 64 and (blocks.get_shader_parameter("uv_scale") as Vector2).is_equal_approx(want_scale),
+			"muro a 64 px por unidade (uv_scale %s)" % str(blocks.get_shader_parameter("uv_scale")))
+	var out_face := load(MATERIAL_DIR + "wall_high_face_out.tres") as ShaderMaterial
+	_check(str((out_face.get_shader_parameter("albedo_tex") as Texture2D).resource_path).ends_with("wall_blocks_mossy.png"),
+			"face externa do muro alto com wall_blocks_mossy")
+	for key: String in ["wall_cap", "wall_cap_z", "wall_cap_low", "wall_crest", "wall_crest_z", "wall_crest_corner", "wall_cap_corner", "wall_quoin", "wall_high_face", "slab_painted", "bark"]:
 		var mat := load(MATERIAL_DIR + key + ".tres") as ShaderMaterial
 		var scale: float = float(mat.get_shader_parameter("normal_scale"))
 		_check(mat.get_shader_parameter("use_normal") == true and scale >= 0.4 and scale <= 0.7, "%s usa normal map de pedra com força %.2f (0,4 a 0,7)" % [key, scale])
@@ -285,11 +294,22 @@ func _check_trees() -> void:
 			var tris: int = (mesh.surface_get_arrays(i)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() / 3
 			if mat.shader.resource_path.ends_with("scenery_foliage.gdshader"):
 				foliage_tris += tris
-			elif mat.shader.resource_path.ends_with("scenery_solid.gdshader"):
+			elif mat.resource_path.ends_with("/bark.tres"):
 				has_bark = true
 		if foliage_tris < 150 or not has_bark:
 			bad.append("%s: %d triângulos de folhagem, tronco %s" % [tree_name, foliage_tris, str(has_bark)])
-	_check(bad.is_empty(), "árvores são volume de cartões de folhagem (scenery_foliage) com tronco", str(bad))
+	_check(bad.is_empty(), "árvores são volume de cartões de folhagem (scenery_foliage) com tronco de casca pintada", str(bad))
+	# Fase 2: folhagem com o atlas da A08, alpha scissor + alpha-to-coverage.
+	var foliage_text: String = FileAccess.get_file_as_string("res://assets/materials/scenery_foliage.gdshader")
+	_check(foliage_text.contains("alpha_to_coverage") and foliage_text.contains("ALPHA_SCISSOR_THRESHOLD")
+			and foliage_text.contains("ALPHA_ANTIALIASING_EDGE"), "folhagem com alpha scissor + alpha-to-coverage")
+	var atlas_bad: Array[String] = []
+	for key: String in ["foliage_warm", "foliage_mid", "foliage_cool", "foliage_conifer"]:
+		var mat := load(MATERIAL_DIR + key + ".tres") as ShaderMaterial
+		var tex := mat.get_shader_parameter("atlas") as Texture2D
+		if tex == null or not tex.resource_path.begins_with("res://assets/textures/scenery/foliage/"):
+			atlas_bad.append(key)
+	_check(atlas_bad.is_empty(), "folhagem usa os atlas pintados da A08", str(atlas_bad))
 
 
 ## Decalques: tamanho = PNG / 32 (decalques da A06, guardados no kit); no mapa, os decalques provisórios da
@@ -320,6 +340,26 @@ func _check_decals() -> void:
 	_check(found.has("arena_ground") and found.has("arena_slabs") and bad.is_empty(),
 			"decalques da arena (terra, círculo e lajes soltas) presentes e planos", str(found) + " " + str(bad))
 	map_scene.queue_free()
+
+
+## Fase 2 da 012: nenhuma peça usada no mapa amostra textura com Nearest (o kit_surface pixel art fica só para
+## referência) e nenhum shader do cenário pede filtro Nearest.
+func _check_no_pixel_scenery() -> void:
+	var map_text: String = FileAccess.get_file_as_string("res://scenes/map.tscn")
+	var bad: Array[String] = []
+	for line: String in map_text.split("\n"):
+		if not line.contains("path=\"res://scenes/kit/"):
+			continue
+		var kit_path: String = line.get_slice("path=\"", 1).get_slice("\"", 0)
+		var piece := (load(kit_path) as PackedScene).instantiate() as KitPiece
+		var mesh_node := piece.get_node_or_null("Mesh") as MeshInstance3D
+		if mesh_node != null and mesh_node.mesh != null:
+			for i in mesh_node.mesh.get_surface_count():
+				var mat := mesh_node.mesh.surface_get_material(i) as ShaderMaterial
+				if mat != null and mat.shader != null and mat.shader.code.contains("filter_nearest"):
+					bad.append("%s[%s]" % [kit_path.get_file(), mat.resource_path.get_file()])
+		piece.free()
+	_check(bad.is_empty(), "nenhuma peça do mapa usa textura com filtro Nearest (cenário pintado)", str(bad))
 
 
 func _descendants(node: Node) -> Array[Node]:

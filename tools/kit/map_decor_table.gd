@@ -108,13 +108,13 @@ const ITEMS: Array = [
 	# Norte central (aberta): uma folhosa na ponta oeste
 	["Forest", "tree_broad_b", -8.6, 0.0, -18.2, 60.0, 0.9],
 	# Nordeste: folhosas redondas em grupo fechado, à esquerda do caminho, e uma conífera no meio
-	["Forest", "tree_broad_d", 11.0, 0.0, -16.0, 20.0],
-	["Forest", "tree_broad_b", 11.4, 0.0, -19.6, 80.0],
-	["Forest", "conifer_b", 13.8, 0.0, -17.4, 40.0],
-	["Forest", "tree_broad_a", 14.2, 0.0, -20.8, 200.0, 0.95],
-	["Forest", "tree_broad_c", 16.2, 0.0, -15.6, 130.0],
-	["Forest", "tree_broad_d", 16.6, 0.0, -18.8, 300.0, 0.9],
-	["Forest", "tree_small_a", 18.2, 0.0, -21.6, 130.0],
+	["Forest", "tree_broad_d", 11.0, 0.0, -16.0, 20.0, 1.1],
+	["Forest", "tree_broad_b", 11.4, 0.0, -19.6, 80.0, 1.3],
+	["Forest", "conifer_b", 13.8, 0.0, -17.4, 40.0, 1.15],
+	["Forest", "tree_broad_a", 14.2, 0.0, -20.8, 200.0, 1.4],
+	["Forest", "tree_broad_c", 16.2, 0.0, -15.6, 130.0, 1.15],
+	["Forest", "tree_broad_d", 16.6, 0.0, -18.8, 300.0, 1.1],
+	["Forest", "tree_small_a", 18.2, 0.0, -21.6, 130.0, 1.35],
 	["Forest", "bush_d", 13.0, 0.0, -14.8, 0.0, 1.6],
 	# Leste: coníferas do caminho até a borda (copas passando da borda), folhosas verde-amareladas no meio
 	["Forest", "conifer_a", 20.6, 0.0, -5.6, 40.0],
@@ -324,6 +324,8 @@ const ITEMS: Array = [
 	["Sky", "cloud_e", -48.0, -10.0, 0.0, 270.0, 3.2],
 	["Sky", "cloud_c", -40.7, -11.55, 23.5, 300.0, 3.0],
 	["Sky", "cloud_e", -23.0, -11.5, 39.8, 330.0, 3.2],
+	# Feixes de luz bem fracos sobre a mata do noroeste (Fase 2; direção de arte: opcional)
+	["Fx", "sun_shafts", 0.0, 0.0, 0.0, 0.0],
 	# Névoa na base da cascata
 	["Fx", "cloud_d", -7.6, -12.5, -55.2, 0.0, 1.5],
 	["Fx", "cloud_d", -0.5, -13.4, -54.8, 30.0, 2.0],

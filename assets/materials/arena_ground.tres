@@ -1,18 +1,16 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/arena_ground.gdshader" id="1_gt2ep"]
+[ext_resource type="Shader" path="res://assets/materials/arena_ground.gdshader" id="1_8e4fe"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/decals/arena_dirt.png" id="2_plm88"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/decals/arena_ring.png" id="3_6tga4"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_gt2ep")
-shader_parameter/dirt_dark = null
-shader_parameter/dirt_rim = null
-shader_parameter/dirt = null
-shader_parameter/dirt_light = null
-shader_parameter/stone = null
-shader_parameter/stone_light = null
+shader = ExtResource("1_8e4fe")
+shader_parameter/dirt_tex = ExtResource("2_plm88")
+shader_parameter/ring_tex = ExtResource("3_6tga4")
 shader_parameter/dirt_center = null
-shader_parameter/dirt_half = null
+shader_parameter/dirt_size = null
 shader_parameter/ring_center = null
-shader_parameter/ring_inner = null
-shader_parameter/ring_outer = null
+shader_parameter/ring_size = null
+shader_parameter/tint = null
