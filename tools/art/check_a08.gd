@@ -42,11 +42,30 @@ const FILES: Array = [
 	["foliage/grass_tufts", 512, 256, "c", false, "", 10.0, false, ["#5E8424", "#7FA22C"]],
 	# flores: metade pétala (média das 5 cores) e metade caule/folha (#5E8424)
 	["foliage/flowers", 256, 256, "c", false, "", 10.0, false, ["#979D70"]],
+	# Leva 2
+	["island/cliff", 512, 512, "o", true, "xy", 8.0, true, ["#5C4330", "#6E5038", "#4A3628"]],
+	["island/under", 512, 512, "o", true, "xy", 8.0, true, ["#4E4140", "#54443A", "#3E3640"]],
+	["island/roots_hang", 512, 1024, "c", false, "", 10.0, false, ["#5A4030", "#4A3426"]],
+	["island/vines_hang", 512, 1024, "c", false, "", 10.0, false, ["#3F5F22", "#56702A"]],
+	["water/fall_streaks", 256, 512, "o", false, "xy", 8.0, false, ["#B6D0E3", "#BCCEDC"]],
+	["water/fall_foam", 512, 128, "s", false, "x", 10.0, false, ["#EAF6FC", "#D3E6F1"]],
+	["fx/mist_puff", 256, 256, "s", false, "", 8.0, false, ["#ECE6EE", "#DCD6E6"]],
+	["sky/cloud_puffs", 1024, 1024, "s", false, "", 8.0, false, ["#ECE6EE", "#C8C0D4"]],
+	["sky/cloud_sea", 1024, 1024, "o", false, "xy", 8.0, false, ["#ECE6EE", "#C8C0D4"]],
+	["fx/fire_flipbook", 512, 192, "s", false, "", 10.0, false, ["#E39041", "#FFDA81"]],
+	["fx/rainbow", 256, 32, "s", false, "", 0.0, false, []],
+	["props/wood_planks", 256, 256, "o", true, "xy", 8.0, true, ["#7A5638", "#A88058"]],
+	["props/wood_end", 256, 256, "o", true, "", 8.0, false, ["#A88058", "#7A5638"]],
+	["props/rope", 64, 256, "o", false, "xy", 8.0, false, ["#B49C76", "#A88C64"]],
+	["props/iron", 128, 128, "o", true, "xy", 8.0, false, ["#46464E", "#3A3A42"]],
+	["props/ruin_stone", 512, 512, "o", true, "xy", 8.0, true, ["#BDA083"]],
 ]
 const SCRIPTS: Array[String] = [
 	"res://tools/art/paint_lib.gd", "res://tools/art/gen_a08_chao.gd", "res://tools/art/gen_a08_pedra.gd",
 	"res://tools/art/gen_a08_folhagem.gd", "res://tools/art/gen_a08_paleta.gd",
+	"res://tools/art/gen_a08_ilha.gd", "res://tools/art/gen_a08_ceu_agua.gd", "res://tools/art/gen_a08_props.gd",
 ]
+const CA = preload("res://tools/art/gen_a08_ceu_agua.gd")
 
 var _problems: int = 0
 
@@ -55,6 +74,8 @@ func _initialize() -> void:
 	for e: Array in FILES:
 		_check_file(e)
 	_check_r1()
+	_check_r2()
+	_check_leva2()
 	_check_scripts()
 	if _problems == 0:
 		print("A08 CHECK: PASS")
@@ -350,7 +371,8 @@ func _check_r1() -> void:
 	if share < 0.15:
 		_fail("foliage/conifer_tiers: rampa clara em %.0f%% (< 15%%)" % (share * 100.0))
 	# Convenção OpenGL dos normal maps
-	for rel: String in ["stone/wall_blocks", "stone/wall_blocks_mossy", "stone/wall_top", "stone/slabs", "foliage/bark"]:
+	for rel: String in ["stone/wall_blocks", "stone/wall_blocks_mossy", "stone/wall_top", "stone/slabs", "foliage/bark",
+			"island/cliff", "island/under", "props/wood_planks", "props/ruin_stone"]:
 		var sg: Vector2 = _normal_sign(PL.load_tex(rel), PL.load_tex(rel + "_n"))
 		var ok: bool = sg.x != 0.0 and signf(sg.x) == signf(sg.y)
 		print("r1 %s_n: correlação R x grad. direita %.3f, G x grad. para cima %.3f -> %s" % [rel, sg.x, sg.y, "OpenGL" if ok else "?"])
@@ -379,6 +401,93 @@ func _normal_sign(alb: Image, nrm: Image) -> Vector2:
 			sy += (float(nd[i * 4 + 1]) - 128.0) * gy_up
 	var k: float = 1.0 / float(w * h)
 	return Vector2(sx * k, sy * k)
+
+
+## Critérios da revisão r2 (docs/specs/revisoes/A08.md, revisão 2): tufos de folha, andares de conífera,
+## terra e pedras da arena. As contas estão em paint_lib (clump_stats, crown_montage, tier_stats,
+## dirt_stats, slab_stats), as mesmas que os geradores e as prévias imprimem.
+func _check_r2() -> void:
+	var atl: Array = []
+	for fam: String in ["warm", "mid", "cool"]:
+		var img: Image = PL.load_tex("foliage/leaf_clumps_" + fam)
+		atl.append(img)
+		var cmin: float = 9.0
+		var cmax: float = 0.0
+		var dmax: float = 0.0
+		var lmin: float = 9.0
+		var tmax: float = 0.0
+		for k: int in 16:
+			var st: Dictionary = PL.clump_stats(img, Rect2i((k % 4) * 256, (k / 4) * 256, 256, 256))
+			cmin = minf(cmin, st["cover"])
+			cmax = maxf(cmax, st["cover"])
+			dmax = maxf(dmax, st["dark"])
+			lmin = minf(lmin, st["dark_low"])
+			tmax = maxf(tmax, st["dtb"])
+		var g: Dictionary = PL.crown_montage([img], 7001)
+		print("r2 leaf_clumps_%s: cobertura %.0f%% a %.0f%% (45 a 65), escuro máx %.1f%% (<= 8), escuro no terço de baixo mín %.0f%% (>= 60), topo-base máx %.1f (<= 25), granulação da copa %.2f (<= 0,95)" % [
+			fam, cmin * 100.0, cmax * 100.0, dmax * 100.0, lmin * 100.0, tmax, g["g_in"]])
+		if cmin < 0.45 or cmax > 0.65 or dmax > 0.08 or lmin < 0.6 or tmax > 25.0 or float(g["g_in"]) > 0.95:
+			_fail("foliage/leaf_clumps_" + fam + ": fora dos critérios r2")
+	var gm: Dictionary = PL.crown_montage(atl, 9101)
+	print("r2 copa montada com as 3 famílias: granulação %.2f (<= 0,95; referência 0,74 a 0,84)" % gm["g_in"])
+	if float(gm["g_in"]) > 0.95:
+		_fail("leaf_clumps: granulação da copa montada %.2f" % gm["g_in"])
+	var con: Image = PL.load_tex("foliage/conifer_tiers")
+	for k: int in 6:
+		var st: Dictionary = PL.tier_stats(con, Rect2i((k % 4) * 256, (k / 4) * 256, 256, 256))
+		print("r2 conifer_tiers andar %d: IoU espelho %.2f (<= 0,85), cachos %d (4 a 8), maior/menor %.2f (>= 1,6), trecho reto %.0f%% (<= 12)" % [k, st["iou"], st["clumps"], st["ratio"], float(st["straight"]) * 100.0])
+		if float(st["iou"]) > 0.85 or int(st["clumps"]) < 4 or int(st["clumps"]) > 8 or float(st["ratio"]) < 1.6 or float(st["straight"]) > 0.12:
+			_fail("foliage/conifer_tiers: andar %d fora dos critérios r2" % k)
+	var ds: Dictionary = PL.dirt_stats(PL.load_tex("decals/arena_dirt"))
+	var dd: float = PL.cdist(ds["color"], Color("#A57A3F"))
+	print("r2 decals/arena_dirt: escuro %.1f%% (25 a 35), claro %.1f%% (<= 10), verde %.1f%% (2 a 5), coroa do anel %+.1f (<= +3), média #%s a %.1f%% da r1 #A57A3F (<= 5)" % [
+		ds["dark"] * 100.0, ds["light"] * 100.0, ds["green"] * 100.0, ds["crown"], (ds["color"] as Color).to_html(false).to_upper(), dd * 100.0])
+	if ds["dark"] < 0.25 or ds["dark"] > 0.35 or ds["light"] > 0.1 or ds["green"] < 0.02 or ds["green"] > 0.05 or ds["crown"] > 3.0 or dd > 0.05:
+		_fail("decals/arena_dirt: fora dos critérios r2")
+	var sl: Image = PL.load_tex("decals/arena_slabs")
+	for k: int in 8:
+		var st: Dictionary = PL.slab_stats(sl, Rect2i((k % 4) * 256, (k / 4) * 256, 256, 256))
+		var cd: float = PL.cdist(st["contact"], Color("#534030"))
+		print("r2 arena_slabs célula %d: topo claro %.0f%% da pedra (>= 20), sombra de contato #%s a %.1f%% de #534030 (<= 10)" % [k, float(st["light"]) * 100.0, (st["contact"] as Color).to_html(false).to_upper(), cd * 100.0])
+		if float(st["light"]) < 0.2 or cd > 0.1:
+			_fail("decals/arena_slabs: célula %d fora dos critérios r2" % k)
+
+
+## Leva 2: critério (f2) das nuvens e conferências de forma dos atlas.
+func _check_leva2() -> void:
+	var st: Dictionary = CA.cloud_stats(PL.load_tex("sky/cloud_puffs"))
+	var base: Color = st["base"]
+	var db: float = minf(PL.cdist(base, Color("#9C9CB8")), PL.cdist(base, Color("#8C8498")))
+	print("leva 2 sky/cloud_puffs: L >= 235 em %.0f%% dos opacos (>= 15), base (quinto de baixo) #%s a %.1f%% de #9C9CB8/#8C8498 (<= 12)" % [float(st["white"]) * 100.0, base.to_html(false).to_upper(), db * 100.0])
+	if float(st["white"]) < 0.15 or db > 0.12:
+		_fail("sky/cloud_puffs: branco do topo ou base lavanda fora do critério (f2)")
+	# névoa e nuvens: alfa 0 na borda do quadro (o puff nunca aparece cortado)
+	for rel: String in ["fx/mist_puff", "sky/cloud_puffs"]:
+		var img: Image = PL.load_tex(rel)
+		var w: int = img.get_width()
+		var h: int = img.get_height()
+		var edge: int = 0
+		for x: int in w:
+			if img.get_pixel(x, 0).a8 > 0 or img.get_pixel(x, h - 1).a8 > 0:
+				edge += 1
+		for y: int in h:
+			if img.get_pixel(0, y).a8 > 0 or img.get_pixel(w - 1, y).a8 > 0:
+				edge += 1
+		print("leva 2 %s: pixels com alfa > 0 na borda do quadro: %d (0)" % [rel, edge])
+		if edge > 0:
+			_fail(rel + ": puff cortado na borda do quadro")
+	# chama: 4 quadros diferentes entre si e com o pé na parte de baixo do quadro
+	var fire: Image = PL.load_tex("fx/fire_flipbook")
+	var diffs: PackedStringArray = []
+	for k: int in 4:
+		var a: Image = fire.get_region(Rect2i(k * 128, 0, 128, 192))
+		var b: Image = fire.get_region(Rect2i(((k + 1) % 4) * 128, 0, 128, 192))
+		var dsum: float = 0.0
+		for y: int in 192:
+			for x: int in 128:
+				dsum += absf(a.get_pixel(x, y).a - b.get_pixel(x, y).a)
+		diffs.append("%.1f%%" % (dsum / (128.0 * 192.0) * 100.0))
+	print("leva 2 fx/fire_flipbook: diferença de alfa entre quadros vizinhos (laço 0-1-2-3-0): " + ", ".join(diffs))
 
 
 ## Seeds literais e nada de randomize()/rand global nos geradores.

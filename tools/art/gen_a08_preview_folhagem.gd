@@ -26,17 +26,41 @@ func _initialize() -> void:
 	var rows: Array = []
 	rows.append(_hcat([_labeled(PL.on_bg(PL.scaled(warm, 0.5), BG), "LEAF_CLUMPS_WARM 50%"), _labeled(PL.on_bg(PL.scaled(mid, 0.5), BG), "LEAF_CLUMPS_MID 50%"),
 		_labeled(PL.on_bg(PL.scaled(cool, 0.5), BG), "LEAF_CLUMPS_COOL 50%")]))
-	var canopy: Image = _canopy([warm, mid], bark, 9101)
-	var canopy_c: Image = _canopy([cool, mid], bark, 9102)
-	var ref_can: Image = PL.scaled(ref.get_region(REF_CANOPY), 520.0 / 64.0, Image.INTERPOLATE_LANCZOS)
-	rows.append(_hcat([_labeled(canopy, "MONTAGEM DE COPA: 40 TUFOS WARM+MID, TINTA POR ALTURA"), _labeled(canopy_c, "COPA COOL+MID"),
-		_labeled(ref_can, "REFERENCIA: COPA AO SOL (LESTE) X8")]))
-	var tree: Image = _conifer(con, bark)
+	# (r2) copas montadas como no jogo (5 lóbulos x 5 cartões grandes, luz da esfera da copa), em 64 px/u e
+	# reduzidas a 20 px/u (escala da câmera), com a granulação do miolo ao lado da granulação da referência
+	var ref_hd: Image = ref.duplicate()
+	ref_hd.resize(1280, 720, Image.INTERPOLATE_LANCZOS)
+	var ref_g: Array = []
+	for rc: Rect2i in [Rect2i(170, 250, 130, 130), Rect2i(1000, 250, 100, 150), Rect2i(800, 150, 140, 80), Rect2i(990, 290, 160, 210)]:
+		ref_g.append("%.2f" % PL.granulation(ref_hd, rc))
+	var crow: Array = []
+	for e: Array in [[[warm, mid], 9101, "WARM+MID"], [[cool, mid], 9102, "COOL+MID"], [[warm, mid, cool], 9103, "AS 3"]]:
+		var cm: Dictionary = PL.crown_montage(e[0], int(e[1]))
+		var sm: Image = cm["small"]
+		var box: Rect2i = cm["box_in"]
+		var sm3: Image = PL.scaled(sm, 3.0, Image.INTERPOLATE_NEAREST)
+		PL.frame(sm3, Rect2i(box.position * 3, box.size * 3), Color("#00e5ff"), 2)
+		print("copa %s: granulação %.2f (miolo), %.2f (copa inteira)" % [e[2], cm["g_in"], cm["g_all"]])
+		crow.append(_labeled(cm["img"], "COPA %s 64 PX/U" % e[2]))
+		crow.append(_labeled(sm3, "A 20 PX/U (X3): GRANULACAO %.2f" % cm["g_in"]))
+	var ref_can: Image = PL.scaled(ref.get_region(REF_CANOPY), 384.0 / 64.0, Image.INTERPOLATE_LANCZOS)
+	crow.append(_labeled(ref_can, "REF. COPA (LESTE) X6; GRANULACAO NAS CAIXAS: " + " ".join(ref_g)))
+	rows.append(_hcat(crow))
+	var tree: Image = _conifer2(con, bark)
 	var share: float = _light_share(tree, Color("#6E9A3A"))
 	print("montagem de conífera: rampa clara em %.0f%% dos pixels da árvore" % (share * 100.0))
 	var ref_con: Image = PL.scaled(ref.get_region(REF_CONIFER), 520.0 / 120.0, Image.INTERPOLATE_LANCZOS)
-	rows.append(_hcat([_labeled(PL.on_bg(con, BG), "CONIFER_TIERS 1024X512 (0-5 ANDARES, 6-7 PONTAS)"), _labeled(tree, "MONTAGEM DE CONIFERA: RAMPA CLARA (>= #6E9A3A) EM %.0f%%" % (share * 100.0)),
+	var tstats: PackedStringArray = []
+	for k: int in 6:
+		var st: Dictionary = PL.tier_stats(con, Rect2i((k % 4) * 256, (k / 4) * 256, 256, 256))
+		tstats.append("%d: IOU %.2f %d CACHOS %.1fX" % [k, st["iou"], st["clumps"], st["ratio"]])
+	rows.append(_hcat([_labeled(PL.on_bg(con, BG), "CONIFER_TIERS (0-5 ANDARES, 6-7 PONTAS)"),
+		_labeled(tree, "MONTAGEM: ALTURA 8 U, BASE 3 U, 7 A 9 CARTOES/ANDAR; CLARA %.0f%%" % (share * 100.0)),
 		_labeled(ref_con, "REFERENCIA: CONIFERAS DO LESTE X4.3")]))
+	var tl := Image.create(1900, 22, false, Image.FORMAT_RGBA8)
+	tl.fill(PANEL)
+	PL.text(tl, "ANDARES R2 - " + "  ".join(tstats), 12, 4, 2, FG)
+	rows.append(tl)
 	var bark_v: Image = PL.tiled(bark, 2, 1)
 	var bark_n: Image = PL.load_tex("foliage/bark_n")
 	rows.append(_hcat([_labeled(bark_v, "BARK 256X512 REPETIDA 2X1"), _labeled(bark_n, "BARK_N"),
@@ -105,6 +129,47 @@ func _conifer(con: Image, bark: Image) -> Image:
 		out.blend_rect(card, Rect2i(0, 0, sz, sz), Vector2i(roundi(260 - sz * 0.5), roundi(y - sz * 0.9)))
 		y -= sz * 0.4
 		s *= 0.87
+	return out
+
+
+## (r2) Conífera na proporção nova (spec 012-f2): altura 8 u, base 3 u (altura = 2,67 x base), 7 andares
+## (células 0..5 + ponta 6) com raios fora de uma reta, 7 a 9 cartões por andar em ângulos variados
+## (cartão em pé passando pelo tronco: largura vista = |cos| do ângulo), de trás para frente.
+const CON_TIERS: Array = [[1.5, 2.3, 8], [1.36, 3.2, 9], [1.4, 4.05, 7], [1.12, 4.9, 8], [0.98, 5.75, 9], [0.84, 6.6, 7], [0.62, 7.15, 8]]
+
+
+func _conifer2(con: Image, bark: Image) -> Image:
+	var ppu: float = 56.0
+	var out := Image.create(400, 520, false, Image.FORMAT_RGBA8)
+	out.fill(SKY)
+	var base := Vector2(200.0, 505.0)
+	var trunk: Image = bark.get_region(Rect2i(100, 0, 40, 160))
+	trunk.resize(18, 120, Image.INTERPOLATE_LANCZOS)
+	out.blend_rect(trunk, Rect2i(0, 0, 18, 120), Vector2i(191, 395))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9201
+	for j: int in CON_TIERS.size():
+		var e: Array = CON_TIERS[j]
+		var r: float = e[0]
+		var y: float = e[1]
+		var m: int = e[2]
+		var cell_k: int = j if j < 6 else 6
+		var src: Image = con.get_region(Rect2i((cell_k % 4) * 256, (cell_k / 4) * 256, 256, 256))
+		var cards: Array = []
+		for k: int in m:
+			var th: float = TAU * float(k) / m + rng.randf_range(-0.21, 0.21)
+			cards.append([th, sin(th), r * rng.randf_range(0.85, 1.15), rng.randf() < 0.5])
+		cards.sort_custom(func(p: Array, q: Array) -> bool: return float(p[1]) < float(q[1]))
+		for cd: Array in cards:
+			var cw: int = maxi(8, roundi(2.0 * float(cd[2]) * ppu * maxf(absf(cos(float(cd[0]))), 0.22)))
+			var chh: int = roundi(2.0 * float(cd[2]) * ppu)
+			var im: Image = src.duplicate()
+			if bool(cd[3]):
+				im.flip_x()
+			im.resize(cw, chh, Image.INTERPOLATE_LANCZOS)
+			_tint(im, 0.86 + 0.16 * (0.5 + 0.5 * float(cd[1])))
+			var top: float = base.y - y * ppu - chh * 0.1
+			out.blend_rect(im, Rect2i(0, 0, cw, chh), Vector2i(roundi(base.x - cw * 0.5), roundi(top)))
 	return out
 
 

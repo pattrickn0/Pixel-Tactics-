@@ -534,7 +534,7 @@ static func cdist(c1: Color, c2: Color) -> float:
 ## Os pixels com alfa 0 recebem o RGB do pixel com alfa >= 128 mais próximo (busca em largura,
 ## vizinhança 8, em ondas de 1 px, até "passes" px); os que sobrarem recebem a média da parte opaca.
 ## Assim o filtro e os mipmaps nunca puxam cor de fora do recorte (sem halo).
-static func dilate_rgb(img: Image, passes: int = 24) -> void:
+static func dilate_rgb(img: Image, passes: int = 24, wrap_x: bool = false) -> void:
 	var w: int = img.get_width()
 	var h: int = img.get_height()
 	var data: PackedByteArray = img.get_data()
@@ -847,3 +847,517 @@ static func camera_metrics(img: Image, scale: float = 1.0 / 3.0, wrap: bool = tr
 ## Pixel "de terra": marrom-alaranjado, não verde (R acima de G, G acima de B, saturação mínima).
 static func is_dirt(c: Color) -> bool:
 	return c.r > c.g * 1.08 and c.g > c.b * 1.05 and c.r > c.b * 1.35
+
+
+# ---------------------------------------------------------------------------
+# (r2) Granulação e estatísticas de cartão
+# ---------------------------------------------------------------------------
+
+## Luminância Rec. 709 (a da revisão 012-f2) de uma imagem RGBA8.
+static func lum709(img: Image) -> PackedFloat32Array:
+	var d: PackedByteArray = img.get_data()
+	var n: int = img.get_width() * img.get_height()
+	var L := PackedFloat32Array()
+	L.resize(n)
+	for i: int in n:
+		L[i] = 0.2126 * d[i * 4] + 0.7152 * d[i * 4 + 1] + 0.0722 * d[i * 4 + 2]
+	return L
+
+
+## Desfoque gaussiano separável (borda presa), sigma em px.
+static func gauss(f: PackedFloat32Array, w: int, h: int, sigma: float) -> PackedFloat32Array:
+	var rad: int = ceili(sigma * 3.0)
+	var ker := PackedFloat32Array()
+	var ks: float = 0.0
+	for k: int in range(-rad, rad + 1):
+		var v: float = exp(-float(k * k) / (2.0 * sigma * sigma))
+		ker.append(v)
+		ks += v
+	for k: int in ker.size():
+		ker[k] /= ks
+	var tmp := PackedFloat32Array()
+	tmp.resize(w * h)
+	var out := PackedFloat32Array()
+	out.resize(w * h)
+	for y: int in h:
+		for x: int in w:
+			var s: float = 0.0
+			for k: int in range(-rad, rad + 1):
+				s += f[y * w + clampi(x + k, 0, w - 1)] * ker[k + rad]
+			tmp[y * w + x] = s
+	for y: int in h:
+		for x: int in w:
+			var s: float = 0.0
+			for k: int in range(-rad, rad + 1):
+				s += tmp[clampi(y + k, 0, h - 1) * w + x] * ker[k + rad]
+			out[y * w + x] = s
+	return out
+
+
+## Granulação da revisão 012-f2: média |L - G2(L)| ÷ média |G2(L) - G10(L)| numa caixa (σ em px).
+## Mede "couve-flor": detalhe fino demais para o tamanho das massas. Referência: 0,74 a 0,84.
+static func granulation(img: Image, rc: Rect2i) -> float:
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	var L: PackedFloat32Array = lum709(img)
+	var g2: PackedFloat32Array = gauss(L, w, h, 2.0)
+	var g10: PackedFloat32Array = gauss(L, w, h, 10.0)
+	var a: float = 0.0
+	var b: float = 0.0
+	for y: int in range(rc.position.y, rc.end.y):
+		for x: int in range(rc.position.x, rc.end.x):
+			var i: int = y * w + x
+			a += absf(L[i] - g2[i])
+			b += absf(g2[i] - g10[i])
+	return a / maxf(b, 0.0001)
+
+
+## (r2) Estatísticas de uma célula de tufo de folha (alfa >= 128 = opaco, L = 0,299 R + 0,587 G + 0,114 B):
+## cover = fração da célula coberta; dark = fração dos opacos com L < 0,55 × mediana; dark_low = fração
+## desses escuros no terço de baixo da célula; dtb = |L médio do terço de cima - do terço de baixo|.
+static func clump_stats(img: Image, rc: Rect2i) -> Dictionary:
+	var d: PackedByteArray = img.get_data()
+	var w: int = img.get_width()
+	var ls: Array[float] = []
+	var ys: Array[int] = []
+	for y: int in range(rc.position.y, rc.end.y):
+		for x: int in range(rc.position.x, rc.end.x):
+			var i: int = y * w + x
+			if d[i * 4 + 3] < 128:
+				continue
+			ls.append(0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2])
+			ys.append(y - rc.position.y)
+	var n: int = ls.size()
+	if n == 0:
+		return {"cover": 0.0, "dark": 0.0, "dark_low": 0.0, "dtb": 0.0}
+	var sorted: Array[float] = ls.duplicate()
+	sorted.sort()
+	var med: float = sorted[n / 2]
+	var h3: float = float(rc.size.y) / 3.0
+	var nd: int = 0
+	var ndl: int = 0
+	var st: float = 0.0
+	var nt: int = 0
+	var sb: float = 0.0
+	var nb: int = 0
+	for k: int in n:
+		var yy: float = float(ys[k])
+		if ls[k] < 0.55 * med:
+			nd += 1
+			if yy >= 2.0 * h3:
+				ndl += 1
+		if yy < h3:
+			st += ls[k]
+			nt += 1
+		elif yy >= 2.0 * h3:
+			sb += ls[k]
+			nb += 1
+	return {"cover": float(n) / float(rc.size.x * rc.size.y), "dark": float(nd) / float(n),
+		"dark_low": float(ndl) / float(maxi(nd, 1)) if nd > 0 else 1.0,
+		"dtb": absf(st / float(maxi(nt, 1)) - sb / float(maxi(nb, 1))), "tb": st / float(maxi(nt, 1)) - sb / float(maxi(nb, 1)), "median": med}
+
+
+## (r2) Estatísticas de um andar de conífera (alfa >= 128 = opaco):
+## iou = IoU da máscara com o espelho horizontal (em volta do centroide x);
+## clumps = cachos na saia (máximos do perfil de baixo separados por entalhes de >= 4 px, "peakdet");
+## ratio = largura do maior cacho ÷ a do menor (largura = distância entre entalhes vizinhos);
+## straight = maior trecho do perfil de baixo que cabe numa reta com ±1,5 px, ÷ largura da célula.
+static func tier_stats(img: Image, rc: Rect2i) -> Dictionary:
+	var d: PackedByteArray = img.get_data()
+	var w: int = img.get_width()
+	var cw: int = rc.size.x
+	var ch: int = rc.size.y
+	var m := PackedByteArray()
+	m.resize(cw * ch)
+	var sx: float = 0.0
+	var n: int = 0
+	for y: int in ch:
+		for x: int in cw:
+			var i: int = (rc.position.y + y) * w + rc.position.x + x
+			if d[i * 4 + 3] >= 128:
+				m[y * cw + x] = 1
+				sx += x
+				n += 1
+	var cxi: int = roundi(sx / float(maxi(n, 1)))
+	var inter: int = 0
+	var uni: int = 0
+	for y: int in ch:
+		for x: int in cw:
+			var a: int = m[y * cw + x]
+			var xm: int = 2 * cxi - x
+			var b: int = m[y * cw + xm] if xm >= 0 and xm < cw else 0
+			if a == 1 and b == 1:
+				inter += 1
+			if a == 1 or b == 1:
+				uni += 1
+	# perfil de baixo
+	var prof: Array[float] = []
+	for x: int in cw:
+		var by: int = -1
+		for y: int in range(ch - 1, -1, -1):
+			if m[y * cw + x] == 1:
+				by = y
+				break
+		if by >= 0:
+			prof.append(float(by))
+	var np: int = prof.size()
+	# trecho reto mais longo
+	var best: int = 0
+	for i: int in np:
+		var j: int = i + best + 1
+		while j < np:
+			var ok: bool = true
+			for k: int in range(i + 1, j):
+				var t: float = float(k - i) / float(j - i)
+				if absf(prof[k] - (prof[i] + (prof[j] - prof[i]) * t)) > 1.5:
+					ok = false
+					break
+			if not ok:
+				break
+			best = j - i
+			j += 1
+	# cachos: peakdet com delta 4 (y maior = mais baixo)
+	var delta: float = 4.0
+	var peaks: Array[int] = []
+	var notches: Array[int] = [0]
+	var look_max: bool = true
+	var mx: float = -INF
+	var mn: float = INF
+	var mxi: int = 0
+	var mni: int = 0
+	for k: int in np:
+		var v: float = prof[k]
+		if v > mx:
+			mx = v
+			mxi = k
+		if v < mn:
+			mn = v
+			mni = k
+		if look_max and v < mx - delta:
+			peaks.append(mxi)
+			mn = v
+			mni = k
+			look_max = false
+		elif not look_max and v > mn + delta:
+			notches.append(mni)
+			mx = v
+			mxi = k
+			look_max = true
+	if look_max and mx > mn + delta and mxi > notches[notches.size() - 1]:
+		peaks.append(mxi)
+	notches.append(np - 1)
+	var wmin: float = INF
+	var wmax: float = 0.0
+	for k: int in range(1, notches.size()):
+		var ww: float = float(notches[k] - notches[k - 1])
+		if ww < 3.0:
+			continue
+		wmin = minf(wmin, ww)
+		wmax = maxf(wmax, ww)
+	return {"iou": float(inter) / float(maxi(uni, 1)), "clumps": peaks.size(), "ratio": wmax / maxf(wmin, 1.0),
+		"straight": float(best) / float(cw)}
+
+
+## (r2) Estatísticas da arena_dirt (opaco = alfa >= 128; L = 0,299 R + 0,587 G + 0,114 B):
+## dark = L <= 95; light = L >= 159; green = G > R; crown = L médio na coroa de raio 1,3 a 3,0 (u) do
+## centro do círculo (0,1 u a leste e 0,1 u ao sul do centro do decalque) menos o L médio da mancha.
+static func dirt_stats(img: Image) -> Dictionary:
+	var w: int = img.get_width()
+	var h: int = img.get_height()
+	var d: PackedByteArray = img.get_data()
+	var rc := Vector2(w * 0.5 + 6.4, h * 0.5 + 6.4)
+	var n: int = 0
+	var nd: int = 0
+	var nl: int = 0
+	var ng: int = 0
+	var sl: float = 0.0
+	var cl: float = 0.0
+	var cn: int = 0
+	var acc := Vector3.ZERO
+	for y: int in h:
+		for x: int in w:
+			var i: int = (y * w + x) * 4
+			if d[i + 3] < 128:
+				continue
+			var l: float = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]
+			n += 1
+			sl += l
+			acc += Vector3(d[i], d[i + 1], d[i + 2])
+			if l <= 95.0:
+				nd += 1
+			if l >= 159.0:
+				nl += 1
+			if d[i + 1] > d[i]:
+				ng += 1
+			var rr: float = Vector2(x + 0.5, y + 0.5).distance_to(rc) / 64.0
+			if rr >= 1.3 and rr <= 3.0:
+				cl += l
+				cn += 1
+	var fn: float = float(maxi(n, 1))
+	acc /= fn * 255.0
+	return {"dark": nd / fn, "light": nl / fn, "green": ng / fn, "mean_l": sl / fn,
+		"crown": cl / float(maxi(cn, 1)) - sl / fn, "color": Color(acc.x, acc.y, acc.z)}
+
+
+## (r2) Pedra solta de arena_slabs numa célula: pedra = alfa >= 128 e saturação (máx - mín) / máx < 0,25;
+## light = fração da pedra com L >= 186 (#C8BEA6 = 190); contact = cor média dos pixels opacos que não são
+## pedra a até 4 px de um pixel de pedra (a sombra de contato, alvo #4A3A28 a #5C4630).
+static func slab_stats(img: Image, rc: Rect2i) -> Dictionary:
+	var w: int = img.get_width()
+	var d: PackedByteArray = img.get_data()
+	var cw: int = rc.size.x
+	var chh: int = rc.size.y
+	var stone := PackedByteArray()
+	stone.resize(cw * chh)
+	var ns: int = 0
+	var nl: int = 0
+	for y: int in chh:
+		for x: int in cw:
+			var i: int = ((rc.position.y + y) * w + rc.position.x + x) * 4
+			if d[i + 3] < 128:
+				continue
+			var mx: float = maxf(d[i], maxf(d[i + 1], d[i + 2]))
+			var mn: float = minf(d[i], minf(d[i + 1], d[i + 2]))
+			if mx > 0.0 and (mx - mn) / mx < 0.25:
+				stone[y * cw + x] = 1
+				ns += 1
+				if 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2] >= 186.0:
+					nl += 1
+	var acc := Vector3.ZERO
+	var nc: int = 0
+	for y: int in chh:
+		for x: int in cw:
+			if stone[y * cw + x] == 1:
+				continue
+			var i: int = ((rc.position.y + y) * w + rc.position.x + x) * 4
+			if d[i + 3] < 128:
+				continue
+			var near: bool = false
+			for dy: int in range(-4, 5):
+				for dx: int in range(-4, 5):
+					var xx: int = x + dx
+					var yy: int = y + dy
+					if xx >= 0 and yy >= 0 and xx < cw and yy < chh and stone[yy * cw + xx] == 1:
+						near = true
+						break
+				if near:
+					break
+			if near:
+				acc += Vector3(d[i], d[i + 1], d[i + 2])
+				nc += 1
+	acc /= float(maxi(nc, 1)) * 255.0
+	return {"stone": ns, "light": float(nl) / float(maxi(ns, 1)), "contact": Color(acc.x, acc.y, acc.z)}
+
+
+## (r2) Montagem de uma copa como no jogo (spec 012-f2, ajuste 4): 5 lóbulos de raio 1,15 u, cada um com
+## 5 cartões grandes (meia largura de 0,9 a 1,2 × o raio), de trás para frente. Cada pixel recebe a luz
+## da esfera da copa (normal 100% da copa, luz única) e AO pela profundidade do cartão, imitando o shader.
+## Pinta em 64 px/u e reduz para 20 px/u (escala da câmera). Devolve a imagem grande, a pequena e a
+## granulação (PL.granulation) numa caixa do miolo da copa e numa caixa da copa inteira.
+const CROWN_LOBES: Array = [[0.0, 1.0], [-1.15, 0.25], [1.1, 0.3], [-0.55, -0.6], [0.6, -0.55]]
+const CROWN_SKY := Color("#C9D3EA")
+
+
+static func crown_montage(atlases: Array, seed_value: int) -> Dictionary:
+	var ppu: float = 64.0
+	var size: int = 384
+	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
+	img.fill(CROWN_SKY)
+	var cc := Vector2(size * 0.5, size * 0.55)
+	var R: float = 2.3
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_value
+	var cards: Array = []
+	for lb: Array in CROWN_LOBES:
+		var lx: float = lb[0]
+		var ly: float = lb[1]
+		var lr: float = 1.15
+		var lz: float = sqrt(maxf(R * R - lx * lx - ly * ly, 0.0))
+		for k: int in 5:
+			var ox: float = rng.randf_range(-0.35, 0.35) * lr
+			var oy: float = rng.randf_range(-0.35, 0.35) * lr
+			cards.append([lx + ox, ly + oy, lz + rng.randf_range(-0.5, 0.5) * lr, rng.randf_range(0.9, 1.2) * lr,
+				rng.randi_range(0, 15), rng.randi_range(0, atlases.size() - 1), rng.randf() < 0.5])
+	cards.sort_custom(func(a: Array, b: Array) -> bool: return float(a[2]) < float(b[2]))
+	var light := Vector3(-0.35, 0.8, 0.5).normalized()
+	for cd: Array in cards:
+		var atlas: Image = atlases[int(cd[5])]
+		var cell: Image = atlas.get_region(Rect2i((int(cd[4]) % 4) * 256, (int(cd[4]) / 4) * 256, 256, 256))
+		if bool(cd[6]):
+			cell.flip_x()
+		var px: int = roundi(float(cd[3]) * 2.0 * ppu)
+		cell.resize(px, px, Image.INTERPOLATE_LANCZOS)
+		var x0: int = roundi(cc.x + float(cd[0]) * ppu - px * 0.5)
+		var y0: int = roundi(cc.y - float(cd[1]) * ppu - px * 0.5)
+		for y: int in px:
+			for x: int in px:
+				var c: Color = cell.get_pixel(x, y)
+				if c.a < 0.5:
+					continue
+				var X: int = x0 + x
+				var Y: int = y0 + y
+				if X < 0 or Y < 0 or X >= size or Y >= size:
+					continue
+				var wx: float = (X - cc.x) / ppu / R
+				var wy: float = -(Y - cc.y) / ppu / R
+				var q: float = wx * wx + wy * wy
+				var n := Vector3(wx, wy, sqrt(maxf(1.0 - minf(q, 1.0), 0.0))).normalized()
+				var dif: float = clampf(n.dot(light) * 0.6 + 0.4, 0.0, 1.0)
+				var ao: float = clampf(0.55 + 0.45 * float(cd[2]) / R, 0.4, 1.0)
+				var f: float = (0.5 + 0.75 * dif) * ao
+				img.set_pixel(X, Y, Color(minf(c.r * f, 1.0), minf(c.g * f, 1.0), minf(c.b * f * (1.05 - 0.1 * dif), 1.0)))
+	var s: float = 20.0 / ppu
+	var small: Image = img.duplicate()
+	small.resize(roundi(size * s), roundi(size * s), Image.INTERPOLATE_LANCZOS)
+	var ccs: Vector2 = cc * s
+	var rin := Rect2i(roundi(ccs.x - 26.0), roundi(ccs.y - 28.0), 52, 48)
+	var rall := Rect2i(roundi(ccs.x - 48.0), roundi(ccs.y - 52.0), 96, 92)
+	return {"img": img, "small": small, "g_in": granulation(small, rin), "g_all": granulation(small, rall), "box_in": rin, "box_all": rall}
+
+
+# ---------------------------------------------------------------------------
+# Leva 2: blocos em fiadas (penhasco, fundo da ilha, ruína), periódicos nos 2 eixos
+# ---------------------------------------------------------------------------
+
+## Divide um comprimento total em pedaços de min a max (soma exata, pedaços escalados no fim).
+static func split_len(rng: RandomNumberGenerator, total: float, lo: float, hi: float) -> Array:
+	var parts: Array = []
+	var s: float = 0.0
+	while s < total - lo * 0.5:
+		var v: float = rng.randf_range(lo, hi)
+		parts.append(v)
+		s += v
+	var k: float = total / s
+	for i: int in parts.size():
+		parts[i] = float(parts[i]) * k
+	return parts
+
+
+## Fiadas de blocos: [{y0, h, off, xs: [início de cada bloco], ws, ids}] cobrindo w x h com volta.
+static func block_rows(rng: RandomNumberGenerator, w: float, h: float, row_lo: float, row_hi: float, bw_lo: float, bw_hi: float) -> Array:
+	var rows: Array = []
+	var y: float = 0.0
+	var id: int = 0
+	for rh: float in split_len(rng, h, row_lo, row_hi):
+		var ws: Array = split_len(rng, w, bw_lo, bw_hi)
+		var xs: Array = []
+		var x: float = 0.0
+		var ids: Array = []
+		for bw: float in ws:
+			xs.append(x)
+			x += bw
+			ids.append(id)
+			id += 1
+		rows.append({"y0": y, "h": rh, "off": rng.randf() * w, "xs": xs, "ws": ws, "ids": ids})
+		y += rh
+	return rows
+
+
+## Bloco em (x, y) (coordenadas já distorcidas; volta em w e h). Devolve [id, dist. ao topo, à base,
+## à esquerda, à direita, v (0 no topo do bloco, 1 na base), largura, altura].
+static func block_at(rows: Array, w: float, h: float, x: float, y: float) -> Array:
+	var yy: float = fposmod(y, h)
+	var row: Dictionary = rows[rows.size() - 1]
+	for r: Dictionary in rows:
+		if yy < float(r["y0"]) + float(r["h"]):
+			row = r
+			break
+	var ly: float = yy - float(row["y0"])
+	var rh: float = row["h"]
+	var xx: float = fposmod(x - float(row["off"]), w)
+	var xs: Array = row["xs"]
+	var ws: Array = row["ws"]
+	var k: int = xs.size() - 1
+	for j: int in xs.size():
+		if xx < float(xs[j]) + float(ws[j]):
+			k = j
+			break
+	var lx: float = xx - float(xs[k])
+	var bw: float = ws[k]
+	return [int(row["ids"][k]), ly, rh - ly, lx, bw - lx, ly / rh, bw, rh]
+
+
+## Voronoi periódico (toroidal) em grade com sorteio: um ponto por célula da grade (gx x gy células).
+## ay < 1 alonga as células na vertical. Devolve, por pixel (em 1/div da resolução, ampliado sem
+## interpolação para os índices): id (F1), id2 (F2) e borda = (F2 - F1) / 2 em px (métrica anisotrópica).
+class Voronoi extends RefCounted:
+	var w: int
+	var h: int
+	var gx: int
+	var gy: int
+	var px: PackedFloat32Array
+	var py: PackedFloat32Array
+	var ay: float
+
+	func _init(width: int, height: int, cells_x: int, cells_y: int, jitter: float, seed_value: int, aniso_y: float = 1.0) -> void:
+		w = width
+		h = height
+		gx = cells_x
+		gy = cells_y
+		ay = aniso_y
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed_value
+		px = PackedFloat32Array()
+		py = PackedFloat32Array()
+		var cw: float = float(w) / gx
+		var ch: float = float(h) / gy
+		for j: int in gy:
+			for i: int in gx:
+				var sx: float = 0.5 + rng.randf_range(-jitter, jitter) * 0.5
+				var sy: float = 0.5 + rng.randf_range(-jitter, jitter) * 0.5
+				px.append((i + sx) * cw)
+				py.append((j + sy) * ch)
+
+	## [id, id2, borda (px), vetor do ponto F1 para o ponto F2 (com volta)]
+	func at(x: float, y: float) -> Array:
+		var cw: float = float(w) / gx
+		var ch: float = float(h) / gy
+		var ci: int = floori(x / cw)
+		var cj: int = floori(y / ch)
+		var d1: float = INF
+		var d2: float = INF
+		var i1: int = 0
+		var i2: int = 0
+		var v1 := Vector2.ZERO
+		var v2 := Vector2.ZERO
+		for dj: int in range(-2, 3):
+			for di: int in range(-2, 3):
+				var ii: int = ci + di
+				var jj: int = cj + dj
+				var k: int = posmod(jj, gy) * gx + posmod(ii, gx)
+				# posição do ponto com a volta aplicada
+				var sx: float = px[k] + floorf(float(ii) / gx) * w
+				var sy: float = py[k] + floorf(float(jj) / gy) * h
+				var dx: float = sx - x
+				var dy: float = (sy - y) * ay
+				var d: float = dx * dx + dy * dy
+				if d < d1:
+					d2 = d1
+					i2 = i1
+					v2 = v1
+					d1 = d
+					i1 = k
+					v1 = Vector2(sx, sy)
+				elif d < d2:
+					d2 = d
+					i2 = k
+					v2 = Vector2(sx, sy)
+		# distância à borda (bissetriz entre F1 e F2), na métrica anisotrópica
+		var p := Vector2(x, y * ay)
+		var a := Vector2(v1.x, v1.y * ay)
+		var b := Vector2(v2.x, v2.y * ay)
+		var m: Vector2 = (a + b) * 0.5
+		var nrm: Vector2 = (b - a).normalized()
+		var edge: float = (m - p).dot(nrm)
+		return [i1, i2, edge, v2 - v1]
+
+
+## Rola albedo e normal juntos para a emenda cair num trecho liso (best_roll_multi nos eixos pedidos).
+## Rolar não muda a textura repetida, só o ponto de corte (aceito na revisão 1 da A08).
+static func roll_pair(albedo: Image, normal: Image, ax: bool, ay: bool) -> Array:
+	var imgs: Array = [albedo] if normal == null else [albedo, normal]
+	var dx: int = best_roll_multi(imgs, true) if ax else 0
+	var dy: int = best_roll_multi(imgs, false) if ay else 0
+	var a2: Image = roll(albedo, dx, dy)
+	var n2: Image = roll(normal, dx, dy) if normal != null else null
+	return [a2, n2]

@@ -58,6 +58,18 @@ func _initialize() -> void:
 	var lab_m: String = "MAQUETE 27 GRAUS (ALBEDO, SEM LUZ) 15 PX/U X2.5: TERRA L MEDIA %.0f DESVIO %.1f COR #%s" % [st_m["mean"], st_m["std"], (st_m["color"] as Color).to_html(false).to_upper()]
 	var lab_r: String = "REFERENCIA X2.5: TERRA L MEDIA %.0f DESVIO %.1f COR #%s" % [st_r["mean"], st_r["std"], (st_r["color"] as Color).to_html(false).to_upper()]
 	blocks.append(_hcat([_labeled(m27b, lab_m), _labeled(refb, lab_r)]))
+	# (r2) frações da terra e volume das pedras
+	var ds: Dictionary = PL.dirt_stats(dirt)
+	var sl: Array = []
+	for kc: int in 8:
+		var st: Dictionary = PL.slab_stats(slabs, Rect2i((kc % 4) * 256, (kc / 4) * 256, 256, 256))
+		sl.append("%d:%.0f%%" % [kc, float(st["light"]) * 100.0])
+	var r2 := Image.create(1900, 44, false, Image.FORMAT_RGBA8)
+	r2.fill(BG)
+	PL.text(r2, "R2 ARENA_DIRT: ESCURO (L<=95) %.1f%% (25-35)  CLARO (L>=159) %.1f%% (<=10)  VERDE %.1f%% (2-5)  COROA DO ANEL %+.1f (<=+3)  MEDIA #%s (%.1f%% DA R1)" % [
+		ds["dark"] * 100.0, ds["light"] * 100.0, ds["green"] * 100.0, ds["crown"], (ds["color"] as Color).to_html(false).to_upper(), PL.cdist(ds["color"], Color("#A57A3F")) * 100.0], 12, 4, 2, FG)
+	PL.text(r2, "R2 ARENA_SLABS: TOPO CLARO POR CELULA (>=20%%) " + " ".join(sl) + "  SOMBRA DE CONTATO #4A3A28 A #5C4630 EM VOLTA", 12, 24, 2, FG)
+	blocks.append(r2)
 	print("27 graus: maquete L %.1f desvio %.1f #%s | referência L %.1f desvio %.1f #%s" % [st_m["mean"], st_m["std"], (st_m["color"] as Color).to_html(false), st_r["mean"], st_r["std"], (st_r["color"] as Color).to_html(false)])
 	# 4. (r1) Grama na escala da câmera: grass_a e grass_b reduzidas a 1/3 (~21 px/u), 2 x 2, ao lado da
 	# grama da arena da referência (caixa da frente), com desvio de L, |L - desfoque σ4| e L médio
@@ -74,7 +86,7 @@ func _initialize() -> void:
 	print("grama a 1/3 vs referência: ver a08-chao.png (ref: desvio %.1f, detalhe %.1f, L %.1f)" % [mr["std"], mr["detail"], mr["mean"]])
 	blocks.append(_hcat(grow))
 	var out: Image = _vcat(blocks)
-	PL.text(out, "A08 LEVA 1 (R1) - CHAO. JANELA CIANO = PIXELS DE TERRA DA MEDIA E DO DESVIO. DETALHE = MEDIA DE |L - DESFOQUE GAUSSIANO 4 PX|", 12, out.get_height() - 22, 2, FG)
+	PL.text(out, "A08 LEVA 1 (R2) - CHAO. JANELA CIANO = PIXELS DE TERRA DA MEDIA E DO DESVIO. DETALHE = MEDIA DE |L - DESFOQUE GAUSSIANO 4 PX|", 12, out.get_height() - 22, 2, FG)
 	PL.save_png(out, PL.PREVIEW + "a08-chao.png")
 	quit()
 

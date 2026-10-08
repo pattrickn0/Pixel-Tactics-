@@ -10,7 +10,7 @@ const SS: int = 2  # supersampling
 # Paleta (direção de arte + medida na referência)
 const GRASS: Array = ["#2C4520", "#3F5F22", "#5E8424", "#7FA22C", "#A8C447"]
 const DIRT_DARK: Array = ["#6E4228", "#74502C", "#8A5E34"]
-const DIRT_MID: Array = ["#A87A3C", "#B3843D"]
+const DIRT_MID: Array = ["#AE7F3E", "#BC8C47"]
 const DIRT_LIGHT: Array = ["#C89A55", "#D6AA66"]
 
 
@@ -239,6 +239,30 @@ static func dirt_sdf(pp: Vector2) -> float:
 	return d * DIRT_SCALE
 
 
+# (r2) Entradas de grama na borda: [ângulo (graus, 0 = leste, 90 = sul), fundo (u), meia largura da boca (u)]
+const GRASS_INLETS: Array = [
+	[8.0, 0.55, 0.22], [31.0, 0.9, 0.3], [52.0, 0.4, 0.18], [77.0, 0.7, 0.26], [101.0, 0.35, 0.16],
+	[118.0, 0.95, 0.32], [146.0, 0.5, 0.2], [171.0, 0.8, 0.28], [196.0, 0.45, 0.2], [214.0, 0.65, 0.24],
+	[241.0, 0.3, 0.15], [263.0, 1.0, 0.3], [289.0, 0.55, 0.22], [318.0, 0.75, 0.26], [342.0, 0.4, 0.18],
+]
+const DIRT_DARK_TARGET: float = 0.3  # fração dos opacos em terra escura (L <= 95) na camada base
+const RING_CROWN_R: float = 3.4  # (r2) sem manchas claras até esse raio do centro do círculo (sem halo)
+
+
+## (r2) Borda + entradas de grama: distância com sinal (u) da mancha recortada pelos dedos de grama.
+static func inlet_sd(p: Vector2, inlets: Array) -> float:
+	var best: float = INF
+	for e: Array in inlets:
+		var base: Vector2 = e[0]
+		var tip: Vector2 = e[1]
+		var hw: float = e[2]
+		var d: Vector2 = tip - base
+		var t: float = clampf((p - base).dot(d) / maxf(d.dot(d), 0.0001), 0.0, 1.0)
+		var rad: float = hw * (1.0 - 0.8 * t)
+		best = minf(best, (p - (base + d * t)).length() - rad)
+	return best
+
+
 func _arena_dirt() -> void:
 	var w: int = 1024 * SS
 	var h: int = 768 * SS
@@ -251,10 +275,21 @@ func _arena_dirt() -> void:
 	var n_fray: PackedFloat32Array = PL.nfield(w, h, 1.0 / 46.0, 3, 4102, 30.0, 2)
 	var n_frag: PackedFloat32Array = PL.nfield(w, h, 1.0 / 40.0, 2, 4103, 24.0, 2)
 	var n_dark: PackedFloat32Array = PL.nfield(w, h, 1.0 / 520.0, 4, 4104, 180.0, 8)
-	var n_light: PackedFloat32Array = PL.nfield(w, h, 1.0 / 380.0, 4, 4105, 140.0, 8)
+	var n_light: PackedFloat32Array = PL.nfield(w, h, 1.0 / 300.0, 4, 4105, 140.0, 8)
 	var n_mid: PackedFloat32Array = PL.nfield(w, h, 1.0 / 160.0, 3, 4106, 60.0, 4)
-	var n_rim: PackedFloat32Array = PL.nfield(w, h, 1.0 / 260.0, 2, 4107, 40.0, 8)
-	# Distância base em 1/4 da resolução, ampliada
+	var n_rim: PackedFloat32Array = PL.nfield(w, h, 1.0 / 200.0, 2, 4107, 40.0, 8)
+	# Entradas de grama: base na borda (raio em que a distância cruza 0), ponta para dentro
+	var inlets: Array = []
+	for e: Array in GRASS_INLETS:
+		var ang: float = deg_to_rad(float(e[0]))
+		var dir := Vector2(cos(ang), sin(ang))
+		var r: float = 0.5
+		while dirt_sdf(dir * r) < -0.05 and r < 9.0:
+			r += 0.05
+		var base: Vector2 = dir * (r + 0.25)
+		var tip: Vector2 = dir * (r - float(e[1]) - 0.15) + Vector2(-dir.y, dir.x) * float(e[1]) * 0.3
+		inlets.append([base, tip, float(e[2])])
+	# Distância base em 1/4 da resolução, ampliada (com as entradas)
 	var lw: int = w / 4
 	var lh: int = h / 4
 	var dlow := PackedFloat32Array()
@@ -262,50 +297,90 @@ func _arena_dirt() -> void:
 	for y: int in lh:
 		for x: int in lw:
 			var p := Vector2((float(x * 4) + 2.0 - cx) / DIRT_U, (float(y * 4) + 2.0 - cy) / DIRT_U)
-			dlow[y * lw + x] = dirt_sdf(p)
+			dlow[y * lw + x] = maxf(dirt_sdf(p), -inlet_sd(p, inlets))
 	var dist: PackedFloat32Array = PL.resize_field(dlow, lw, lh, 4, false, false)
-	var dark_mask := PackedFloat32Array()
-	dark_mask.resize(w * h)
-	var c_mid0: Color = c(DIRT_MID[0])
-	var c_mid1: Color = c(DIRT_MID[1])
-	var c_l0: Color = c(DIRT_LIGHT[0])
-	var c_l1: Color = c(DIRT_LIGHT[1])
-	var c_d0: Color = c(DIRT_DARK[1])
-	var c_d1: Color = c(DIRT_DARK[2])
-	var c_rim0: Color = c("#6E4228")
-	var c_rim1: Color = c("#7E5A2C")
+	# Campo da terra escura: faixa junto à borda sul/oeste + manchas grandes, inclusive encostando no anel
+	var ring_c := Vector2(cx, cy) + RING_OFS * DIRT_U
+	var dk_field := PackedFloat32Array()
+	dk_field.resize(w * h)
+	var alpha := PackedFloat32Array()
+	alpha.resize(w * h)
 	for y: int in h:
 		var ny: float = (float(y) - cy) / DIRT_U / 4.8
 		for x: int in w:
 			var i: int = y * w + x
 			var nx: float = (float(x) - cx) / DIRT_U / 6.35
-			var d: float = dist[i] + 0.7 * (n_shape[i] - 0.5)
+			var d: float = dist[i] + 0.55 * (n_shape[i] - 0.5)
 			var df: float = d + 0.2 * (n_fray[i] - 0.5)
 			var al: float = 1.0 - smoothstep(-0.035, 0.035, df)
-			# Fragmentos de terra para fora e buracos de grama para dentro, perto da borda
 			if d > 0.0 and d < 0.45:
-				var fa: float = smoothstep(0.02, 0.0, (0.64 + 0.9 * d) - n_frag[i])
-				al = maxf(al, fa)
+				al = maxf(al, smoothstep(0.02, 0.0, (0.64 + 0.9 * d) - n_frag[i]))
 			elif d <= 0.0 and d > -0.6:
-				var hole: float = smoothstep(0.0, 0.02, n_frag[i] - (0.66 + 1.0 * (-d)))
-				al *= 1.0 - hole
-			if al <= 0.0:
-				continue
-			# Rampa: médio -> luz -> terra batida escura -> borda avermelhada
-			var m: float = n_mid[i]
-			var col: Color = c_mid0.lerp(c_mid1, smoothstep(0.15, 0.6, m))
-			var sw: float = 0.16 * ny - 0.13 * nx  # mais escuro no sul e no oeste
-			var lt: float = smoothstep(0.57, 0.64, n_light[i] - 0.5 * sw + 0.04 * (m - 0.5))
-			col = col.lerp(c_l0.lerp(c_l1, smoothstep(0.62, 0.8, n_light[i])), lt * 0.95)
-			# Terra batida escura: faixa larga junto à borda sul/oeste + poucas manchas no meio
+				al *= 1.0 - smoothstep(0.0, 0.02, n_frag[i] - (0.66 + 1.0 * (-d)))
+			alpha[i] = al
+			var sw: float = 0.16 * ny - 0.13 * nx
 			var swn: float = clampf(0.5 + 2.4 * sw, 0.0, 1.0)
 			var band: float = smoothstep(-2.3, -0.4, d) * swn
-			var dk: float = smoothstep(0.56, 0.62, 0.58 * band + 0.62 * n_dark[i] + 0.04 * (m - 0.5))
+			var rr: float = Vector2(x + 0.5, y + 0.5).distance_to(ring_c) / DIRT_U
+			var near_ring: float = smoothstep(3.6, 2.2, rr)
+			dk_field[i] = 0.55 * band + 0.62 * n_dark[i] + 0.04 * (n_mid[i] - 0.5) + 0.2 * near_ring
+	# Limiar da terra escura escolhido por busca binária para DIRT_DARK_TARGET dos opacos
+	var lo: float = 0.3
+	var hi: float = 1.2
+	for it: int in 18:
+		var th: float = (lo + hi) * 0.5
+		var nd: int = 0
+		var na: int = 0
+		for i: int in range(0, w * h, 7):
+			if alpha[i] < 0.5:
+				continue
+			na += 1
+			if dk_field[i] > th + 0.03:
+				nd += 1
+		if float(nd) / float(maxi(na, 1)) > DIRT_DARK_TARGET:
+			lo = th
+		else:
+			hi = th
+	var th_dark: float = (lo + hi) * 0.5
+	var c_mid0: Color = c(DIRT_MID[0])
+	var c_mid1: Color = c(DIRT_MID[1])
+	var c_l0: Color = c(DIRT_LIGHT[0])
+	var c_l1: Color = c(DIRT_LIGHT[1])
+	var c_d0: Color = c(DIRT_DARK[1])
+	var c_d1: Color = c("#7A5530")
+	var c_rim0: Color = c("#6E4228")
+	var c_rim1: Color = c("#7E5A2C")
+	var dark_mask := PackedFloat32Array()
+	dark_mask.resize(w * h)
+	for y: int in h:
+		var ny: float = (float(y) - cy) / DIRT_U / 4.8
+		for x: int in w:
+			var i: int = y * w + x
+			var al: float = alpha[i]
+			if al <= 0.0:
+				continue
+			var nx: float = (float(x) - cx) / DIRT_U / 6.35
+			var d: float = dist[i] + 0.55 * (n_shape[i] - 0.5)
+			var df: float = d + 0.2 * (n_fray[i] - 0.5)
+			var m: float = n_mid[i]
+			var col: Color = c_mid0.lerp(c_mid1, smoothstep(0.15, 0.6, m))
+			var sw: float = 0.16 * ny - 0.13 * nx
+			# Em volta do círculo a terra é média (batida), um pouco mais escura que o resto do miolo
+			var rr0: float = Vector2(x + 0.5, y + 0.5).distance_to(ring_c) / DIRT_U
+			col = col.lerp(c("#9C6E3A"), 0.55 * smoothstep(3.8, 2.4, rr0))
+			# Luz em manchas pequenas e soltas, longe do anel (sem halo em volta do círculo)
+			var rr: float = Vector2(x + 0.5, y + 0.5).distance_to(ring_c) / DIRT_U
+			var away: float = smoothstep(RING_CROWN_R - 0.2, RING_CROWN_R + 0.4, rr)
+			var lt: float = smoothstep(0.66, 0.71, n_light[i] - 0.5 * sw + 0.04 * (m - 0.5)) * away
+			col = col.lerp(c_l0.lerp(c_l1, smoothstep(0.7, 0.85, n_light[i])), lt * 0.9)
+			var dk: float = smoothstep(th_dark, th_dark + 0.06, dk_field[i])
 			dark_mask[i] = dk
-			col = col.lerp(c_d0.lerp(c_d1, clampf(smoothstep(0.35, 0.7, m) + 0.6 * (1.0 - band), 0.0, 1.0)), dk)
-			var rim_w: float = 0.2 + 0.32 * n_rim[i] + 0.12 * clampf(sw * 3.0, 0.0, 1.0)
-			var rw: float = 1.0 - smoothstep(rim_w * 0.55, rim_w, -df)
-			col = col.lerp(c_rim0.lerp(c_rim1, n_rim[i]), rw * 0.92)
+			var band: float = smoothstep(-2.3, -0.4, d) * clampf(0.5 + 2.4 * sw, 0.0, 1.0)
+			col = col.lerp(c_d0.lerp(c_d1, clampf(smoothstep(0.35, 0.7, m) * 0.7 + 0.5 * (1.0 - band), 0.0, 1.0)), dk)
+			# Borda escura avermelhada de 0,08 a 0,58 de largura (varia devagar)
+			var rim_w: float = 0.08 + 0.5 * n_rim[i]
+			var rw: float = 1.0 - smoothstep(rim_w * 0.5, rim_w, -df)
+			col = col.lerp(c_rim0.lerp(c_rim1, n_rim[i]), rw * 0.9)
 			cv.r[i] = col.r
 			cv.g[i] = col.g
 			cv.b[i] = col.b
@@ -319,10 +394,8 @@ func _arena_dirt() -> void:
 		if cv.a[i] < 0.9:
 			continue
 		var base: Color = cv.get_c(i)
-		var shade: float = rng.randf_range(-0.09, 0.07)
+		var shade: float = rng.randf_range(-0.09, 0.06)
 		var col: Color = base.darkened(-shade) if shade < 0.0 else base.lightened(shade)
-		if shade < 0.0:
-			col = base.darkened(-shade)
 		var ang: float = rng.randf_range(-0.6, 0.6) + (PI * 0.5 if rng.randf() < 0.25 else 0.0)
 		var pts: PackedVector2Array = PL.arc_pts(p, ang, rng.randf_range(18.0, 56.0), rng.randf_range(-0.6, 0.6), 4)
 		var r0: float = rng.randf_range(3.0, 7.5)
@@ -330,25 +403,25 @@ func _arena_dirt() -> void:
 		cv.stroke(pts, radii, col, col, rng.randf_range(0.35, 0.6), 1)
 	# Seixos e grãos
 	_dirt_bits(cv, rng)
-	# Plantinhas: 11 tufos de 0,3 a 0,6 (rosetas e touceiras), fora do círculo
+	# Plantinhas: 26 tufos de 0,4 a 0,8 (rosetas e touceiras), mais perto da borda, fora do círculo
 	var placed: Array = []
 	var tries: int = 0
-	while placed.size() < 11 and tries < 2000:
+	while placed.size() < 26 and tries < 6000:
 		tries += 1
-		var p := Vector2(rng.randf_range(-5.8, 5.8), rng.randf_range(-4.3, 4.3))
+		var p := Vector2(rng.randf_range(-6.4, 6.4), rng.randf_range(-4.8, 4.8))
 		var i: int = cv.idx(int(cx + p.x * DIRT_U), int(cy + p.y * DIRT_U))
-		if cv.a[i] < 0.99 or dirt_sdf(p) > -0.7:
+		if cv.a[i] < 0.99 or dirt_sdf(p) > -0.35:
 			continue
-		if p.distance_to(RING_OFS) < 2.15:
+		if p.distance_to(RING_OFS) < 2.0:
 			continue
 		var ok: bool = true
 		for q: Vector2 in placed:
-			if q.distance_to(p) < 1.6:
+			if q.distance_to(p) < 1.15:
 				ok = false
 		if not ok:
 			continue
 		placed.append(p)
-		var size: float = rng.randf_range(0.42, 0.6)
+		var size: float = rng.randf_range(0.42, 0.8)
 		if placed.size() % 3 == 0:
 			_sprig(cv, Vector2(cx, cy) + p * DIRT_U, size * DIRT_U, rng)
 		else:
@@ -358,6 +431,10 @@ func _arena_dirt() -> void:
 	PL.dilate_rgb(img, 16)
 	PL.save_png(img, PL.TEX + "decals/arena_dirt.png")
 	_print_dirt_stats(img, dark_mask, w, h)
+	print("arena_dirt: %d plantinhas, %d entradas de grama, limiar escuro %.3f" % [placed.size(), inlets.size(), th_dark])
+	var ds: Dictionary = PL.dirt_stats(img)
+	print("arena_dirt r2: escuro %.1f%% (25-35), claro %.1f%% (<= 10), verde %.1f%% (2-5), coroa %+.1f (<= +3), média #%s a %.1f%% de #A57A3F (<= 5)" % [
+		ds["dark"] * 100.0, ds["light"] * 100.0, ds["green"] * 100.0, ds["crown"], (ds["color"] as Color).to_html(false).to_upper(), PL.cdist(ds["color"], c("#A57A3F")) * 100.0])
 
 
 func _dirt_bits(cv: PL.Canvas, rng: RandomNumberGenerator) -> void:
@@ -618,30 +695,40 @@ func _arena_slabs() -> void:
 	var img: Image = cv.down2().to_image(false)
 	PL.dilate_rgb(img, 16)
 	PL.save_png(img, PL.TEX + "decals/arena_slabs.png")
+	for k: int in 8:
+		var st: Dictionary = PL.slab_stats(img, Rect2i((k % 4) * 256, (k / 4) * 256, 256, 256))
+		var cc: Color = st["contact"]
+		print("arena_slabs célula %d: topo claro %.0f%% da pedra (>= 20), contato #%s (a %.1f%% de #534030)" % [k, float(st["light"]) * 100.0, cc.to_html(false).to_upper(), PL.cdist(cc, c("#534030")) * 100.0])
 
 
-## Pinta uma pedra chata a partir de um campo de distância (em unidades; < 0 dentro), com terra
-## escura em volta (meio enterrada), topo mais claro, facetas e lascas.
+## Pinta uma pedra chata a partir de um campo de distância (em unidades; < 0 dentro).
+## (r2) Volume só com luz de cima: topo claro (#C8BEA6 a #D8CCB0) no miolo, lados escurecendo para a
+## beira, sombra de contato escura e quente (#4A3A28 a #5C4630, 0,03 a 0,08) em toda a volta, e terra
+## escura cobrindo uma parte da beira (meio enterrada).
 func _stone_px(cv: PL.Canvas, i: int, sd: float, facet: float, crack: float, bury: float, ramp: Array) -> void:
-	# Terra escura em volta (meio enterrada), mais forte onde a pedra "afunda"
-	var halo: float = (1.0 - smoothstep(-0.02, 0.02 + 0.13 * bury * bury, sd)) * (0.35 + 0.45 * bury)
-	if halo > 0.0:
-		var hc: Color = c("#6E4A2E").lerp(c("#7E5634"), clampf(facet, 0.0, 1.0))
-		cv.blend(i, hc, halo)
+	# sombra de contato: faixa estreita colada na pedra, depois terra escura bem suave
+	var cw: float = 0.035 + 0.04 * bury
+	if sd > -0.01:
+		var sh: float = 1.0 - smoothstep(cw * 0.6, cw + 0.015, sd)
+		var soft: float = (1.0 - smoothstep(cw, cw + 0.09, sd)) * 0.45
+		if soft > 0.0:
+			cv.blend(i, c("#6E4A2E"), soft)
+		if sh > 0.0:
+			cv.blend(i, c("#4A3A28").lerp(c("#5C4630"), clampf(facet, 0.0, 1.0)), sh * 0.95)
 	var inside: float = 1.0 - smoothstep(-0.012, 0.012, sd)
 	if inside <= 0.0:
 		return
-	var depth: float = clampf(-sd / 0.15, 0.0, 1.0)
-	# Topo claro (luz de cima), beira escura; facetas em 3 planos
-	var t: float = 0.0 + 0.66 * pow(depth, 0.9)
+	var depth: float = clampf(-sd / 0.17, 0.0, 1.0)
+	# lados (perto da beira) escuros, topo claro; facetas largas
+	var t: float = 0.1 + 0.9 * pow(depth, 0.7)
 	var lv: float = facet * 3.0
 	var fl: float = floorf(lv)
-	t += 0.36 * ((fl + smoothstep(0.4, 0.6, lv - fl)) / 3.0 - 0.35)
-	var col: Color = PL.ramp_at(ramp, t)
+	t += 0.26 * ((fl + smoothstep(0.4, 0.6, lv - fl)) / 3.0 - 0.5)
+	var col: Color = PL.ramp_at(ramp, clampf(t, 0.0, 1.0))
 	col = col.darkened(0.25 * crack)
-	# Terra cobrindo um pedaço da beira
-	var b: float = smoothstep(0.6, 0.68, bury) * (1.0 - smoothstep(0.15, 0.6, depth))
-	col = col.lerp(c("#7E5634"), b * 0.85)
+	# terra cobrindo um pedaço da beira
+	var b: float = smoothstep(0.56, 0.64, bury) * (1.0 - smoothstep(0.3, 0.85, depth))
+	col = col.lerp(c("#6E4A2E"), b * 0.9)
 	cv.blend(i, col, inside)
 	cv.z[i] = 1.0
 
@@ -653,11 +740,11 @@ func _long_stone(cv: PL.Canvas, org: Vector2, cell: int, u: float, length: float
 	nz.fractal_octaves = 3
 	var nb := FastNoiseLite.new()
 	nb.seed = seed_value + 50
-	nb.frequency = 1.0 / 45.0
+	nb.frequency = 1.0 / 95.0
 	var center := org + Vector2(cell * 0.5, cell * 0.5 + width * 0.25 * u)
 	var arc_c := center + Vector2(0.0, radius * u)
 	var lh: float = length * 0.5
-	var ramp: Array = [c("#5A564C"), c("#6E6A5E"), c("#7E786A"), c("#948C78"), c("#A89F88"), c("#B8AE98")]
+	var ramp: Array = [c("#5E584C"), c("#7E786A"), c("#988F7C"), c("#B8AE98"), c("#C8BEA6"), c("#D8CCB0")]
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value + 7
 	var asym: float = rng.randf_range(-0.25, 0.25)
@@ -693,10 +780,10 @@ func _worn_slab(cv: PL.Canvas, org: Vector2, cell: int, u: float, seed_value: in
 	nz.fractal_octaves = 3
 	var nb := FastNoiseLite.new()
 	nb.seed = seed_value + 50
-	nb.frequency = 1.0 / 45.0
+	nb.frequency = 1.0 / 95.0
 	var center := org + Vector2(cell * 0.5, cell * 0.5)
 	# Laje de ~0,8 x 0,6, cantos gastos (retângulo arredondado girado + ruído)
-	var ramp: Array = [c("#746E60"), c("#857C68"), c("#9A907A"), c("#ADA28A"), c("#BCB198")]
+	var ramp: Array = [c("#6A6456"), c("#857C68"), c("#A0967F"), c("#BCB198"), c("#CDC2A8"), c("#D6CAAE")]
 	for y: int in cell:
 		for x: int in cell:
 			var px := Vector2(org.x + x + 0.5, org.y + y + 0.5)
@@ -715,7 +802,7 @@ func _pebbles(cv: PL.Canvas, org: Vector2, cell: int, u: float, seed_value: int,
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_value
 	var center := org + Vector2(cell * 0.5, cell * 0.5)
-	var ramp: Array = [c("#6E6A5E"), c("#7E786A"), c("#948C78"), c("#AAA08A"), c("#BCB29C")]
+	var ramp: Array = [c("#6E6A5E"), c("#8A8372"), c("#A89F88"), c("#C2B89E"), c("#D2C6AC")]
 	var stones: Array = []
 	for k: int in count:
 		var p: Vector2 = center + Vector2(rng.randf_range(-0.55, 0.55), rng.randf_range(-0.45, 0.45)) * u
@@ -737,4 +824,4 @@ func _pebbles(cv: PL.Canvas, org: Vector2, cell: int, u: float, seed_value: int,
 			if best > 0.2:
 				continue
 			var i: int = cv.idx(int(px.x), int(px.y))
-			_stone_px(cv, i, best * 1.6, nz.get_noise_2d(px.x + 99.0, px.y) * 0.5 + 0.5, 0.0, 0.0, ramp)
+			_stone_px(cv, i, best * 2.6, nz.get_noise_2d(px.x + 99.0, px.y) * 0.5 + 0.5, 0.0, 0.0, ramp)
