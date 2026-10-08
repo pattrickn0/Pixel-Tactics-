@@ -30,7 +30,9 @@ void fragment() {
 			/ vec2(float(atlas_cols), float(atlas_rows));
 	vec4 t = texture(atlas, cell_uv);
 	ALBEDO = t.rgb * tint.rgb;
-	ALPHA = t.a;
+	// Alfa afiado (largura de ~1 pixel): o alpha-to-coverage só age na borda do recorte, sem pontilhar
+	// o miolo do cartão de longe (nos mipmaps o alfa vira meio-termo e o MSAA desenhava um xadrez).
+	ALPHA = clamp((t.a - alpha_cut) / max(fwidth(t.a), 0.0001) + 0.5, 0.0, 1.0);
 	ALPHA_SCISSOR_THRESHOLD = alpha_cut;
 	ALPHA_ANTIALIASING_EDGE = alpha_edge;
 	ALPHA_TEXTURE_COORDINATE = cell_uv * atlas_size;

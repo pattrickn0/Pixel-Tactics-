@@ -12,6 +12,6 @@ shader_parameter/atlas_rows = 2
 shader_parameter/atlas_size = Vector2(512, 256)
 shader_parameter/first_cell = 0
 shader_parameter/cell_count = 4
-shader_parameter/tint = null
+shader_parameter/tint = Color(1.18, 1.14, 0.95, 1)
 shader_parameter/alpha_cut = null
 shader_parameter/alpha_edge = null

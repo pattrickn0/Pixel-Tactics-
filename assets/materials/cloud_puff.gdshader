@@ -19,9 +19,9 @@ uniform vec2 depth_range = vec2(-18.0, -3.0);
 uniform float deep_amount = 0.9;
 uniform float alpha_scale = 1.0;
 // Topo do puff mais claro (chega a branco quente; a base fica lavanda).
-uniform float top_boost = 0.25;
+uniform float top_boost = 0.15;
 // Brilho quente do lado do sol (espalhamento para a frente).
-uniform vec4 sun_tint : source_color = vec4(1.0, 0.7, 0.48, 1.0);
+uniform vec4 sun_tint : source_color = vec4(1.0, 0.66, 0.44, 1.0);
 uniform float sun_amount = 1.0;
 
 varying float v_deep;

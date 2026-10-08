@@ -7,7 +7,7 @@ extends SceneTree
 ## marcadores). Sem sorteio: rodar de novo regrava arquivos idênticos. Não mexe em scenes/map.tscn.
 
 const MESH_DIR: String = "res://assets/models/kit/"
-## MultiMesh dos tufos e das flores (spec 012, item 9).
+## MultiMesh dos tufos, das flores e dos vaga-lumes (spec 012, item 9 e Fase 3), em .tres de texto.
 const SCATTER_DIR: String = "res://assets/models/scatter/"
 const SCENE_DIR: String = "res://scenes/kit/"
 ## Peças que não projetam sombra (chão e decalques); as do cenário pintado usam "no_shadow" na tabela.
@@ -82,16 +82,12 @@ func _save_fireflies(material: Material) -> int:
 	var m := KitMesher.new()
 	m.quad("firefly", Vector3(-1.0, 1.0, 0.0), Vector3(1.0, 1.0, 0.0), Vector3(1.0, -1.0, 0.0), Vector3(-1.0, -1.0, 0.0), Vector3(0.0, 0.0, 1.0),
 			Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.mesh = m.to_mesh({"firefly": material}, {})
-	mm.instance_count = IslandTables.FIREFLIES.size()
-	for i in IslandTables.FIREFLIES.size():
-		mm.set_instance_transform(i, Transform3D(Basis.IDENTITY, IslandTables.FIREFLIES[i]))
-	var path: String = SCATTER_DIR + "fireflies.res"
-	if ResourceSaver.save(mm, path) != OK:
-		push_error("Falha ao gravar " + path)
-	return mm.instance_count
+	var items: Array[Transform3D] = []
+	for p: Vector3 in IslandTables.FIREFLIES:
+		items.append(Transform3D(Basis.IDENTITY, p))
+	var no_colors: Array[Color] = []
+	_write_multimesh("fireflies", m.to_mesh({"firefly": material}, {}), items, no_colors)
+	return items.size()
 
 
 func _save_scatter(file_name: String, groups: Array, size: Vector2, material: Material, with_colors: bool) -> int:
@@ -105,23 +101,72 @@ func _save_scatter(file_name: String, groups: Array, size: Vector2, material: Ma
 		for off: Vector3 in pattern:
 			var d := Vector2(off.x, off.y).rotated(turn)
 			var b := Basis(Vector3.UP, turn + deg_to_rad(37.0 * float(k))).scaled(Vector3(off.z, off.z, off.z))
-			items.append(Transform3D(b, center + Vector3(d.x, 0.0, d.y)))
+			var spot: Vector3 = center + Vector3(d.x, 0.0, d.y)
+			# Fase 3: os tufos agora aparecem (o buffer antes saía vazio); os que caíam fora da ilha (tabelas da
+			# ilha antiga) ficam de fora.
+			if not _on_island(Vector2(spot.x, spot.z)):
+				k += 1
+				continue
+			items.append(Transform3D(b, spot))
 			if with_colors:
 				colors.append(ScatterTables.FLOWER_COLORS[(int(g[5]) + k) % ScatterTables.FLOWER_COLORS.size()])
 			k += 1
-	var mm := MultiMesh.new()
-	mm.transform_format = MultiMesh.TRANSFORM_3D
-	mm.use_colors = with_colors
-	mm.mesh = _tuft_mesh(size, material)
-	mm.instance_count = items.size()
-	for i in items.size():
-		mm.set_instance_transform(i, items[i])
-		if with_colors:
-			mm.set_instance_color(i, colors[i])
-	var path: String = SCATTER_DIR + file_name + ".res"
-	if ResourceSaver.save(mm, path) != OK:
-		push_error("Falha ao gravar " + path)
+	if not with_colors:
+		colors.clear()
+	_write_multimesh(file_name, _tuft_mesh(size, material), items, colors)
 	return items.size()
+
+
+## Ponto dentro do contorno da ilha e a pelo menos ISLAND_MARGIN da borda.
+const ISLAND_MARGIN: float = 0.4
+
+
+static func _on_island(p: Vector2) -> bool:
+	var poly: PackedVector2Array = IslandTables.ISLAND_OUTLINE
+	if not Geometry2D.is_point_in_polygon(p, poly):
+		return false
+	for i in poly.size():
+		var q: Vector2 = Geometry2D.get_closest_point_to_segment(p, poly[i], poly[(i + 1) % poly.size()])
+		if p.distance_to(q) < ISLAND_MARGIN:
+			return false
+	return true
+
+
+## Grava o MultiMesh como .tres de texto com o buffer escrito aqui. No modo headless o servidor de renderização
+## é o "dummy" e não guarda o buffer de MultiMesh.set_instance_transform (o .res saía com todas as instâncias
+## na origem). A malha vai num .res próprio. Buffer por instância: base em linhas + origem (12) e cor (4).
+func _write_multimesh(file_name: String, mesh: ArrayMesh, items: Array[Transform3D], colors: Array[Color]) -> void:
+	var mesh_path: String = SCATTER_DIR + file_name + "_mesh.res"
+	if ResourceSaver.save(mesh, mesh_path) != OK:
+		push_error("Falha ao gravar " + mesh_path)
+		return
+	var values := PackedStringArray()
+	for i in items.size():
+		var t: Transform3D = items[i]
+		var b: Basis = t.basis
+		for v: float in [b.x.x, b.y.x, b.z.x, t.origin.x, b.x.y, b.y.y, b.z.y, t.origin.y, b.x.z, b.y.z, b.z.z, t.origin.z]:
+			values.append(_num(v))
+		if not colors.is_empty():
+			for v: float in [colors[i].r, colors[i].g, colors[i].b, colors[i].a]:
+				values.append(_num(v))
+	var text: String = "[gd_resource type=\"MultiMesh\" load_steps=2 format=3]\n\n"
+	text += "[ext_resource type=\"ArrayMesh\" path=\"%s\" id=\"1_mesh\"]\n\n" % mesh_path
+	text += "[resource]\ntransform_format = 1\n"
+	if not colors.is_empty():
+		text += "use_colors = true\n"
+	text += "instance_count = %d\nmesh = ExtResource(\"1_mesh\")\nbuffer = PackedFloat32Array(%s)\n" % [items.size(), ", ".join(values)]
+	var path: String = SCATTER_DIR + file_name + ".tres"
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	if f == null:
+		push_error("Falha ao gravar " + path)
+		return
+	f.store_string(text)
+	f.close()
+
+
+static func _num(v: float) -> String:
+	var r: float = snappedf(v, 0.00001)
+	return "0" if is_zero_approx(r) else str(r)
 
 
 ## Tufo: 3 cartões cruzados de 60°, normal para cima (assenta no chão); UV.y = número do cartão.

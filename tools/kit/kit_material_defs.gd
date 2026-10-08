@@ -166,17 +166,17 @@ static func scenery() -> Dictionary:
 	var grass_units: float = 512.0 / float(WorldScale.SCENERY_TEXELS_PER_UNIT)
 	var ground: Dictionary = {"grass_a": SCENERY_TEX + "ground/grass_a.png", "grass_b": SCENERY_TEX + "ground/grass_b.png",
 			"blend_mask": SCENERY_TEX + "ground/blend_mask.png", "tile_units": grass_units, "mask_units": 4.0 * grass_units}
-	d["grass_painted"] = _s("scenery_ground", _with(ground, {"tint": Color(0.8, 0.8, 0.74), "patch_amount": 0.2}))
-	d["grass_painted_inner"] = _s("scenery_ground", _with(ground, {"offset": Vector2(37.0, 11.0), "tint": Color(0.9, 0.86, 0.78),
+	d["grass_painted"] = _s("scenery_ground", _with(ground, {"tint": Color(0.85, 0.84, 0.72), "patch_amount": 0.2}))
+	d["grass_painted_inner"] = _s("scenery_ground", _with(ground, {"offset": Vector2(37.0, 11.0), "tint": Color(0.93, 0.89, 0.76),
 			"patch_amount": 0.2}))
 	# Penhasco, fundo e rochas (A08 leva 2, Fase 3): triplanar com island/cliff e island/under (8 x 8 unidades).
 	var cliff: Dictionary = {"albedo_tex": SCENERY_TEX + "island/cliff.png", "normal_tex": SCENERY_TEX + "island/cliff_n.png",
 			"tex_units": 512.0 / float(WorldScale.SCENERY_TEXELS_PER_UNIT)}
 	var under: Dictionary = {"albedo_tex": SCENERY_TEX + "island/under.png", "normal_tex": SCENERY_TEX + "island/under_n.png",
 			"tex_units": 512.0 / float(WorldScale.SCENERY_TEXELS_PER_UNIT)}
-	d["cliff_painted"] = _s("scenery_cliff", _with(cliff, {"gradient_range": Vector2(-7.0, 0.5), "deep_amount": 0.55,
+	d["cliff_painted"] = _s("scenery_cliff", _with(cliff, {"gradient_range": Vector2(-7.0, 0.5), "deep_amount": 0.65,
 			"top_color": Color("#4a5e1c"), "top_amount": 0.9}))
-	d["under_painted"] = _s("scenery_cliff", _with(under, {"gradient_range": Vector2(-20.0, -2.0), "deep_amount": 0.8}))
+	d["under_painted"] = _s("scenery_cliff", _with(under, {"gradient_range": Vector2(-20.0, -2.0), "deep_amount": 0.9}))
 	d["rock_painted"] = _s("scenery_cliff", _with(cliff, {"local_gradient": true, "gradient_range": Vector2(-6.0, 0.5), "deep_amount": 0.75,
 			"tint": Color(0.75, 0.72, 0.72), "air_strength": 0.0,
 			"top_color": Color("#4f6a22"), "top_amount": 0.9, "dither_on": true, "dither_margin": 1.0}))
@@ -189,13 +189,13 @@ static func scenery() -> Dictionary:
 			"shade_low": Color(0.55, 0.62, 0.66), "shade_high": Color(1.0, 1.0, 0.92)}))
 	# Folhagem pintada (A08): atlas de tufos 4x4 (três famílias) e andares de conífera 4x2.
 	var leaf: Dictionary = {"atlas_cols": 4, "atlas_rows": 4, "atlas_size": Vector2(1024.0, 1024.0), "dither_on": true, "dither_margin": 3.0,
-			"wrap_light": 0.35, "rim_amount": 1.0, "rim_color": Color(1.0, 0.8, 0.45), "air_strength": 0.07}
+			"wrap_light": 0.35, "rim_amount": 1.6, "rim_color": Color(1.0, 0.8, 0.45), "air_strength": 0.07}
 	d["foliage_warm"] = _s("scenery_foliage", _with(leaf, {"atlas": SCENERY_TEX + "foliage/leaf_clumps_warm.png",
-			"shade_low": Color(0.3, 0.37, 0.48), "shade_high": Color(1.1, 1.0, 0.7), "core_color": Color("#26361a")}))
+			"shade_low": Color(0.22, 0.28, 0.37), "shade_high": Color(1.06, 0.97, 0.67), "core_color": Color("#26361a")}))
 	d["foliage_mid"] = _s("scenery_foliage", _with(leaf, {"atlas": SCENERY_TEX + "foliage/leaf_clumps_mid.png",
-			"shade_low": Color(0.28, 0.36, 0.5), "shade_high": Color(1.14, 1.04, 0.72), "core_color": Color("#1e3218")}))
+			"shade_low": Color(0.21, 0.27, 0.38), "shade_high": Color(1.09, 1.0, 0.69), "core_color": Color("#1e3218")}))
 	d["foliage_cool"] = _s("scenery_foliage", _with(leaf, {"atlas": SCENERY_TEX + "foliage/leaf_clumps_cool.png",
-			"shade_low": Color(0.26, 0.34, 0.5), "shade_high": Color(1.04, 0.98, 0.8), "core_color": Color("#182c1e")}))
+			"shade_low": Color(0.2, 0.26, 0.38), "shade_high": Color(1.0, 0.94, 0.76), "core_color": Color("#182c1e")}))
 	d["foliage_conifer"] = _s("scenery_foliage", {"atlas": SCENERY_TEX + "foliage/conifer_tiers.png", "atlas_cols": 4, "atlas_rows": 2,
 			"atlas_size": Vector2(1024.0, 512.0), "shade_low": Color(0.17, 0.24, 0.34), "shade_high": Color(0.62, 0.7, 0.62),
 			"core_color": Color("#10200d"), "dither_on": true, "dither_margin": 3.0, "wrap_light": 0.35, "rim_amount": 0.5})
@@ -216,7 +216,7 @@ static func scenery() -> Dictionary:
 	d["arena_stones"] = _s("scenery_decal", {"atlas": SCENERY_TEX + "decals/arena_slabs.png"})
 	# Tufos (grass_tufts 4x2: linha de cima baixos da arena, de baixo altos) e flores (flowers 4x4, 12 grupos).
 	var tufts: Dictionary = {"atlas": SCENERY_TEX + "foliage/grass_tufts.png", "atlas_cols": 4, "atlas_rows": 2, "atlas_size": Vector2(512.0, 256.0)}
-	d["tuft_grass_arena"] = _s("scenery_tuft", _with(tufts, {"first_cell": 0, "cell_count": 4}))
+	d["tuft_grass_arena"] = _s("scenery_tuft", _with(tufts, {"first_cell": 0, "cell_count": 4, "tint": Color(1.18, 1.14, 0.95)}))
 	d["tuft_grass"] = _s("scenery_tuft", _with(tufts, {"first_cell": 4, "cell_count": 4}))
 	d["tuft_flower"] = _s("scenery_tuft", {"atlas": SCENERY_TEX + "foliage/flowers.png", "atlas_cols": 4, "atlas_rows": 4,
 			"atlas_size": Vector2(256.0, 256.0), "first_cell": 0, "cell_count": 12})

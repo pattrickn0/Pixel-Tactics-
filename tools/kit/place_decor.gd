@@ -70,7 +70,7 @@ func _initialize() -> void:
 	for spec: Array in SCATTER_NODES:
 		var mmi := MultiMeshInstance3D.new()
 		mmi.name = str(spec[0])
-		mmi.multimesh = load(SCATTER_DIR + str(spec[1]) + ".res") as MultiMesh
+		mmi.multimesh = load(SCATTER_DIR + str(spec[1]) + ".tres") as MultiMesh
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		(groups[str(spec[2])] as Node3D).add_child(mmi)
 		mmi.owner = map_root

@@ -22,9 +22,15 @@ uniform vec4 core_color : source_color = vec4(0.16, 0.26, 0.12, 1.0);
 uniform float alpha_cut = 0.5;
 // Suaviza o miúdo das folhas (mistura com um mip mais alto, só na cor): de longe a copa lê como massa com
 // luz única, não como granulado (revisão 012-f2, granulação <= 0,95).
-uniform float detail_soften = 0.85;
-uniform float soften_bias = 2.5;
+uniform float detail_soften = 0.9;
+uniform float soften_bias = 4.0;
 uniform float alpha_edge = 0.3;
+// Distância a partir da qual o alfa dos cartões fica binário.
+uniform float binary_alpha_from = 40.0;
+// Quanto o corte do alfa desce longe (cartão mais cheio).
+uniform float far_cut_drop = -0.12;
+// Viés de mip do alfa longe (silhueta mais macia).
+uniform float far_alpha_bias = 0.0;
 // Luz embrulhada: 0 = Lambert; 1 = a luz dá a volta até o lado oposto.
 uniform float wrap_light = 0.6;
 // Luz de borda quente (quando a câmera olha contra o sol).
@@ -33,7 +39,7 @@ uniform float rim_amount = 0.35;
 // Translucidez das folhas: luz que atravessa os tufos do lado oposto ao sol.
 uniform vec4 backlight_color : source_color = vec4(0.18, 0.2, 0.06, 1.0);
 // Sombra recebida mais suave dentro da copa (os cartões recortados fazem sombra picada; a referência é macia).
-uniform float shadow_softness = 0.3;
+uniform float shadow_softness = 0.38;
 // Balanço lento (amplitude <= 0,03, período de 3 a 6 s, só por TIME).
 uniform float sway_amount = 0.02;
 uniform float sway_period = 4.5;
@@ -83,8 +89,17 @@ void fragment() {
 				/ vec2(float(atlas_cols), float(atlas_rows));
 		vec4 t = texture(atlas, cell_uv);
 		vec3 soft = texture(atlas, cell_uv, soften_bias).rgb;
+		// Longe, o recorte fica mais cheio (menos furos): massa macia.
+		float far = smoothstep(binary_alpha_from, binary_alpha_from + 15.0, length(v_world - CAMERA_POSITION_WORLD));
 		ALBEDO = mix(t.rgb, soft, detail_soften) * shade * COLOR.g;
-		ALPHA = t.a;
+		float cut = alpha_cut - far_cut_drop * far;
+		// Alfa afiado (largura de ~1 pixel): o alpha-to-coverage só age na borda do recorte, sem pontilhar
+		// o miolo do cartão de longe (nos mipmaps o alfa vira meio-termo e o MSAA desenhava um xadrez).
+		// Longe, o recorte usa o alfa de um mip mais alto (silhueta em tufos, sem o serrilhado de cada folha) e
+		// vira binário (o MSAA do alpha-to-coverage pontilhava as copas distantes).
+		float a_src = mix(t.a, texture(atlas, cell_uv, far_alpha_bias).a, far);
+		float a_soft = clamp((a_src - cut) / max(fwidth(a_src), 0.0001) + 0.5, 0.0, 1.0);
+		ALPHA = mix(a_soft, step(cut, a_src), far);
 		ALPHA_SCISSOR_THRESHOLD = alpha_cut;
 		ALPHA_ANTIALIASING_EDGE = alpha_edge;
 		ALPHA_TEXTURE_COORDINATE = cell_uv * atlas_size;

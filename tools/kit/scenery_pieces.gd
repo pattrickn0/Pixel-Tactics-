@@ -591,7 +591,7 @@ static func _crown_card(m: KitMesher, key: String, c: Vector3, t: Vector3, b: Ve
 
 
 ## Luz mínima (canal g) no miolo da copa.
-const CROWN_AO_MIN: float = 0.36
+const CROWN_AO_MIN: float = 0.48
 
 
 ## Raio da copa pintada de uma folhosa (maior distância horizontal de um lóbulo ao tronco), já com a escala.
