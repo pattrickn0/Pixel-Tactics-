@@ -1,7 +1,8 @@
 # Direção de Arte: Pixel Chess (cenário 3D pintado, personagens em pixel art)
 
-**Status:** reescrita em 2026-10-08 por decisão do usuário: "Pixel art serão só os personagens" e, sobre a referência nova, "esse gráfico exatamente, nessas posições, igual a tudo", com "dia claro com toque quente". **Substitui** a versão "pixel art minimalista em 2.5D" de 2026-10-06/07 (specs `A03`, `A06` e `A07` viram histórico). Specs vigentes: `012` (developer) e `A08` (artist).
+**Status:** reescrita em 2026-10-08 por decisão do usuário: "Pixel art serão só os personagens" e, sobre a referência nova, "esse gráfico exatamente, nessas posições, igual a tudo", com "dia claro com toque quente". **Substitui** a versão "pixel art minimalista em 2.5D" de 2026-10-06/07 (specs `A03`, `A06` e `A07` viram histórico). Specs vigentes: `012` e `013` (developer), `A08` e `A09` (artist).
 **Atualização (2026-10-08, fechamento da `012` e da `A08`):** os valores de luz, pós, folhagem, cascata e nuvens passam a ser os da entrega aprovada (`revisoes/012-f2.md` revisão 2 e `revisoes/012-f3.md`), mais as medidas de controle em "Luz e pós-processamento".
+**Atualização (2026-10-08, spec `013`):** as nuvens passam a ser **volumétricas** (raymarch próprio), por decisão do usuário ("vamos de volumétrica"). Os billboards de puff e o plano do mar de nuvens saem. A análise, as cores medidas e os critérios ficam na `013` e na `A09`.
 
 Esta é a fonte única de estilo. Vale para o `artist` (scripts em `tools/art/`), para o código (malhas, materiais, shaders, luz e pós-processamento) e para a revisão. Se algo aqui conflitar com uma spec de arte (`docs/specs/ANN-*.md`), vale a spec mais recente. Se conflitar com `CLAUDE.md`, vale o `CLAUDE.md`.
 
@@ -33,7 +34,7 @@ Na referência nova, o anfiteatro tem as mesmas proporções do nosso (arena 20 
 
 ## Como o mundo é montado
 
-**Fronteira de trabalho.** O `artist` faz os **pixels**: texturas pintadas (albedo, normal map suave e, quando a spec pedir, rugosidade), atlas de cartões de folha, puffs de nuvem, decalques com borda suave, flipbook de chama e o gradiente do arco-íris. O `developer` faz a **forma** e a **luz**: malhas do kit (por tabelas explícitas), UV, cor de vértice, materiais e shaders (folhagem, chão, pedra, penhasco, água, céu, nuvens), luz, pós-processamento e a montagem à mão do mapa. O artist nunca desenha a silhueta inteira de uma árvore, e o developer nunca edita PNG.
+**Fronteira de trabalho.** O `artist` faz os **pixels**: texturas pintadas (albedo, normal map suave e, quando a spec pedir, rugosidade), atlas de cartões de folha, ruído 3D e rampa de cor das nuvens (`A09`), decalques com borda suave, flipbook de chama e o gradiente do arco-íris. O `developer` faz a **forma** e a **luz**: malhas do kit (por tabelas explícitas), UV, cor de vértice, materiais e shaders (folhagem, chão, pedra, penhasco, água, céu, nuvens), luz, pós-processamento e a montagem à mão do mapa. O artist nunca desenha a silhueta inteira de uma árvore, e o developer nunca edita PNG.
 
 **De onde vem o "pintado"** (o modo realista de chegar à referência no nosso fluxo):
 1. **Forma:** volumes redondos e chanfrados. A copa é um aglomerado de lóbulos com cartões de folha. A pedra é bloco com chanfro. A borda da ilha é um contorno irregular. Nada de cubo seco nem cone liso.
@@ -56,7 +57,7 @@ Na referência nova, o anfiteatro tem as mesmas proporções do nosso (arena 20 
 | Penhasco e fundo da ilha | Face irregular em blocos (malha com degraus e reentrâncias) + fundo cônico. Triplanar, mais escuro e frio para baixo, e somindo na névoa de altura | Terra e rocha marrom pintadas + `_n` suave; cartões de raiz e de cipó |
 | Cascata e névoa | Lâminas em 2 camadas com shader de rolagem (riscos), faixa de espuma no lábio, puffs de névoa na base | Riscos de água, espuma e puff de névoa |
 | Arco-íris | Fita em arco com shader aditivo fraco, apagando nas pontas | Gradiente de 6 faixas |
-| Nuvens | Aglomerados de puffs billboard (alfa misturado, ordenados por aglomerado) + mar de nuvem bem abaixo (y −27) | 4 a 6 puffs pintados com alfa suave |
+| Nuvens (spec `013`) | **Volumes com raymarch próprio** (`cloud_volume.gdshader`): lóbulos em tabela literal por massa, um nó por massa em `Sky/Clouds`, sombra própria por marcha até o sol, fase HG dupla, ambiente por altura, luz → rampa medida, sombra da ilha por máscara de pegada, perspectiva aérea própria (sem a névoa da cena) e mar de nuvens volumétrico embaixo. **Sem billboard** | Ruído 3D (forma e detalhe) e rampa de cor de tela medida na referência (`A09`) |
 | Céu | Shader de céu próprio, **inclusive abaixo do horizonte** (a câmera olha para baixo e o "céu" de baixo aparece entre as nuvens) | — |
 | Braseiro | Pedestal de pedra + bacia de ferro + chama em cartões cruzados com flipbook, `OmniLight3D` sem sombra | Pedra e ferro pintados, flipbook de chama |
 | Ponte de corda | Tábuas, postes e cordas pendentes (catenária em tabela) | Tábuas e corda pintadas |
@@ -112,7 +113,7 @@ Na referência nova, o anfiteatro tem as mesmas proporções do nosso (arena 20 
 ## Água, nuvens e céu
 
 - **Cascata:** larga, branco-azulada, com riscos verticais rolando, espuma na quina e névoa branca na base que se funde ao mar de nuvens. Há um **arco-íris** fraco na frente da névoa, visto da metade sul da órbita.
-- **Nuvens:** cúmulos fofos, com o topo branco-quente e a base lavanda. Formam um mar em volta e embaixo da ilha, e há aglomerados ao lado das ilhotas.
+- **Nuvens (spec `013`):** cúmulos volumétricos em **fileiras** nos lados da ilha e **torres e bancos** ao fundo, sem céu limpo entre eles. É contraluz lateral: só a crista acende em creme quente (`#FDEED6`), a face fica malva (`#D6C4C5`) e o vale e a base, azul-lavanda (`#959FB5`). A borda é macia, de bolotas redondas, sem contorno, sem branco puro e sem cinza neutro. As nuvens distantes quase não perdem contraste. O mar embaixo da ilha fica azul-acinzentado (`#8C96AD`) na sombra da ilha (leste-sudeste) e claro fora dela.
 - **Céu:** claro, azul-lavanda no alto, rosado-claro perto do horizonte e mais quente do lado do sol. **Abaixo do horizonte** continua claro (lavanda-azulado), sem "chão" escuro.
 
 ## Luz e pós-processamento (motor)
@@ -157,7 +158,7 @@ Valores de referência para as texturas e os materiais, da sombra para a luz. O 
 | Penhasco | `#3E3640` (fundo frio) `#4A3628` `#6E5038` `#9A7656` |
 | Ruínas | `#8E7660` `#BDA083` `#E0CCAA` |
 | Água | `#5A7E9C` `#7FA2BE` `#B6D0E3` `#EAF6FC` |
-| Nuvem | `#9C9CB8` `#C8C0D4` `#ECE6EE` `#FFF6EC` |
+| Nuvem (medida na `013`, P5 → P95) | `#959FB5` `#B4AFBF` `#D6C4C5` `#EDD9CF` `#FDEED6`; na sombra da ilha: `#818597` `#8D97AD` `#9FA3B6` |
 | Céu | zênite `#8FB0D8`, meio `#C9D3EA`, horizonte e abaixo `#EAD9DC`, perto do sol `#FFF0D8` |
 | Névoa | `#DCD6E6` |
 | Fogo | `#B8501C` `#E39041` `#FFDA81` `#FFF2C0` |
