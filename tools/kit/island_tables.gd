@@ -365,25 +365,6 @@ const RAINBOW_ARC: PackedVector2Array = [
 ]
 const RAINBOW_WIDTH: float = 1.5
 
-## Nuvens: aglomerados de puffs Vector4(x, y, z, raio) (achatados em y por CLOUD_FLATTEN).
-const CLOUD_FLATTEN: float = 0.62
-const CLOUDS: Array = [
-	[Vector4(-4.0, 0.0, 0.0, 2.2), Vector4(-1.5, 0.4, 0.5, 2.6), Vector4(1.5, 0.2, -0.3, 2.4), Vector4(4.0, 0.0, 0.2, 2.0),
-		Vector4(0.0, 1.2, 0.0, 1.8), Vector4(-2.6, 1.0, -0.6, 1.5), Vector4(2.6, 1.1, 0.4, 1.6), Vector4(0.5, -0.2, 1.6, 1.8),
-		Vector4(-0.8, -0.1, -1.6, 1.7)],
-	[Vector4(0.0, 0.0, 0.0, 2.4), Vector4(1.8, 0.5, 0.4, 1.9), Vector4(-1.9, 0.4, -0.3, 2.0), Vector4(0.3, 1.8, 0.1, 1.9),
-		Vector4(-0.9, 2.9, 0.0, 1.4), Vector4(1.0, 2.6, -0.3, 1.3), Vector4(0.0, 3.8, 0.2, 1.1), Vector4(2.8, -0.2, 0.1, 1.4),
-		Vector4(-2.9, -0.3, 0.2, 1.3)],
-	[Vector4(-6.0, 0.0, 0.3, 1.8), Vector4(-3.6, 0.3, -0.2, 2.2), Vector4(-1.0, 0.5, 0.2, 2.5), Vector4(1.8, 0.3, -0.1, 2.3),
-		Vector4(4.4, 0.1, 0.3, 2.0), Vector4(6.6, -0.1, 0.0, 1.6), Vector4(-2.2, 1.6, 0.0, 1.5), Vector4(0.8, 1.8, 0.2, 1.7),
-		Vector4(3.4, 1.4, -0.2, 1.4)],
-	[Vector4(0.0, 0.0, 0.0, 1.5), Vector4(1.3, 0.3, 0.3, 1.2), Vector4(-1.2, 0.2, -0.2, 1.3), Vector4(0.2, 1.0, 0.0, 1.1),
-		Vector4(-0.4, -0.2, 1.0, 1.0)],
-	[Vector4(-5.0, 0.0, -2.0, 2.6), Vector4(-1.5, 0.2, -2.4, 3.0), Vector4(2.5, 0.0, -1.8, 2.8), Vector4(5.5, -0.2, -1.0, 2.2),
-		Vector4(-4.0, -0.1, 1.6, 2.4), Vector4(-0.5, 0.3, 1.2, 3.0), Vector4(3.5, 0.1, 1.8, 2.6), Vector4(0.8, 1.1, -0.3, 2.0),
-		Vector4(-2.4, 0.9, 0.2, 1.8)],
-]
-
 ## Pontes de corda: catenária em tabela (distância ao longo, altura), da cabeceira (0, 0) até a ilhota.
 const BRIDGE_W: PackedVector2Array = [
 	Vector2(0.0, 0.0), Vector2(0.49, -0.26), Vector2(0.97, -0.5), Vector2(1.46, -0.7), Vector2(1.95, -0.86), Vector2(2.43, -1.0),

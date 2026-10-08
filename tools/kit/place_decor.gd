@@ -5,11 +5,15 @@ extends SceneTree
 ## ATENÇÃO (spec 012): scenes/map.tscn é a fonte de verdade. Este script APAGA o que foi ajustado à mão nesses
 ## grupos, por isso só roda com a flag explícita --force (e avisa quantos nós vai trocar):
 ##   "$G" --headless --path . --script tools/kit/place_decor.gd -- --force
-## (rodar depois de tools/kit/build_kit.gd e, se o anel mudou, de tools/kit/gen_initial_map.gd -- --force)
+## (rodar depois de tools/kit/build_kit.gd e tools/kit/build_clouds.gd e, se o anel mudou, de
+## tools/kit/gen_initial_map.gd -- --force)
+## Nuvens (spec 013): um nó por massa da tabela CloudTables em Sky/Clouds (proxy + material de build_clouds.gd).
 
 const MAP_PATH: String = "res://scenes/map.tscn"
 const KIT_DIR: String = "res://scenes/kit/"
 const SCATTER_DIR: String = "res://assets/models/scatter/"
+const CLOUD_MODEL_DIR: String = "res://assets/models/clouds/"
+const CLOUD_MATERIAL_DIR: String = "res://assets/materials/clouds/"
 ## Tufos, flores e vaga-lumes (MultiMesh): [nome do nó, arquivo, grupo].
 const SCATTER_NODES: Array = [["TuftsArena", "tufts_arena", "Small"], ["TuftsOuter", "tufts_outer", "Small"], ["Flowers", "flowers", "Small"],
 		["Fireflies", "fireflies", "Fx"]]
@@ -75,6 +79,7 @@ func _initialize() -> void:
 		(groups[str(spec[2])] as Node3D).add_child(mmi)
 		mmi.owner = map_root
 		counter += 1
+	counter += _place_clouds(groups["Sky"] as Node3D, map_root)
 	var packed_map := PackedScene.new()
 	if packed_map.pack(map_root) != OK:
 		push_error("Falha ao empacotar o mapa")
@@ -84,3 +89,28 @@ func _initialize() -> void:
 	print("Montagem aplicada: %d peças em %d grupos (erro %d)" % [counter, MapDecorTable.GROUPS.size(), err])
 	map_root.free()
 	quit(0 if err == OK else 1)
+
+
+## Nuvens volumétricas: Sky/Clouds com um MeshInstance3D por massa (o shader trabalha no espaço local do nó,
+## então arrastar o nó no editor move o volume).
+func _place_clouds(sky: Node3D, map_root: Node3D) -> int:
+	var clouds := Node3D.new()
+	clouds.name = "Clouds"
+	sky.add_child(clouds)
+	clouds.owner = map_root
+	var placed: int = 0
+	for mass: Dictionary in CloudTables.MASSES:
+		var mass_name: String = str(mass["name"])
+		var mi := MeshInstance3D.new()
+		mi.name = mass_name
+		mi.mesh = load(CLOUD_MODEL_DIR + mass_name + ".res") as Mesh
+		mi.material_override = load(CLOUD_MATERIAL_DIR + "cloud_" + mass_name + ".tres") as Material
+		if mi.mesh == null or mi.material_override == null:
+			push_error("Massa de nuvem sem proxy ou material (rode tools/kit/build_clouds.gd): " + mass_name)
+		mi.position = mass["pos"]
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+		clouds.add_child(mi)
+		mi.owner = map_root
+		placed += 1
+	return placed

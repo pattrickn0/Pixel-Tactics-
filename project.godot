@@ -40,3 +40,30 @@ texture={
 
 rendering_device/driver.windows="d3d12"
 anti_aliasing/quality/msaa_3d=2
+
+[shader_globals]
+
+sun_direction={
+"type": "vec3",
+"value": Vector3(-0.765931, 0.559193, -0.317259)
+}
+sun_color={
+"type": "color",
+"value": Color(1, 0.914, 0.784, 1)
+}
+sun_energy={
+"type": "float",
+"value": 1.65
+}
+cloud_time={
+"type": "float",
+"value": 0.0
+}
+island_shadow_mask={
+"type": "sampler2D",
+"value": "res://assets/models/clouds/island_shadow_mask.png"
+}
+island_shadow_rect={
+"type": "vec4",
+"value": Vector4(-64, -96, 64, 32)
+}

@@ -8,6 +8,12 @@ extends SceneTree
 ## spec, mais o desvio-padrão da luminância dos pixels de terra da arena e as medidas globais da revisão 012-f2
 ## (saturação, P95, escuros, leitosos, ilha e granulação da folhagem). --out é opcional com --boxes.
 ##   "$G" --headless --path . --script tools/dev/compare_images.gd -- --a=captura.png --b=docs/reference/ilha-flutuante.webp --boxes
+## Nuvens (spec 013): com --clouds, imprime as medidas de cada massa da Tabela N1 (ar, L P10/P50/P90, cor, iluminado,
+## centróide, IoU, estrutura, perfil, gradiente e tons) contra a referência, com os limites da spec, e o resumo da
+## Fase 1 e da Fase 2. Com --out (e --clouds), grava a comparação da 013: em cima a referência e a captura lado a lado,
+## embaixo os recortes 2x (referência | captura) de M3, M6, M5, M4 e M7.
+##   "$G" --headless --path . --script tools/dev/compare_images.gd -- --a=captura.png --b=docs/reference/ilha-flutuante.webp --clouds [--out=013-comparacao.png]
+## Com --same, compara duas capturas (--a e --b) e imprime a diferença média de L em cada caixa M1-M8 (limite 0,5).
 
 ## Caixas da spec 012 (x0, y0, x1, y1 em 1280x720), alvo e limite (fração). Fase 3 = só informativas.
 const BOXES: Array = [
@@ -23,9 +29,9 @@ const BOXES: Array = [
 	["faixa sul", Rect2i(250, 590, 170, 40), "#2C3F1E", 0.12],
 	["ceu alto direita", Rect2i(870, 0, 90, 30), "#B4BAD9", 0.08],
 	["ceu alto esquerda", Rect2i(130, 0, 100, 30), "#E2D1C1", 0.08],
-	["(F3) nuvem esquerda", Rect2i(40, 320, 100, 60), "#D9C7C2", 0.08],
-	["(F3) nuvem embaixo esquerda", Rect2i(30, 560, 120, 140), "#938B8C", 0.08],
-	["(F3) nuvem direita", Rect2i(1190, 330, 80, 90), "#B9B3BA", 0.08],
+	["nuvem esquerda", Rect2i(40, 320, 100, 60), "#D9C7C2", 0.08],
+	["nuvem embaixo esquerda", Rect2i(30, 560, 120, 140), "#938B8C", 0.08],
+	["nuvem direita", Rect2i(1190, 330, 80, 90), "#B9B3BA", 0.08],
 ]
 ## Medidas globais da revisão 012-f2 (L = luminância Rec. 709 de 0 a 255, S = (máx - mín) / máx, "leitoso" =
 ## S < 0,18 e L > 150; granulação = média |L - G2(L)| / média |G2(L) - G10(L)|, G = desfoque gaussiano σ em px).
@@ -61,6 +67,19 @@ func _initialize() -> void:
 		return
 	a.convert(Image.FORMAT_RGBA8)
 	b.convert(Image.FORMAT_RGBA8)
+	if args.has("same"):
+		# Determinismo (spec 013): duas capturas iguais têm diferença média de L <= 0,5 em cada caixa M1-M8.
+		quit(0 if CloudMeasure.print_determinism(a, b) else 1)
+		return
+	if args.has("clouds"):
+		var ref_c := b.duplicate() as Image
+		ref_c.resize(a.get_width(), a.get_height(), Image.INTERPOLATE_LANCZOS)
+		CloudMeasure.print_report(a, ref_c)
+		var err_c: Error = OK
+		if args.has("out"):
+			err_c = CloudMeasure.comparison_image(a, ref_c).save_png(str(args["out"]))
+		quit(0 if err_c == OK else 1)
+		return
 	if args.has("boxes"):
 		var ref := b.duplicate() as Image
 		ref.resize(a.get_width(), a.get_height(), Image.INTERPOLATE_LANCZOS)

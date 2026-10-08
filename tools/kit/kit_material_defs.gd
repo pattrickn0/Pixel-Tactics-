@@ -200,13 +200,7 @@ static func scenery() -> Dictionary:
 			"atlas_size": Vector2(1024.0, 512.0), "shade_low": Color(0.17, 0.24, 0.34), "shade_high": Color(0.62, 0.7, 0.62),
 			"core_color": Color("#10200d"), "dither_on": true, "dither_margin": 3.0, "wrap_light": 0.35, "rim_amount": 0.5})
 	# Céu, água e efeitos (A08 leva 2, Fase 3).
-	d["cloud_puff"] = _s("cloud_puff", {"atlas": SCENERY_TEX + "sky/cloud_puffs.png", "atlas_cols": 2, "atlas_rows": 2})
-	d["mist_puff"] = _s("cloud_puff", {"atlas": SCENERY_TEX + "fx/mist_puff.png", "atlas_cols": 1, "atlas_rows": 1, "energy": 1.3,
-			"deep_amount": 0.0, "sun_amount": 0.1})
-	var sea: Dictionary = _s("cloud_sea", {"sea": SCENERY_TEX + "sky/cloud_sea.png"})
-	# Desenhado antes das outras transparências (fica embaixo de tudo).
-	sea["priority"] = -20
-	d["cloud_sea"] = sea
+	# As nuvens são volumes (spec 013): materiais em assets/materials/clouds/, gravados por tools/kit/build_clouds.gd.
 	d["water_fall"] = _s("water_fall", {"streaks": SCENERY_TEX + "water/fall_streaks.png", "foam": SCENERY_TEX + "water/fall_foam.png"})
 	d["rainbow"] = _s("rainbow", {"bands": SCENERY_TEX + "fx/rainbow.png"})
 	d["flame"] = _s("flame", {"flipbook": SCENERY_TEX + "fx/fire_flipbook.png"})

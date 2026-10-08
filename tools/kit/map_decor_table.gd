@@ -1,7 +1,8 @@
 class_name MapDecorTable
 extends RefCounted
 ## Tabela explícita da montagem do mapa (spec 012, Fase 1): ilha, estruturas, decalques da arena, mata,
-## props, céu (ilha alta, cascata, ilhotas, rochas e nuvens) e névoa. Cada linha: [grupo, peça do kit, x, y, z,
+## props, céu (ilha alta, cascata, ilhotas e rochas) e efeitos. As nuvens volumétricas (spec 013) vêm de
+## tools/kit/cloud_tables.gd e ficam em Sky/Clouds (também aplicadas pelo place_decor.gd). Cada linha: [grupo, peça do kit, x, y, z,
 ## giro em graus] e, opcional, a escala uniforme. Posições escritas à mão a partir das medidas da referência
 ## docs/reference/ilha-flutuante.webp (Tabelas B, C e D da spec); nada é sorteado nem calculado.
 ## Lida por tools/kit/place_decor.gd (só com -- --force). Depois disso a fonte de verdade é scenes/map.tscn:
@@ -261,51 +262,7 @@ const ITEMS: Array = [
 	["Sky", "rock_float_b", -24.0, -7.5, 7.0, 40.0, 4.0],
 	["Sky", "root_hang_b", -24.6, -1.2, 8.6, 42.0, 1.3],
 	["Sky", "root_hang_a", -29.4, -1.2, 8.2, -20.0, 1.1],
-	# Mar de nuvens: plano pintado bem abaixo da ilha (Fase 3) e aglomerados de puffs
-	["Sky", "cloud_sea", 0.0, -27.0, 0.0, 0.0],
-	["Sky", "cloud_b", -38.4, -9.5, -21.4, 10.0, 1.91],
-	["Sky", "cloud_a", -37.9, -11.7, -12.6, 60.0, 1.33],
-	["Sky", "cloud_e", -32.3, -20.0, -10.6, 20.0, 1.29],
-	["Sky", "cloud_c", -29.8, -14.6, 3.6, 80.0, 0.97],
-	["Sky", "cloud_a", -27.1, -30.4, -12.9, 140.0, 1.27],
-	["Sky", "cloud_a", -39.6, -14.9, -47.7, 30.0, 1.46],
-	["Sky", "cloud_c", -32.4, -18.3, -67.6, 0.0, 1.66],
-	["Sky", "cloud_b", -27.3, -20.5, -85.8, 40.0, 3.12],
-	["Sky", "cloud_a", -22.5, -18.6, -97.4, 10.0, 2.29],
-	["Sky", "cloud_d", -4.9, -16.1, -61.8, 0.0, 3.55],
-	["Sky", "cloud_d", 15.6, -16.2, -60.0, 30.0, 4.09],
-	["Sky", "cloud_c", 32.6, -17.2, -83.9, 20.0, 2.07],
-	["Sky", "cloud_a", 44.4, -13.9, -66.6, 70.0, 2.07],
-	["Sky", "cloud_b", 56.2, -10.6, -76.6, 15.0, 2.83],
-	["Sky", "cloud_b", 47.3, -10.9, -37.0, 35.0, 2.56],
-	["Sky", "cloud_a", 44.1, -13.3, -23.6, 100.0, 1.62],
-	["Sky", "cloud_e", 39.9, -17.8, -18.5, 10.0, 1.33],
-	["Sky", "cloud_c", 35.7, -16.3, -4.8, 50.0, 1.02],
-	["Sky", "cloud_a", 28.6, -28.1, -9.0, 0.0, 1.34],
-	["Sky", "cloud_a", -18.5, -10.0, 9.2, 0.0, 1.1],
-	["Sky", "cloud_e", 22.3, -12.0, 7.6, 30.0, 1.05],
-	["Sky", "cloud_b", 13.9, -10.0, 9.2, 20.0, 1.4],
-	["Sky", "cloud_a", -6.0, -6.0, 18.6, 0.0, 0.6],
-	["Sky", "cloud_a", 7.0, -6.5, 18.2, 40.0, 0.55],
-	["Sky", "cloud_e", -2.0, -24.0, 30.0, 0.0, 1.6],
-	["Sky", "cloud_c", -30.0, -12.0, 22.0, 10.0, 1.2],
-	["Sky", "cloud_c", 30.0, -13.0, 24.0, 70.0, 1.2],
-	# Nuvens e rochas dos outros lados da órbita (o fundo de cada giro é nuvem/céu)
-	["Sky", "cloud_a", 33.8, -13.0, 12.3, 330.0, 1.6],
-	["Sky", "cloud_e", 24.4, -16.0, 29.1, 60.0, 1.5],
-	["Sky", "cloud_c", 6.9, -14.0, 39.4, 150.0, 1.7],
-	["Sky", "cloud_b", -12.7, -12.0, 34.8, 240.0, 1.8],
-	["Sky", "cloud_e", -29.1, -15.0, 24.4, 330.0, 1.4],
-	["Sky", "cloud_a", -33.8, -13.0, 9.1, 45.0, 1.5],
-	["Sky", "cloud_c", 39.8, -15.0, -3.5, 255.0, 1.5],
-	["Sky", "cloud_b", -36.7, -14.0, -9.8, 135.0, 1.6],
-	["Sky", "cloud_c", 79.7, -6.0, 46.0, 0.0, 3.2],
-	["Sky", "cloud_a", 44.0, -2.0, 76.2, 90.0, 3.4],
-	["Sky", "cloud_b", 0.0, -4.0, 95.0, 180.0, 4.0],
-	["Sky", "cloud_e", -45.0, 0.0, 77.9, 270.0, 3.0],
-	["Sky", "cloud_c", -83.1, -8.0, 48.0, 0.0, 3.3],
-	["Sky", "cloud_a", 92.6, 2.0, 16.3, 300.0, 3.0],
-	["Sky", "cloud_b", -88.6, -3.0, 15.6, 60.0, 3.6],
+	# Rochas dos outros lados da órbita (as nuvens ficam em Sky/Clouds, tabela CloudTables, spec 013)
 	["Sky", "rock_float_b", -30.0, 2.0, 40.0, 30.0, 2.4],
 	["Sky", "rock_float_a", -27.5, 0.0, 41.5, 80.0, 1.2],
 	["Sky", "rock_float_c", 33.0, -1.0, 38.0, 10.0, 2.0],
@@ -314,28 +271,4 @@ const ITEMS: Array = [
 	["Sky", "ruin_column_b", 36.4, -5.0, 48.2, 0.0, 0.9],
 	["Sky", "rock_float_b", -50.0, 1.0, 8.0, 0.0, 2.2],
 	["Sky", "rock_float_c", 50.0, -2.0, -6.0, 0.0, 2.0],
-	# Anel de nuvens do horizonte (Tabela D, f1): 12 aglomerados largos em volta da ilha, raio de 38 a 52, topo
-	# em y de -2,3 a -6 (Fase 3, puffs em billboard: cloud_c: topo = y + 3,35 x escala; cloud_e: topo = y + 3,04 x escala), deitados
-	# na tangente do anel. Aparecem logo acima da borda distante em qualquer giro.
-	["Sky", "cloud_c", 0.0, -13.55, 46.0, 0.0, 3.0],
-	["Sky", "cloud_e", 23.5, -13.50, 40.7, 30.0, 3.2],
-	["Sky", "cloud_c", 41.6, -13.55, 24.0, 60.0, 3.0],
-	["Sky", "cloud_e", 50.0, -12.00, 0.0, 90.0, 3.2],
-	["Sky", "cloud_c", 45.0, -14.55, -26.0, 120.0, 3.0],
-	["Sky", "cloud_e", 21.0, -14.50, -36.4, 150.0, 3.2],
-	["Sky", "cloud_c", 0.0, -16.05, -38.0, 180.0, 3.0],
-	["Sky", "cloud_e", -21.0, -14.50, -36.4, 210.0, 3.2],
-	["Sky", "cloud_c", -43.3, -14.55, -25.0, 240.0, 3.0],
-	["Sky", "cloud_e", -48.0, -12.00, 0.0, 270.0, 3.2],
-	["Sky", "cloud_c", -40.7, -13.55, 23.5, 300.0, 3.0],
-	["Sky", "cloud_e", -23.0, -13.50, 39.8, 330.0, 3.2],
-	# Névoa na base da cascata (puffs de névoa pintados, Fase 3)
-	["Fx", "mist_a", -7.6, -12.5, -55.2, 0.0, 1.5],
-	["Fx", "mist_a", -0.5, -13.4, -54.8, 30.0, 2.0],
-	["Fx", "mist_a", 6.2, -12.8, -54.9, 60.0, 1.8],
-	["Fx", "mist_a", 12.8, -12.2, -55.3, 10.0, 1.4],
-	# Névoa subindo entre as lâminas (até y -4) e ao lado da direita, atrás do plano da cascata
-	["Fx", "mist_a", -5.0, -6.0, -57.6, 0.0, 1.2],
-	["Fx", "mist_a", 1.2, -7.5, -58.0, 40.0, 1.6],
-	["Fx", "mist_a", 16.6, -3.0, -57.6, 20.0, 1.2],
 ]

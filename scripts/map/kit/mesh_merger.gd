@@ -13,9 +13,9 @@ extends Node
 ## Grupos com lote próprio cada um (saem do quadro quando a câmera gira e podem ser descartados).
 @export var separate_groups: PackedStringArray = ["Sky", "Fx"]
 
-## Malhas com estes shaders ficam de fora (billboards de nuvem e névoa: o shader usa a matriz da própria peça e a
-## transparência é ordenada por aglomerado).
-@export var unmerged_shaders: PackedStringArray = ["cloud_puff.gdshader"]
+## Malhas com estes shaders ficam de fora (nuvens volumétricas: o shader marcha no espaço local do próprio nó e a
+## transparência é ordenada por massa).
+@export var unmerged_shaders: PackedStringArray = ["cloud_volume.gdshader"]
 
 ## Quantas MeshInstance3D foram escondidas na última junção.
 var merged_sources: int = 0

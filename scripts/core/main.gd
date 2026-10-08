@@ -6,6 +6,9 @@ extends Node3D
 ## --hud=off (esconde o HUD; só para as capturas de comparação com a referência),
 ## --focus-offset=N (desloca o ponto mirado N unidades no sentido da vista; negativo = para a câmera).
 ## --distance, --overview e --focus-offset são só para captura (fogem dos limites do zoom de jogo).
+## Só captura (spec 013): --capture-frames=N (quadros de espera antes de salvar; o raymarch das nuvens no Vulkan
+## por software é lento) e --cam-from=x,y,z --cam-to=x,y,z (câmera livre olhando de um ponto para outro).
+## Na captura, o tempo das nuvens fica parado em 0 (imagem reproduzível).
 
 ## Quadros de espera antes de medir (sombras, glow e DOF estabilizarem).
 const CAPTURE_DELAY_FRAMES: int = 60
@@ -24,6 +27,7 @@ var match_state: MatchState = null
 @onready var _atmosphere: Atmosphere = $Atmosphere
 @onready var _dither: OcclusionDither = $OcclusionDither
 @onready var _merger: MeshMerger = $MeshMerger
+@onready var _sky_globals: SkyGlobals = $SkyGlobals
 
 
 func _ready() -> void:
@@ -63,9 +67,15 @@ func _ready() -> void:
 	if args.has("capture"):
 		# Captura não é interativa: tecla perdida (janela nova pega o foco) não gira a câmera.
 		_camera.set_process_unhandled_input(false)
+		_sky_globals.freeze()
+		if args.has("cam-from") and args.has("cam-to"):
+			_camera.set_process(false)
+			_camera.look_at_from_position(_parse_vec3(str(args["cam-from"])), _parse_vec3(str(args["cam-to"])), Vector3.UP)
+		var delay: int = int(args.get("capture-frames", CAPTURE_DELAY_FRAMES))
+		var measure: int = CAPTURE_MEASURE_FRAMES if not args.has("capture-frames") else maxi(2, delay / 4)
 		# Roda em paralelo (espera quadros e fecha o jogo); não precisa de await aqui.
 		@warning_ignore("missing_await")
-		_capture_and_quit(str(args["capture"]))
+		_capture_and_quit(str(args["capture"]), maxi(delay, 1), measure)
 
 
 ## "--chave=valor" vira {chave: valor}; "--chave" sozinho vira {chave: ""}.
@@ -83,19 +93,33 @@ func _parse_user_args() -> Dictionary:
 	return result
 
 
-func _capture_and_quit(path: String) -> void:
+## "x,y,z" -> Vector3.
+static func _parse_vec3(text: String) -> Vector3:
+	var parts: PackedStringArray = text.split(",")
+	if parts.size() != 3:
+		push_error("Vetor inválido (esperado x,y,z): " + text)
+		return Vector3.ZERO
+	return Vector3(float(parts[0]), float(parts[1]), float(parts[2]))
+
+
+func _capture_and_quit(path: String, delay_frames: int, measure_frames: int) -> void:
 	# Sem vsync, a média de FPS mede o custo real do quadro (e não a taxa do monitor).
 	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
-	for _i in CAPTURE_DELAY_FRAMES:
+	var viewport_rid: RID = get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(viewport_rid, true)
+	for _i in delay_frames:
 		await get_tree().process_frame
 	var start_usec: int = Time.get_ticks_usec()
-	for _i in CAPTURE_MEASURE_FRAMES:
+	var gpu_ms: float = 0.0
+	for _i in measure_frames:
 		await get_tree().process_frame
+		gpu_ms += RenderingServer.viewport_get_measured_render_time_gpu(viewport_rid)
 	var elapsed: float = float(Time.get_ticks_usec() - start_usec) / 1_000_000.0
 	await RenderingServer.frame_post_draw
 	var image: Image = get_viewport().get_texture().get_image()
-	print("Medição %dx%d: FPS médio (últimos %d quadros) %.1f; draw calls %d; primitivas %d" % [
-			image.get_width(), image.get_height(), CAPTURE_MEASURE_FRAMES, CAPTURE_MEASURE_FRAMES / maxf(elapsed, 0.000001),
+	print("Medição %dx%d: FPS médio (últimos %d quadros) %.2f; GPU %.1f ms/quadro; draw calls %d; primitivas %d" % [
+			image.get_width(), image.get_height(), measure_frames, measure_frames / maxf(elapsed, 0.000001),
+			gpu_ms / float(measure_frames),
 			int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 			int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME))])
 	var abs_path: String = path

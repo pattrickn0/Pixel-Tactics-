@@ -54,11 +54,7 @@ static func catalog() -> Array[Dictionary]:
 	for name_i in ["a", "b", "c"]:
 		out.append(_e("ruin_column_" + name_i, "column", Vector3(1.0, [3.4, 2.1, 0.9]["abc".find(name_i)], 1.0), {"variant": "abc".find(name_i)}))
 	out.append(_e("ruin_lintel", "lintel", Vector3(4.4, 0.55, 0.8), {}))
-	for i in IslandTables.CLOUDS.size():
-		out.append(_e("cloud_%s" % "abcde"[i], "cloud", Vector3(14, 4, 6), {"variant": i, "no_shadow": true, "cull_margin": 4.0}))
-	# Névoa da base da cascata (puffs de fx/mist_puff, com o desenho do aglomerado d) e o mar de nuvens embaixo.
-	out.append(_e("mist_a", "cloud", Vector3(6, 3, 3), {"variant": 3, "material": "mist_puff", "no_shadow": true, "cull_margin": 3.0}))
-	out.append(_e("cloud_sea", "cloud_sea", Vector3(400, 0, 400), {"no_shadow": true}))
+	# As nuvens (e a névoa da base da cascata) saíram do kit: são volumes (spec 013, tools/kit/cloud_tables.gd).
 	out.append(_e("brazier_a", "brazier", Vector3(0.5, 1.5, 0.5), {"obstacle": true, "light": [1.25, 3.5, 0.9]}))
 	out.append(_e("bridge_rope_w", "bridge", Vector3(4.9, 2.2, 1.7), {"variant": 0}))
 	out.append(_e("bridge_rope_e", "bridge", Vector3(3.6, 2.5, 1.7), {"variant": 1}))
@@ -121,11 +117,6 @@ static func build(m: KitMesher, entry: Dictionary) -> bool:
 			column(m, v)
 		"lintel":
 			m.box("ruin_stone_box", "ruin_stone_box", Vector3(-s.x * 0.5, 0.0, -s.z * 0.5), Vector3(s.x * 0.5, s.y, s.z * 0.5))
-		"cloud":
-			cloud(m, IslandTables.CLOUDS[v], str(entry.get("material", "cloud_puff")))
-		"cloud_sea":
-			var hs: float = s.x * 0.5
-			m.quad("cloud_sea", Vector3(-hs, 0.0, -hs), Vector3(hs, 0.0, -hs), Vector3(hs, 0.0, hs), Vector3(-hs, 0.0, hs), Vector3.UP)
 		"brazier":
 			brazier(m)
 		"bridge":
@@ -826,46 +817,6 @@ static func rock_vines(m: KitMesher) -> void:
 		hang_cards(m, "vines_cards", float(vc[0]), float(vc[1]), (int(vc[2]) + k) % 4, int(vc[3]))
 		k += 1
 	m.xf = xf_saved
-
-
-## Nuvem (A08 leva 2, Fase 3): cada puff da tabela vira um quad em billboard (shader cloud_puff) com uma célula
-## do atlas; o tamanho cobre a esfera da tabela (o desenho ocupa 85% da largura e 60% da altura da célula).
-## A ordem dos puffs na malha é a de desenho dentro do aglomerado: de trás (z local menor) para a frente.
-const CLOUD_PUFF_SCALE: float = 1.45
-
-
-static func cloud(m: KitMesher, puffs: Array, key: String) -> void:
-	var ordered: Array = puffs.duplicate()
-	ordered.sort_custom(func(a: Vector4, b: Vector4) -> bool: return a.z < b.z)
-	var k: int = 0
-	for p: Vector4 in ordered:
-		var half: float = p.w * CLOUD_PUFF_SCALE
-		var c := Vector3(p.x, p.y - p.w * 0.13, p.z)
-		_billboard(m, key, c, half, (k * 3 + puffs.size()) % 4 if key == "cloud_puff" else 0, 2 if key == "cloud_puff" else 1,
-				0.2 + 0.15 * float(k % 5))
-		k += 1
-	m.color = Color.WHITE
-
-
-## Topo visível (local) de uma nuvem da tabela: o desenho vai até 14% da célula (72% da meia altura acima do centro).
-static func cloud_visible_top(variant: int) -> float:
-	var top: float = -INF
-	for p: Vector4 in IslandTables.CLOUDS[variant]:
-		top = maxf(top, p.y - p.w * 0.13 + p.w * CLOUD_PUFF_SCALE * 0.72)
-	return top
-
-
-## Quad de billboard no plano XY local centrado em c (meia largura half), com a célula do atlas (cols x cols) e
-## uma folga mínima no UV (o shader tira o canto do quad de fract(UV)). COLOR.r = half / 32, COLOR.a = tom.
-static func _billboard(m: KitMesher, key: String, c: Vector3, half: float, cell: int, cols: int, shade: float) -> void:
-	var du: float = 1.0 / float(cols)
-	var u0: float = float(cell % cols) * du
-	var v0: float = float(cell / cols) * du
-	var e: float = 0.002
-	m.color = Color(half / 32.0, 0.0, 0.0, shade)
-	m.quad(key, c + Vector3(-half, half, 0.0), c + Vector3(half, half, 0.0), c + Vector3(half, -half, 0.0), c + Vector3(-half, -half, 0.0),
-			Vector3(0.0, 0.0, 1.0), Vector2(u0 + e, v0 + e), Vector2(u0 + du - e, v0 + e), Vector2(u0 + du - e, v0 + du - e),
-			Vector2(u0 + e, v0 + du - e))
 
 
 # ================================================================ estruturas

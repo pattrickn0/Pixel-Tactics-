@@ -31,7 +31,7 @@ const REQUIRED_NAMES: PackedStringArray = [
 	"island_top", "island_cliff", "island_under", "root_hang_a", "root_hang_b", "root_hang_c", "vine_hang_a", "vine_hang_b",
 	"island_high", "high_spur", "high_block", "waterfall", "rainbow", "islet_ruins", "islet_ne", "islet_w", "islet_e",
 	"rock_float_a", "rock_float_b", "rock_float_c", "rock_big", "ruin_column_a", "ruin_column_b", "ruin_column_c", "ruin_lintel",
-	"cloud_a", "cloud_b", "cloud_c", "cloud_d", "cloud_e", "brazier_a", "bridge_rope_w", "bridge_rope_e", "landing_south",
+	"brazier_a", "bridge_rope_w", "bridge_rope_e", "landing_south",
 	"landing_north", "platform_w", "path_ne", "pillar_stone", "arena_ground", "arena_slabs",
 	"ground_inner", "ground_outer", "decal_arena_dirt", "decal_grass_light_0", "decal_grass_light_1",
 	"decal_grass_light_2", "decal_grass_dark_0", "decal_grass_dark_1", "decal_forest_soil_0", "decal_forest_soil_1",

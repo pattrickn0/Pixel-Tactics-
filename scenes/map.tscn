@@ -83,14 +83,37 @@
 [ext_resource type="PackedScene" path="res://scenes/kit/rock_float_b.tscn" id="78_qitd0"]
 [ext_resource type="PackedScene" path="res://scenes/kit/rock_float_a.tscn" id="79_clnm0"]
 [ext_resource type="PackedScene" path="res://scenes/kit/rock_float_c.tscn" id="80_xb1vf"]
-[ext_resource type="PackedScene" path="res://scenes/kit/cloud_b.tscn" id="81_we0su"]
-[ext_resource type="PackedScene" path="res://scenes/kit/cloud_a.tscn" id="82_csj0d"]
-[ext_resource type="PackedScene" path="res://scenes/kit/cloud_e.tscn" id="83_ivt0i"]
-[ext_resource type="PackedScene" path="res://scenes/kit/cloud_c.tscn" id="84_4ewnl"]
-[ext_resource type="PackedScene" path="res://scenes/kit/cloud_sea.tscn" id="84_uemes"]
-[ext_resource type="PackedScene" path="res://scenes/kit/cloud_d.tscn" id="85_4v3bk"]
-[ext_resource type="PackedScene" path="res://scenes/kit/mist_a.tscn" id="90_aj2kf"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M3_R1.tres" id="84_8imy6"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M3_R1.res" id="85_goal7"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M3_R2.tres" id="86_2nsuc"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M3_R2.res" id="87_o8g4j"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M3_R3.tres" id="88_0kbeg"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M3_R3.res" id="89_pie5y"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M3_R4.tres" id="90_pfb0u"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M3_R4.res" id="91_521t8"]
 [ext_resource type="MultiMesh" path="res://assets/models/scatter/fireflies.tres" id="91_g204o"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M4.tres" id="92_8bpgt"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M4.res" id="93_54sr3"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M7_R1.tres" id="94_y8qgh"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M7_R1.res" id="95_o6pjl"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M7_R2.tres" id="96_dp2xw"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M7_R2.res" id="97_jvymk"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M7_R3.tres" id="98_nopys"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M7_R3.res" id="99_5g3sy"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M8.tres" id="100_6ob85"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M8.res" id="101_rdlqv"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M1.tres" id="102_7upxd"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M1.res" id="103_noif7"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M2.tres" id="104_sxfoa"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M2.res" id="105_f8b38"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M2b.tres" id="106_b3noo"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M2b.res" id="107_gyc73"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M5.tres" id="108_bbrc0"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M5.res" id="109_6ml5h"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_M6.tres" id="110_2txnj"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/M6.res" id="111_rxsn8"]
+[ext_resource type="Material" path="res://assets/materials/clouds/cloud_Sea.tres" id="112_qitd0"]
+[ext_resource type="ArrayMesh" path="res://assets/models/clouds/Sea.res" id="113_clnm0"]
 
 [node name="Map" type="Node3D" unique_id=1174681232]
 script = ExtResource("1_m335s")
@@ -2205,357 +2228,154 @@ transform = Transform3D(1.0336618, 0, -0.37622213, 0, 1.1, 0, 0.37622213, 0, 1.0
 script = ExtResource("3_4b7dj")
 size = Vector3(1.5, 5.5, 1.5)
 
-[node name="cloud_sea_231" type="Node3D" parent="Sky" unique_id=839676503 instance=ExtResource("84_uemes")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -27, 0)
-script = ExtResource("3_4b7dj")
-size = Vector3(400, 0, 400)
-
-[node name="cloud_b_232" type="Node3D" parent="Sky" unique_id=1941190726 instance=ExtResource("81_we0su")]
-transform = Transform3D(1.8809828, 0, 0.33166802, 0, 1.91, 0, -0.33166802, 0, 1.8809828, -38.4, -9.5, -21.4)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_233" type="Node3D" parent="Sky" unique_id=1876646829 instance=ExtResource("82_csj0d")]
-transform = Transform3D(0.66499996, 0, 1.1518139, 0, 1.33, 0, -1.1518139, 0, 0.66499996, -37.9, -11.7, -12.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_e_234" type="Node3D" parent="Sky" unique_id=478834093 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(1.2122034, 0, 0.44120595, 0, 1.29, 0, -0.44120595, 0, 1.2122034, -32.3, -20, -10.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_c_235" type="Node3D" parent="Sky" unique_id=2068433593 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(0.16843878, 0, 0.95526356, 0, 0.97, 0, -0.95526356, 0, 0.16843878, -29.8, -14.6, 3.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_236" type="Node3D" parent="Sky" unique_id=718611737 instance=ExtResource("82_csj0d")]
-transform = Transform3D(-0.9728764, 0, 0.81634027, 0, 1.27, 0, -0.81634027, 0, -0.9728764, -27.1, -30.4, -12.9)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_237" type="Node3D" parent="Sky" unique_id=1130200283 instance=ExtResource("82_csj0d")]
-transform = Transform3D(1.2643971, 0, 0.73, 0, 1.46, 0, -0.73, 0, 1.2643971, -39.6, -14.9, -47.7)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_c_238" type="Node3D" parent="Sky" unique_id=1381066194 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(1.66, 0, 0, 0, 1.66, 0, 0, 0, 1.66, -32.4, -18.3, -67.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_b_239" type="Node3D" parent="Sky" unique_id=253338844 instance=ExtResource("81_we0su")]
-transform = Transform3D(2.3900585, 0, 2.0054972, 0, 3.12, 0, -2.0054972, 0, 2.3900585, -27.3, -20.5, -85.8)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_240" type="Node3D" parent="Sky" unique_id=101922943 instance=ExtResource("82_csj0d")]
-transform = Transform3D(2.2552097, 0, 0.39765432, 0, 2.29, 0, -0.39765432, 0, 2.2552097, -22.5, -18.6, -97.4)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_d_241" type="Node3D" parent="Sky" unique_id=1052317459 instance=ExtResource("85_4v3bk")]
-transform = Transform3D(3.55, 0, 0, 0, 3.55, 0, 0, 0, 3.55, -4.9, -16.1, -61.8)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_d_242" type="Node3D" parent="Sky" unique_id=1019967517 instance=ExtResource("85_4v3bk")]
-transform = Transform3D(3.542044, 0, 2.045, 0, 4.09, 0, -2.045, 0, 3.542044, 15.6, -16.2, -60)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_c_243" type="Node3D" parent="Sky" unique_id=1539186821 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(1.9451636, 0, 0.70798165, 0, 2.07, 0, -0.70798165, 0, 1.9451636, 32.6, -17.2, -83.9)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_244" type="Node3D" parent="Sky" unique_id=2065167146 instance=ExtResource("82_csj0d")]
-transform = Transform3D(0.7079817, 0, 1.9451636, 0, 2.07, 0, -1.9451636, 0, 0.7079817, 44.4, -13.9, -66.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_b_245" type="Node3D" parent="Sky" unique_id=1884978274 instance=ExtResource("81_we0su")]
-transform = Transform3D(2.7335699, 0, 0.7324579, 0, 2.83, 0, -0.7324579, 0, 2.7335699, 56.2, -10.6, -76.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_b_246" type="Node3D" parent="Sky" unique_id=1468422974 instance=ExtResource("81_we0su")]
-transform = Transform3D(2.0970292, 0, 1.4683557, 0, 2.56, 0, -1.4683557, 0, 2.0970292, 47.3, -10.9, -37)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_247" type="Node3D" parent="Sky" unique_id=384189315 instance=ExtResource("82_csj0d")]
-transform = Transform3D(-0.28131008, 0, 1.5953885, 0, 1.62, 0, -1.5953885, 0, -0.28131008, 44.1, -13.3, -23.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_e_248" type="Node3D" parent="Sky" unique_id=1310643946 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(1.3097943, 0, 0.23095208, 0, 1.33, 0, -0.23095208, 0, 1.3097943, 39.9, -17.8, -18.5)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_c_249" type="Node3D" parent="Sky" unique_id=326096994 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(0.6556434, 0, 0.78136533, 0, 1.02, 0, -0.78136533, 0, 0.6556434, 35.7, -16.3, -4.8)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_250" type="Node3D" parent="Sky" unique_id=1693786452 instance=ExtResource("82_csj0d")]
-transform = Transform3D(1.34, 0, 0, 0, 1.34, 0, 0, 0, 1.34, 28.6, -28.1, -9)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_251" type="Node3D" parent="Sky" unique_id=275674769 instance=ExtResource("82_csj0d")]
-transform = Transform3D(1.1, 0, 0, 0, 1.1, 0, 0, 0, 1.1, -18.5, -10, 9.2)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_e_252" type="Node3D" parent="Sky" unique_id=365040670 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(0.9093266, 0, 0.525, 0, 1.05, 0, -0.525, 0, 0.9093266, 22.3, -12, 7.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_b_253" type="Node3D" parent="Sky" unique_id=448946577 instance=ExtResource("81_we0su")]
-transform = Transform3D(1.3155696, 0, 0.47882816, 0, 1.4, 0, -0.47882816, 0, 1.3155696, 13.9, -10, 9.2)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_254" type="Node3D" parent="Sky" unique_id=1757920603 instance=ExtResource("82_csj0d")]
-transform = Transform3D(0.6, 0, 0, 0, 0.6, 0, 0, 0, 0.6, -6, -6, 18.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_255" type="Node3D" parent="Sky" unique_id=2108328507 instance=ExtResource("82_csj0d")]
-transform = Transform3D(0.42132446, 0, 0.35353318, 0, 0.55, 0, -0.35353318, 0, 0.42132446, 7, -6.5, 18.2)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_e_256" type="Node3D" parent="Sky" unique_id=1545142774 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(1.6, 0, 0, 0, 1.6, 0, 0, 0, 1.6, -2, -24, 30)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_c_257" type="Node3D" parent="Sky" unique_id=1613428050 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(1.1817694, 0, 0.20837782, 0, 1.2, 0, -0.20837782, 0, 1.1817694, -30, -12, 22)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_c_258" type="Node3D" parent="Sky" unique_id=393237814 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(0.4104242, 0, 1.1276312, 0, 1.2, 0, -1.1276312, 0, 0.4104242, 30, -13, 24)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_259" type="Node3D" parent="Sky" unique_id=1525924052 instance=ExtResource("82_csj0d")]
-transform = Transform3D(1.3856405, 0, -0.8000003, 0, 1.6, 0, 0.8000003, 0, 1.3856405, 33.8, -13, 12.3)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_e_260" type="Node3D" parent="Sky" unique_id=1225014462 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(0.74999994, 0, 1.2990382, 0, 1.5, 0, -1.2990382, 0, 0.74999994, 24.4, -16, 29.1)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_c_261" type="Node3D" parent="Sky" unique_id=1537447969 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(-1.4722432, 0, 0.85000014, 0, 1.7, 0, -0.85000014, 0, -1.4722432, 6.9, -14, 39.4)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_b_262" type="Node3D" parent="Sky" unique_id=394022545 instance=ExtResource("81_we0su")]
-transform = Transform3D(-0.8999998, 0, -1.5588458, 0, 1.8, 0, 1.5588458, 0, -0.8999998, -12.7, -12, 34.8)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_e_263" type="Node3D" parent="Sky" unique_id=201485181 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(1.2124355, 0, -0.7000002, 0, 1.4, 0, 0.7000002, 0, 1.2124355, -29.1, -15, 24.4)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_264" type="Node3D" parent="Sky" unique_id=920969809 instance=ExtResource("82_csj0d")]
-transform = Transform3D(1.0606601, 0, 1.0606601, 0, 1.5, 0, -1.0606601, 0, 1.0606601, -33.8, -13, 9.1)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_c_265" type="Node3D" parent="Sky" unique_id=700988550 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(-0.38822848, 0, -1.4488888, 0, 1.5, 0, 1.4488888, 0, -0.38822848, 39.8, -15, -3.5)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_b_266" type="Node3D" parent="Sky" unique_id=136163662 instance=ExtResource("81_we0su")]
-transform = Transform3D(-1.1313709, 0, 1.1313709, 0, 1.6, 0, -1.1313709, 0, -1.1313709, -36.7, -14, -9.8)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_c_267" type="Node3D" parent="Sky" unique_id=96967830 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(3.2, 0, 0, 0, 3.2, 0, 0, 0, 3.2, 79.7, -6, 46)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_268" type="Node3D" parent="Sky" unique_id=2102597647 instance=ExtResource("82_csj0d")]
-transform = Transform3D(-1.4861872e-07, 0, 3.4, 0, 3.4, 0, -3.4, 0, -1.4861872e-07, 44, -2, 76.2)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_b_269" type="Node3D" parent="Sky" unique_id=1963872712 instance=ExtResource("81_we0su")]
-transform = Transform3D(-4, 0, -3.496911e-07, 0, 4, 0, 3.496911e-07, 0, -4, 0, -4, 95)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_e_270" type="Node3D" parent="Sky" unique_id=300399945 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(3.577464e-08, 0, -3, 0, 3, 0, 3, 0, 3.577464e-08, -45, 0, 77.9)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_c_271" type="Node3D" parent="Sky" unique_id=2123767934 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(3.3, 0, 0, 0, 3.3, 0, 0, 0, 3.3, -83.1, -8, 48)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_a_272" type="Node3D" parent="Sky" unique_id=1856404248 instance=ExtResource("82_csj0d")]
-transform = Transform3D(1.4999998, 0, -2.5980763, 0, 3, 0, 2.5980763, 0, 1.4999998, 92.6, 2, 16.3)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="cloud_b_273" type="Node3D" parent="Sky" unique_id=1223351472 instance=ExtResource("81_we0su")]
-transform = Transform3D(1.7999998, 0, 3.1176915, 0, 3.6, 0, -3.1176915, 0, 1.7999998, -88.6, -3, 15.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
-
-[node name="rock_float_b_274" type="Node3D" parent="Sky" unique_id=897538112 instance=ExtResource("78_qitd0")]
+[node name="rock_float_b_231" type="Node3D" parent="Sky" unique_id=1212941534 instance=ExtResource("78_qitd0")]
 transform = Transform3D(2.078461, 0, 1.2, 0, 2.4, 0, -1.2, 0, 2.078461, -30, 2, 40)
 script = ExtResource("3_4b7dj")
 size = Vector3(1, 1.6, 1)
 
-[node name="rock_float_a_275" type="Node3D" parent="Sky" unique_id=1662209940 instance=ExtResource("79_clnm0")]
+[node name="rock_float_a_232" type="Node3D" parent="Sky" unique_id=1910618567 instance=ExtResource("79_clnm0")]
 transform = Transform3D(0.20837788, 0, 1.1817694, 0, 1.2, 0, -1.1817694, 0, 0.20837788, -27.5, 0, 41.5)
 script = ExtResource("3_4b7dj")
 size = Vector3(1, 1.3, 1)
 
-[node name="rock_float_c_276" type="Node3D" parent="Sky" unique_id=1436973366 instance=ExtResource("80_xb1vf")]
+[node name="rock_float_c_233" type="Node3D" parent="Sky" unique_id=1974350091 instance=ExtResource("80_xb1vf")]
 transform = Transform3D(1.9696155, 0, 0.34729636, 0, 2, 0, -0.34729636, 0, 1.9696155, 33, -1, 38)
 script = ExtResource("3_4b7dj")
 size = Vector3(1, 1.1, 1)
 
-[node name="rock_float_a_277" type="Node3D" parent="Sky" unique_id=1256077070 instance=ExtResource("79_clnm0")]
+[node name="rock_float_a_234" type="Node3D" parent="Sky" unique_id=348928440 instance=ExtResource("79_clnm0")]
 transform = Transform3D(0.8999027, 0, 1.0724622, 0, 1.4, 0, -1.0724622, 0, 0.8999027, 35, 3, 36)
 script = ExtResource("3_4b7dj")
 size = Vector3(1, 1.3, 1)
 
-[node name="islet_ne_278" type="Node3D" parent="Sky" unique_id=2050280484 instance=ExtResource("74_bbrc0")]
+[node name="islet_ne_235" type="Node3D" parent="Sky" unique_id=787143889 instance=ExtResource("74_bbrc0")]
 transform = Transform3D(-0.9396926, 0, -0.34202015, 0, 1, 0, 0.34202015, 0, -0.9396926, 36, -5, 48)
 script = ExtResource("3_4b7dj")
 size = Vector3(7, 7, 7)
 
-[node name="ruin_column_b_279" type="Node3D" parent="Sky" unique_id=944930898 instance=ExtResource("72_b3noo")]
+[node name="ruin_column_b_236" type="Node3D" parent="Sky" unique_id=782661238 instance=ExtResource("72_b3noo")]
 transform = Transform3D(0.9, 0, 0, 0, 0.9, 0, 0, 0, 0.9, 36.4, -5, 48.2)
 script = ExtResource("3_4b7dj")
 size = Vector3(1, 2.1, 1)
 
-[node name="rock_float_b_280" type="Node3D" parent="Sky" unique_id=221652919 instance=ExtResource("78_qitd0")]
+[node name="rock_float_b_237" type="Node3D" parent="Sky" unique_id=868581443 instance=ExtResource("78_qitd0")]
 transform = Transform3D(2.2, 0, 0, 0, 2.2, 0, 0, 0, 2.2, -50, 1, 8)
 script = ExtResource("3_4b7dj")
 size = Vector3(1, 1.6, 1)
 
-[node name="rock_float_c_281" type="Node3D" parent="Sky" unique_id=2046604445 instance=ExtResource("80_xb1vf")]
+[node name="rock_float_c_238" type="Node3D" parent="Sky" unique_id=1560103921 instance=ExtResource("80_xb1vf")]
 transform = Transform3D(2, 0, 0, 0, 2, 0, 0, 0, 2, 50, -2, -6)
 script = ExtResource("3_4b7dj")
 size = Vector3(1, 1.1, 1)
 
-[node name="cloud_c_282" type="Node3D" parent="Sky" unique_id=643781496 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(3, 0, 0, 0, 3, 0, 0, 0, 3, 0, -13.55, 46)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="Clouds" type="Node3D" parent="Sky" unique_id=1302391967]
 
-[node name="cloud_e_283" type="Node3D" parent="Sky" unique_id=1388217735 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(2.7712812, 0, 1.6, 0, 3.2, 0, -1.6, 0, 2.7712812, 23.5, -13.5, 40.7)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M3_R1" type="MeshInstance3D" parent="Sky/Clouds" unique_id=138634170]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -56, -2.2, -37)
+material_override = ExtResource("84_8imy6")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("85_goal7")
 
-[node name="cloud_c_284" type="Node3D" parent="Sky" unique_id=994981573 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(1.4999999, 0, 2.5980763, 0, 3, 0, -2.5980763, 0, 1.4999999, 41.6, -13.55, 24)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M3_R2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1049785172]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, -7, -20)
+material_override = ExtResource("86_2nsuc")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("87_o8g4j")
 
-[node name="cloud_e_285" type="Node3D" parent="Sky" unique_id=190607793 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(-1.3987645e-07, 0, 3.2, 0, 3.2, 0, -3.2, 0, -1.3987645e-07, 50, -12, 0)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M3_R3" type="MeshInstance3D" parent="Sky/Clouds" unique_id=577638036]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, -8.2, -16.2)
+material_override = ExtResource("88_0kbeg")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("89_pie5y")
 
-[node name="cloud_c_286" type="Node3D" parent="Sky" unique_id=123383866 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(-1.5000002, 0, 2.598076, 0, 3, 0, -2.598076, 0, -1.5000002, 45, -14.55, -26)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M3_R4" type="MeshInstance3D" parent="Sky/Clouds" unique_id=124036629]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -45, -12, -7)
+material_override = ExtResource("90_pfb0u")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("91_521t8")
 
-[node name="cloud_e_287" type="Node3D" parent="Sky" unique_id=2096124147 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(-2.7712812, 0, 1.6000003, 0, 3.2, 0, -1.6000003, 0, -2.7712812, 21, -14.5, -36.4)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M7_R1" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1074542195]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54, -1, -35)
+material_override = ExtResource("94_y8qgh")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("95_o6pjl")
 
-[node name="cloud_c_288" type="Node3D" parent="Sky" unique_id=1076533234 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(-3, 0, -2.6226832e-07, 0, 3, 0, 2.6226832e-07, 0, -3, 0, -16.05, -38)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M7_R2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=841838714]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, -7, -20)
+material_override = ExtResource("96_dp2xw")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("97_jvymk")
 
-[node name="cloud_e_289" type="Node3D" parent="Sky" unique_id=564920228 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(-2.7712812, 0, -1.5999999, 0, 3.2, 0, 1.5999999, 0, -2.7712812, -21, -14.5, -36.4)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M7_R3" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1772008433]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, -10.5, -14)
+material_override = ExtResource("98_nopys")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("99_5g3sy")
 
-[node name="cloud_c_290" type="Node3D" parent="Sky" unique_id=38112564 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(-1.4999998, 0, -2.5980763, 0, 3, 0, 2.5980763, 0, -1.4999998, -43.3, -14.55, -25)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M8" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1516128821]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -20, -5.5)
+material_override = ExtResource("100_6ob85")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("101_rdlqv")
 
-[node name="cloud_e_291" type="Node3D" parent="Sky" unique_id=1837420712 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(3.815962e-08, 0, -3.2, 0, 3.2, 0, 3.2, 0, 3.815962e-08, -48, -12, 0)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M4" type="MeshInstance3D" parent="Sky/Clouds" unique_id=373277865]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, -21.5, 0)
+material_override = ExtResource("92_8bpgt")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("93_54sr3")
 
-[node name="cloud_c_292" type="Node3D" parent="Sky" unique_id=2009324888 instance=ExtResource("84_4ewnl")]
-transform = Transform3D(1.4999998, 0, -2.5980763, 0, 3, 0, 2.5980763, 0, 1.4999998, -40.7, -13.55, 23.5)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M1" type="MeshInstance3D" parent="Sky/Clouds" unique_id=222041983]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, -6.5, -88)
+material_override = ExtResource("102_7upxd")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("103_noif7")
 
-[node name="cloud_e_293" type="Node3D" parent="Sky" unique_id=217580796 instance=ExtResource("83_ivt0i")]
-transform = Transform3D(2.771281, 0, -1.6000006, 0, 3.2, 0, 1.6000006, 0, 2.771281, -23, -13.5, 39.8)
-script = ExtResource("3_4b7dj")
-size = Vector3(14, 4, 6)
+[node name="M2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1786029586]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, -7.5, -83)
+material_override = ExtResource("104_sxfoa")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("105_f8b38")
+
+[node name="M2b" type="MeshInstance3D" parent="Sky/Clouds" unique_id=881623626]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, -11, -55)
+material_override = ExtResource("106_b3noo")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("107_gyc73")
+
+[node name="M5" type="MeshInstance3D" parent="Sky/Clouds" unique_id=915661039]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -11.5, -84)
+material_override = ExtResource("108_bbrc0")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("109_6ml5h")
+
+[node name="M6" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1258648989]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64, -13.5, -102)
+material_override = ExtResource("110_2txnj")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("111_rxsn8")
+
+[node name="Sea" type="MeshInstance3D" parent="Sky/Clouds" unique_id=635515440]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -30, 0)
+material_override = ExtResource("112_qitd0")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("113_clnm0")
 
 [node name="Fx" type="Node3D" parent="." unique_id=458544898]
-
-[node name="mist_a_294" type="Node3D" parent="Fx" unique_id=2005461135 instance=ExtResource("90_aj2kf")]
-transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, -7.6, -12.5, -55.2)
-script = ExtResource("3_4b7dj")
-size = Vector3(6, 3, 3)
-
-[node name="mist_a_295" type="Node3D" parent="Fx" unique_id=2085187932 instance=ExtResource("90_aj2kf")]
-transform = Transform3D(1.7320508, 0, 1, 0, 2, 0, -1, 0, 1.7320508, -0.5, -13.4, -54.8)
-script = ExtResource("3_4b7dj")
-size = Vector3(6, 3, 3)
-
-[node name="mist_a_296" type="Node3D" parent="Fx" unique_id=1620679113 instance=ExtResource("90_aj2kf")]
-transform = Transform3D(0.8999999, 0, 1.5588458, 0, 1.8, 0, -1.5588458, 0, 0.8999999, 6.2, -12.8, -54.9)
-script = ExtResource("3_4b7dj")
-size = Vector3(6, 3, 3)
-
-[node name="mist_a_297" type="Node3D" parent="Fx" unique_id=833374478 instance=ExtResource("90_aj2kf")]
-transform = Transform3D(1.3787308, 0, 0.24310745, 0, 1.4, 0, -0.24310745, 0, 1.3787308, 12.8, -12.2, -55.3)
-script = ExtResource("3_4b7dj")
-size = Vector3(6, 3, 3)
-
-[node name="mist_a_298" type="Node3D" parent="Fx" unique_id=1503625220 instance=ExtResource("90_aj2kf")]
-transform = Transform3D(1.2, 0, 0, 0, 1.2, 0, 0, 0, 1.2, -5, -6, -57.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(6, 3, 3)
-
-[node name="mist_a_299" type="Node3D" parent="Fx" unique_id=1698570601 instance=ExtResource("90_aj2kf")]
-transform = Transform3D(1.2256712, 0, 1.0284601, 0, 1.6, 0, -1.0284601, 0, 1.2256712, 1.2, -7.5, -58)
-script = ExtResource("3_4b7dj")
-size = Vector3(6, 3, 3)
-
-[node name="mist_a_300" type="Node3D" parent="Fx" unique_id=38332334 instance=ExtResource("90_aj2kf")]
-transform = Transform3D(1.1276312, 0, 0.41042417, 0, 1.2, 0, -0.41042417, 0, 1.1276312, 16.6, -3, -57.6)
-script = ExtResource("3_4b7dj")
-size = Vector3(6, 3, 3)
 
 [node name="Fireflies" type="MultiMeshInstance3D" parent="Fx" unique_id=1818707917]
 cast_shadow = 0

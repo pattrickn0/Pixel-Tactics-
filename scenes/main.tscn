@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/map/kit/occlusion_dither.gd" id="6_dither"]
 [ext_resource type="Shader" path="res://assets/materials/sky_day.gdshader" id="7_sky"]
 [ext_resource type="Script" path="res://scripts/map/kit/mesh_merger.gd" id="8_merger"]
+[ext_resource type="Script" path="res://scripts/core/sky_globals.gd" id="9_skyglobals"]
 
 [sub_resource type="ShaderMaterial" id="SkyMaterial_main"]
 shader = ExtResource("7_sky")
@@ -97,6 +98,10 @@ directional_shadow_max_distance = 90.0
 script = ExtResource("5_atmosphere")
 sun = NodePath("../Sun")
 world_environment = NodePath("../WorldEnvironment")
+
+[node name="SkyGlobals" type="Node" parent="." node_paths=PackedStringArray("sun")]
+script = ExtResource("9_skyglobals")
+sun = NodePath("../Sun")
 
 [node name="OcclusionDither" type="Node" parent="."]
 script = ExtResource("6_dither")

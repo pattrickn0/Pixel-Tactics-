@@ -1,0 +1,66 @@
+[gd_resource type="ShaderMaterial" format=4]
+
+[ext_resource type="Shader" path="res://assets/materials/cloud_volume.gdshader" id="1_gxm55"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_gxm55")
+shader_parameter/lobes = PackedVector4Array(-14.4, -4.05, 0, 4.05, -7.2, -3.85, 0.81, 3.48, 0, -4.13, -0.61, 4.37, 7.2, -3.91, 0.41, 3.73, 14.4, -4.09, -0.91, 4.21, -14.4, -1.06, 0.85, 1.7, -10.09, -1.73, 0.06, 2.23, -7.81, -0.97, 0.91, 1.46, -3.19, -1.66, 0.61, 2.02, -0.3, -1.34, 1.09, 1.86, 4.41, -1.99, 0.24, 2.43, 6.49, -1, 0.85, 1.62, 10.8, -1.35, 0.06, 1.7, 15.11, -1.52, 0.91, 2.23, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/lobe_axes = PackedVector3Array(1.4, 1, 0.6, 1.4, 1, 0.6, 1.4, 1, 0.6, 1.4, 1, 0.6, 1.4, 1, 0.6, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+shader_parameter/lobe_count = 14
+shader_parameter/layer_mode = null
+shader_parameter/layer_top = null
+shader_parameter/layer_amp = null
+shader_parameter/layer_cell = null
+shader_parameter/proxy_min = Vector3(-23.07, -8.4, -6.44)
+shader_parameter/proxy_max = Vector3(23.3, 3.3000002, 5.9100003)
+shader_parameter/blend_k = null
+shader_parameter/edge_softness = null
+shader_parameter/base_height = -5.4
+shader_parameter/base_softness = null
+shader_parameter/top_height = 0.30000002026557904
+shader_parameter/density = null
+shader_parameter/noise_scale = null
+shader_parameter/noise_strength = null
+shader_parameter/erosion_base = null
+shader_parameter/erosion_top = null
+shader_parameter/noise_offset = Vector3(32.24, 48.278, 45.302)
+shader_parameter/drift_speed = null
+shader_parameter/primary_steps = null
+shader_parameter/extinction = null
+shader_parameter/light_extinction = null
+shader_parameter/light_step = null
+shader_parameter/light_growth = null
+shader_parameter/sun_strength = null
+shader_parameter/phase_forward = null
+shader_parameter/phase_back = null
+shader_parameter/phase_mix = null
+shader_parameter/powder_strength = null
+shader_parameter/ms_floor = null
+shader_parameter/ambient_bottom = null
+shader_parameter/ambient_top = null
+shader_parameter/ambient_extinction = null
+shader_parameter/ambient_height_mix = null
+shader_parameter/light_lo = null
+shader_parameter/light_hi = null
+shader_parameter/light_gamma = null
+shader_parameter/exposure = 0.75
+shader_parameter/ramp_p5 = null
+shader_parameter/ramp_p25 = null
+shader_parameter/ramp_p50 = null
+shader_parameter/ramp_p75 = null
+shader_parameter/ramp_p95 = null
+shader_parameter/shadow_p5 = null
+shader_parameter/shadow_p50 = null
+shader_parameter/shadow_p95 = null
+shader_parameter/island_shadow_strength = null
+shader_parameter/island_shadow_plane = null
+shader_parameter/island_shadow_penumbra = null
+shader_parameter/island_shadow_spread = null
+shader_parameter/aerial_color = null
+shader_parameter/aerial_max = null
+shader_parameter/aerial_distance = null
+shader_parameter/opacity = null
+shader_parameter/compensate_tonemap = null
+shader_parameter/tonemap_exposure = null
+shader_parameter/tonemap_white = null

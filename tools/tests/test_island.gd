@@ -274,39 +274,12 @@ func _test_orbit_rule(map: Node3D) -> void:
 	cam.free()
 
 
-## Anel de nuvens do horizonte (Tabela D, f1): de 10 a 16 aglomerados largos (>= 30 de largura) com o centro a
-## raio horizontal de 35 a 60 e o topo em y de -6 a -2, cobrindo o giro inteiro (nenhum vão maior que 60°).
+## Anel de nuvens do horizonte: desde a spec 013 as nuvens são volumes (Sky/Clouds, tabela CloudTables) e o anel é
+## conferido em tools/tests/test_clouds.gd. Aqui só confere que o grupo existe e tem volumes.
 func _test_horizon_ring(sky: Node) -> void:
-	var angles: Array[float] = []
-	for child: Node in sky.get_children():
-		var piece := child as KitPiece
-		if piece == null or not str(piece.scene_file_path.get_file()).begins_with("cloud_"):
-			continue
-		var r: float = Vector2(piece.global_position.x, piece.global_position.z).length()
-		if r < 35.0 or r > 60.0:
-			continue
-		var box := AABB()
-		var first := true
-		for node: Node in _descendants(piece):
-			var mi := node as MeshInstance3D
-			if mi == null or mi.mesh == null:
-				continue
-			var b: AABB = mi.global_transform * mi.mesh.get_aabb()
-			box = b if first else box.merge(b)
-			first = false
-		# Fase 3: os puffs são billboards (o quad passa do desenho); o topo é o do desenho (SceneryPieces.cloud_visible_top).
-		var variant: int = "abcde".find(str(piece.scene_file_path.get_file().get_basename()).right(1))
-		var top: float = piece.global_position.y + SceneryPieces.cloud_visible_top(variant) * piece.scale.y
-		if first or top < -6.0 or top > -2.0 or maxf(box.size.x, box.size.z) < 30.0:
-			continue
-		angles.append(fposmod(rad_to_deg(atan2(piece.global_position.x, piece.global_position.z)), 360.0))
-	angles.sort()
-	var widest: float = 0.0
-	for i in angles.size():
-		var next: float = angles[(i + 1) % angles.size()] + (360.0 if i == angles.size() - 1 else 0.0)
-		widest = maxf(widest, next - angles[i])
-	_check(angles.size() >= 10 and angles.size() <= 16 and widest <= 60.0,
-			"anel de nuvens do horizonte: de 10 a 16 aglomerados largos (%d), raio 35 a 60, topo de -6 a -2, maior vão %.0f°" % [angles.size(), widest])
+	var clouds: Node = sky.get_node_or_null("Clouds")
+	_check(clouds != null and clouds.get_child_count() >= CloudTables.MASSES.size(),
+			"nuvens volumétricas em Sky/Clouds (%d nós; anel conferido em test_clouds)" % (clouds.get_child_count() if clouds != null else 0))
 
 
 ## Fase 3: de 28 a 48 vaga-lumes em tabela (MultiMesh no grupo Fx), sem sombra.
