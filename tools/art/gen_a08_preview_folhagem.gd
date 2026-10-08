@@ -32,8 +32,10 @@ func _initialize() -> void:
 	rows.append(_hcat([_labeled(canopy, "MONTAGEM DE COPA: 40 TUFOS WARM+MID, TINTA POR ALTURA"), _labeled(canopy_c, "COPA COOL+MID"),
 		_labeled(ref_can, "REFERENCIA: COPA AO SOL (LESTE) X8")]))
 	var tree: Image = _conifer(con, bark)
+	var share: float = _light_share(tree, Color("#6E9A3A"))
+	print("montagem de conífera: rampa clara em %.0f%% dos pixels da árvore" % (share * 100.0))
 	var ref_con: Image = PL.scaled(ref.get_region(REF_CONIFER), 520.0 / 120.0, Image.INTERPOLATE_LANCZOS)
-	rows.append(_hcat([_labeled(PL.on_bg(con, BG), "CONIFER_TIERS 1024X512 (0-5 ANDARES, 6-7 PONTAS)"), _labeled(tree, "MONTAGEM DE CONIFERA"),
+	rows.append(_hcat([_labeled(PL.on_bg(con, BG), "CONIFER_TIERS 1024X512 (0-5 ANDARES, 6-7 PONTAS)"), _labeled(tree, "MONTAGEM DE CONIFERA: RAMPA CLARA (>= #6E9A3A) EM %.0f%%" % (share * 100.0)),
 		_labeled(ref_con, "REFERENCIA: CONIFERAS DO LESTE X4.3")]))
 	var bark_v: Image = PL.tiled(bark, 2, 1)
 	var bark_n: Image = PL.load_tex("foliage/bark_n")
@@ -93,17 +95,33 @@ func _conifer(con: Image, bark: Image) -> Image:
 	out.blend_rect(trunk, Rect2i(0, 0, 26, 120), Vector2i(247, 395))
 	# do andar mais baixo (célula 0) até a ponta (célula 6); cada andar sobe e encolhe
 	var cells: Array = [0, 1, 2, 3, 4, 5, 6]
-	var y: float = 445.0
-	var s: float = 1.12
+	var y: float = 455.0
+	var s: float = 0.98
 	for j: int in cells.size():
 		var card: Image = con.get_region(Rect2i((int(cells[j]) % 4) * 256, (int(cells[j]) / 4) * 256, 256, 256))
 		var sz: int = roundi(256 * s)
 		card.resize(sz, sz, Image.INTERPOLATE_LANCZOS)
-		_tint(card, 0.72 + 0.06 * j)
+		_tint(card, 0.94 + 0.01 * j)
 		out.blend_rect(card, Rect2i(0, 0, sz, sz), Vector2i(roundi(260 - sz * 0.5), roundi(y - sz * 0.9)))
-		y -= sz * 0.3
+		y -= sz * 0.4
 		s *= 0.87
 	return out
+
+
+## Fração dos pixels da árvore (cor diferente do céu) com luminância >= a da cor de corte.
+func _light_share(img: Image, cut: Color) -> float:
+	var lc: float = PL.lum(cut)
+	var n: int = 0
+	var k: int = 0
+	for y: int in img.get_height():
+		for x: int in img.get_width():
+			var c: Color = img.get_pixel(x, y)
+			if PL.cdist(c, SKY) < 0.02 or c.g < c.r:
+				continue
+			n += 1
+			if PL.lum(c) >= lc:
+				k += 1
+	return float(k) / float(maxi(n, 1))
 
 
 func _tint(img: Image, f: float) -> void:

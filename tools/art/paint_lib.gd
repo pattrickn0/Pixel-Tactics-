@@ -22,6 +22,9 @@ class Canvas extends RefCounted:
 	var b: PackedFloat32Array
 	var a: PackedFloat32Array
 	var z: PackedFloat32Array
+	# recorte de linhas para a pintura (só linhas clip_lo <= y < clip_hi recebem tinta)
+	var clip_lo: int = 0
+	var clip_hi: int = 1 << 30
 
 	func _init(width: int, height: int, wx: bool, wy: bool) -> void:
 		w = width
@@ -64,6 +67,9 @@ class Canvas extends RefCounted:
 	## Mistura "por cima" com alfa reto. mode 0 = over; mode 1 = atop (só onde já há tinta).
 	func blend(i: int, c: Color, t: float, mode: int = 0) -> void:
 		if t <= 0.0:
+			return
+		var row: int = i / w
+		if row < clip_lo or row >= clip_hi:
 			return
 		if t > 1.0:
 			t = 1.0
@@ -730,7 +736,7 @@ const FONT: Dictionary = {
 	"#": "101111101111101", ":": "000010000010000", "=": "000111000111000",
 	"%": "101001010100101", ",": "000000000010100", "(": "010100100100010",
 	")": "010001001001010", "+": "000010111010000", ">": "100010001010100",
-	"<": "001010100010001", "*": "000101010101000",
+	"<": "001010100010001", "*": "000101010101000", "|": "010010010010010",
 }
 
 
@@ -784,6 +790,58 @@ static func lum_stats(img: Image, rc: Rect2i, dirt_only: bool = false) -> Dictio
 		return {"mean": 0.0, "std": 0.0, "n": 0, "color": Color.BLACK}
 	var m: float = s / n
 	return {"mean": m, "std": sqrt(maxf(s2 / n - m * m, 0.0)), "n": n, "color": Color(cr / n, cg / n, cb / n)}
+
+
+## (r1) Métrica da grama na escala da câmera: reduz a 1/3 (Lanczos) e mede o desvio-padrão de L, a média
+## de |L - desfoque gaussiano σ 4 px| (com volta) e o L médio.
+## Com scale = 1 e wrap = false serve para medir um recorte da referência do mesmo jeito.
+static func camera_metrics(img: Image, scale: float = 1.0 / 3.0, wrap: bool = true) -> Dictionary:
+	var sm: Image = img.duplicate()
+	sm.convert(Image.FORMAT_RGBA8)
+	if scale != 1.0:
+		sm.resize(roundi(img.get_width() * scale), roundi(img.get_height() * scale), Image.INTERPOLATE_LANCZOS)
+	var w: int = sm.get_width()
+	var h: int = sm.get_height()
+	var d: PackedByteArray = sm.get_data()
+	var L := PackedFloat32Array()
+	L.resize(w * h)
+	for i: int in w * h:
+		L[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2]
+	var sigma: float = 4.0
+	var rad: int = 12
+	var ker := PackedFloat32Array()
+	var ks: float = 0.0
+	for k: int in range(-rad, rad + 1):
+		var v: float = exp(-float(k * k) / (2.0 * sigma * sigma))
+		ker.append(v)
+		ks += v
+	for k: int in ker.size():
+		ker[k] /= ks
+	var tmp := PackedFloat32Array()
+	tmp.resize(w * h)
+	var bl := PackedFloat32Array()
+	bl.resize(w * h)
+	for y: int in h:
+		for x: int in w:
+			var s: float = 0.0
+			for k: int in range(-rad, rad + 1):
+				s += L[y * w + (posmod(x + k, w) if wrap else clampi(x + k, 0, w - 1))] * ker[k + rad]
+			tmp[y * w + x] = s
+	for y: int in h:
+		for x: int in w:
+			var s: float = 0.0
+			for k: int in range(-rad, rad + 1):
+				s += tmp[(posmod(y + k, h) if wrap else clampi(y + k, 0, h - 1)) * w + x] * ker[k + rad]
+			bl[y * w + x] = s
+	var s1: float = 0.0
+	var s2: float = 0.0
+	var dt: float = 0.0
+	for i: int in w * h:
+		s1 += L[i]
+		s2 += L[i] * L[i]
+		dt += absf(L[i] - bl[i])
+	var mean: float = s1 / float(w * h)
+	return {"std": sqrt(maxf(s2 / float(w * h) - mean * mean, 0.0)), "detail": dt / float(w * h), "mean": mean}
 
 
 ## Pixel "de terra": marrom-alaranjado, não verde (R acima de G, G acima de B, saturação mínima).

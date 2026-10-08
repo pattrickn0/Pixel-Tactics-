@@ -308,55 +308,67 @@ func _drape_moss(cv: PL.Canvas, rng: RandomNumberGenerator, n_moss: PackedFloat3
 
 
 # ---------------------------------------------------------------------------
-# Topo de muro e de degrau (512x128 = 8 x 2 unidades, seamless horizontal)
-# Duas faixas de 1 unidade (y 0..63 e 64..127), cada uma com lajes de cobertura de lado a lado:
-# pedra aparecendo nas duas beiras e musgo/grama cobrindo o meio (>= 50%).
+# Topo de muro e de degrau (512x128 = 8 x 2 unidades, seamless horizontal). (r1)
+# Duas faixas iguais de 1 unidade (y 0..63 e 64..127). Em cada faixa: duas fileiras de lajes de
+# cobertura bege-claras, com musgo amarelo-esverdeado claro só nas bordas e nas juntas (25% a 40%).
+# A borda de cima de cada faixa (y = 0 e y = 64) é a de FORA do muro (mais musgo); a de baixo
+# (y = 63 e y = 127) é a de DENTRO (arena/terraço), com só um fio de musgo.
 # ---------------------------------------------------------------------------
+
+const TOP_STONE: Array = ["#8E8466", "#B4A884", "#C8BB94", "#D2C59C", "#DCCEA4", "#E0D2A8"]
+const TOP_MOSS: Array = ["#87A23A", "#A8B050", "#B8BA60", "#C8C470"]
+
 
 func _wall_top() -> void:
 	var w: int = 512 * SS
 	var h: int = 128 * SS
-	var cv := PL.Canvas.new(w, h, true, true)
-	cv.fill(c(STONE[0]))
+	var cv := PL.Canvas.new(w, h, true, false)
+	var stone: Array = []
+	for hx: String in TOP_STONE:
+		stone.append(c(hx))
+	cv.fill(stone[1])
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7501
 	var n_face: PackedFloat32Array = PL.pfield(w, h, 16, 3, 7502, 0.8, 2, 0.55)
 	var n_edge: PackedFloat32Array = PL.pfield(w, h, 48, 2, 7503, 0.6, 2, 0.5)
 	var n_moss: PackedFloat32Array = PL.pfield(w, h, 12, 3, 7504, 1.0, 2, 0.5)
-	# lajes: [x0, y0, comprimento, largura]
+	var n_big: PackedFloat32Array = PL.pfield(w, h, 3, 2, 7505, 0.8, 4, 0.5)
+	# lajes: [x0, y0, comprimento, largura, tom]; 2 faixas x 2 fileiras de 0,5 unidade
 	var caps: Array = []
-	for row: int in 2:
-		var x: float = rng.randf() * w
-		var total: float = 0.0
-		while total < w - 40.0 * SS:
-			var ln: float = rng.randf_range(44.0, 100.0) * SS
-			if total + ln > w - 30.0 * SS:
-				ln = w - total
-			caps.append([x + total, row * 64 * SS, ln, 64 * SS, rng.randf_range(-1.0, 1.0)])
-			total += ln
-	var bevel: float = 6.0 * SS
+	for strip: int in 2:
+		for row: int in 2:
+			var x: float = rng.randf() * w
+			var total: float = 0.0
+			while total < w - 40.0 * SS:
+				var ln: float = rng.randf_range(40.0, 84.0) * SS
+				if total + ln > w - 30.0 * SS:
+					ln = w - total
+				caps.append([x + total, (strip * 64 + row * 32) * SS, ln, 32 * SS, rng.randf_range(-1.0, 1.0)])
+				total += ln
+	var bevel: float = 5.0 * SS
 	for y: int in h:
 		for x: int in w:
 			var i: int = y * w + x
 			var best: float = 1e9
-			var ly: float = 0.0
 			var tone: float = 0.0
 			for cp: Array in caps:
+				var yy: float = y + 0.5 - float(cp[1])
+				if yy < -8.0 * SS or yy > float(cp[3]) + 8.0 * SS:
+					continue
 				var lx: float = fposmod(x + 0.5 - float(cp[0]), w)
 				if lx > float(cp[2]) + 8.0 * SS and lx < w - 8.0 * SS:
 					continue
 				if lx > w * 0.5:
 					lx -= w
-				var yy: float = y + 0.5 - float(cp[1])
 				var q := Vector2(lx - float(cp[2]) * 0.5, yy - float(cp[3]) * 0.5)
-				var sd: float = sd_box(q, float(cp[2]) * 0.5, float(cp[3]) * 0.5, 6.0 * SS)
+				var sd: float = sd_box(q, float(cp[2]) * 0.5, float(cp[3]) * 0.5, 5.0 * SS)
 				if sd < best:
 					best = sd
-					ly = clampf(yy / float(cp[3]), 0.0, 1.0)
 					tone = cp[4]
-			var sd2: float = best + 2.2 * SS + (n_edge[i] - 0.5) * 3.0 * SS
+			var sd2: float = best + 1.6 * SS + (n_edge[i] - 0.5) * 2.4 * SS
 			if sd2 > 0.0:
-				var jc: Color = c(STONE[0])
+				# junta rasa e clara (a crista é a moldura clara da arena)
+				var jc: Color = stone[0].lerp(stone[1], 0.45)
 				cv.r[i] = jc.r
 				cv.g[i] = jc.g
 				cv.b[i] = jc.b
@@ -367,50 +379,73 @@ func _wall_top() -> void:
 			var lv: float = f * 3.0
 			var fl: float = floorf(lv)
 			var facet: float = (fl + smoothstep(0.35, 0.65, lv - fl)) / 3.0
-			# visto de cima: beira escurece (chanfro), centro claro
-			var t: float = 0.62 + 0.06 * tone + 0.16 * (facet - 0.5) - 0.3 * (1.0 - smoothstep(0.0, 1.0, depth))
-			var col: Color = PL.ramp_at(_stone_ramp(), clampf(t, 0.0, 1.0))
+			# visto de cima: centro claro, chanfro um pouco mais escuro
+			var t: float = 0.78 + 0.07 * tone + 0.12 * (facet - 0.5) + 0.46 * (n_big[i] - 0.5) - 0.32 * (1.0 - smoothstep(0.0, 1.0, depth))
+			var col: Color = PL.ramp_at(stone, clampf(t, 0.0, 1.0))
 			cv.r[i] = col.r
 			cv.g[i] = col.g
 			cv.b[i] = col.b
 			cv.z[i] = 0.55 + 0.45 * smoothstep(0.0, 1.0, depth) + 0.05 * (facet - 0.5)
-	_cracks(cv, rng, 10)
-	# Musgo e grama: faixa no meio de cada laje (borda torta) + juntas
-	var ramp: Array = _moss_ramp()
-	ramp.append(c("#B8C85A"))
+	_cracks(cv, rng, 8)
+	# Musgo: borda de fora (larga), junta do meio, borda de dentro (fio) e juntas de través
+	var moss: Array = []
+	for hx: String in TOP_MOSS:
+		moss.append(c(hx))
+	var dens := PackedFloat32Array()
+	dens.resize(w * h)
+	for y: int in h:
+		var fy: float = fposmod(float(y) / SS, 64.0) / 64.0
+		for x: int in w:
+			var i: int = y * w + x
+			var nm: float = n_moss[i] - 0.5 + 0.5 * (n_big[i] - 0.5)
+			var outer: float = 1.0 - smoothstep(0.04, 0.11, fy + 0.1 * nm)
+			var mid: float = 1.0 - smoothstep(0.025, 0.06, absf(fy - 0.5) + 0.05 * nm)
+			var inner: float = 1.0 - smoothstep(0.015, 0.035, 1.0 - fy + 0.03 * nm)
+			var cross: float = 0.0
+			if cv.z[i] < 0.3:
+				cross = smoothstep(0.45, 0.6, n_moss[i])
+			dens[i] = maxf(maxf(outer, mid * smoothstep(0.25, 0.5, n_moss[i] + 0.2)), maxf(inner * 0.8, cross))
+	var mask := PackedByteArray()
+	mask.resize(w * h)
 	var leaves: Array = []
-	for k: int in 26000:
+	for k: int in 30000:
 		var p := Vector2(rng.randf() * w, rng.randf() * h)
 		var i: int = cv.idx(int(p.x), int(p.y))
-		var fy: float = fposmod(p.y, 64.0 * SS) / (64.0 * SS)
-		var band: float = 1.0 - smoothstep(0.17, 0.27, absf(fy - 0.5) + 0.2 * (n_moss[i] - 0.5))
-		var jm: float = 0.85 if cv.z[i] < 0.3 else 0.0
-		if rng.randf() > maxf(band, jm * smoothstep(0.4, 0.6, n_moss[i])):
+		if rng.randf() > smoothstep(0.35, 0.65, dens[i]):
 			continue
 		leaves.append(p)
 	leaves.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.y < b.y)
-	var moss_px: int = 0
 	for p: Vector2 in leaves:
 		var i: int = cv.idx(int(p.x), int(p.y))
-		var r: float = rng.randf_range(2.2, 4.4) * SS
-		var t: float = clampf(0.35 + 0.45 * n_moss[i] + rng.randf_range(-0.15, 0.15), 0.0, 0.9)
-		cv.blob(p.x, p.y, r, r * 0.8, rng.randf() * PI, PL.ramp_at(ramp, t), 1.0, 0.55, 0, 1.0)
-		cv.blob(p.x, p.y - r * 0.25, r * 0.55, r * 0.4, 0.0, PL.ramp_at(ramp, t + 0.15), 0.6, 0.3)
-	# Lâminas de grama saindo do musgo para cima da pedra
-	for k: int in 900:
+		var r: float = rng.randf_range(1.8, 3.6) * SS
+		var t: float = clampf(0.35 + 0.5 * n_moss[i] + rng.randf_range(-0.2, 0.2), 0.0, 1.0)
+		cv.blob(p.x, p.y, r, r * 0.8, rng.randf() * PI, PL.ramp_at(moss, t * 0.85), 1.0, 0.55, 0, 1.0)
+		cv.blob(p.x, p.y - r * 0.25, r * 0.55, r * 0.4, 0.0, PL.ramp_at(moss, t + 0.2), 0.6, 0.3)
+		for yy: int in range(int(p.y - r * 0.8), int(p.y + r * 0.8) + 1):
+			for xx: int in range(int(p.x - r * 0.8), int(p.x + r * 0.8) + 1):
+				var j: int = cv.idx(xx, yy)
+				if j >= 0:
+					mask[j] = 1
+	# algumas lâminas de grama saindo do musgo
+	for k: int in 500:
 		var p := Vector2(rng.randf() * w, rng.randf() * h)
 		var i: int = cv.idx(int(p.x), int(p.y))
-		if cv.z[i] < 0.95:
+		if mask[i] == 0:
 			continue
-		var ang: float = rng.randf() * TAU
-		var pts: PackedVector2Array = PL.arc_pts(p, ang, rng.randf_range(8.0, 18.0) * SS, rng.randf_range(-0.8, 0.8), 3)
-		cv.stroke(pts, PL.taper(3, 1.4 * SS, 0.4 * SS), c("#5E8424"), c("#A8C447"), 0.9)
+		var pts: PackedVector2Array = PL.arc_pts(p, rng.randf() * TAU, rng.randf_range(6.0, 13.0) * SS, rng.randf_range(-0.8, 0.8), 3)
+		cv.stroke(pts, PL.taper(3, 1.2 * SS, 0.35 * SS), moss[0], moss[3], 0.9)
+	var cov: int = 0
+	for v: int in mask:
+		cov += v
 	var out: PL.Canvas = cv.down2()
+	var img: Image = out.to_image(true)
+	var mean := Vector3.ZERO
 	for i: int in out.w * out.h:
-		if out.g[i] > out.r[i] * 1.08 and out.g[i] > out.b[i] * 1.3:
-			moss_px += 1
-	print("wall_top: musgo/grama cobre %.0f%%" % (100.0 * float(moss_px) / float(out.w * out.h)))
-	PL.save_png(out.to_image(true), PL.TEX + "stone/wall_top.png")
+		mean += Vector3(out.r[i], out.g[i], out.b[i])
+	mean /= float(out.w * out.h)
+	var mc := Color(mean.x, mean.y, mean.z)
+	print("wall_top: musgo cobre %.0f%%, média #%s (a %.1f%% de #D2C46D)" % [100.0 * float(cov) / float(w * h), mc.to_html(false).to_upper(), PL.cdist(mc, c("#D2C46D")) * 100.0])
+	PL.save_png(img, PL.TEX + "stone/wall_top.png")
 	PL.save_png(PL.normal_map(out.z, out.w, out.h, 5.0, 2, true, false), PL.TEX + "stone/wall_top_n.png")
 
 

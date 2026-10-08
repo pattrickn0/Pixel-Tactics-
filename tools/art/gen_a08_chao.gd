@@ -43,65 +43,98 @@ static func c(s: String) -> Color:
 func _grass(file: String, seed_base: int, variant_b: bool) -> void:
 	var n: int = 512 * SS
 	var cv := PL.Canvas.new(n, n, true, true)
+	# (r1) tufos de 0,25 a 0,6 com topo claro e fendas escuras entre eles; manchas grandes fracas
+	# rampa: fenda, base do tufo, meio, ponta, ponta ao sol
 	var ramp: Array = []
 	if variant_b:
-		ramp = [c("#557A24"), c("#6E9028"), c("#88A82E"), c("#9DBA3A"), c("#B2CA50")]
+		ramp = [c("#3E5619"), c("#506A1E"), c("#6A8A26"), c("#90AE32"), c("#AEC84C")]
 	else:
-		ramp = [c("#456A20"), c("#5E8424"), c("#76992A"), c("#8DAE34"), c("#A8C447")]
-	# Valor em manchas grandes (1/2 a 1/8 do quadro), com distorção de domínio, posterizado em
-	# planos (pintura em "massas" de valor, não gradiente de nuvem)
-	var big: PackedFloat32Array = PL.pfield(n, n, 2, 4, seed_base * 1000 + 1, 1.1, 8, 0.55)
-	var mid: PackedFloat32Array = PL.pfield(n, n, 7, 3, seed_base * 1000 + 2, 0.8, 4, 0.5)
-	var val := PackedFloat32Array()
-	val.resize(n * n)
+		ramp = [c("#3F5A1A"), c("#4F6A1E"), c("#5E8424"), c("#7FA22C"), c("#A8C447")]
+	var big: PackedFloat32Array = PL.pfield(n, n, 2, 3, seed_base * 1000 + 1, 1.0, 8, 0.55)
+	var lean_f: PackedFloat32Array = PL.pfield(n, n, 3, 2, seed_base * 1000 + 3, 0.5, 8)
+	# fundo: a fenda escura, com variação fraca
 	for i: int in n * n:
-		var v: float = smoothstep(0.15, 0.85, 0.72 * big[i] + 0.28 * mid[i])
-		var lv: float = v * 3.0
-		var fl: float = floorf(lv)
-		v = (fl + smoothstep(0.2, 0.8, lv - fl)) / 3.0
-		val[i] = 0.12 + 0.76 * v
-	cv.paint_ramp(val, ramp)
-	# Direção das lâminas: campo suave (as pinceladas seguem um "penteado" que muda devagar)
-	var dirf: PackedFloat32Array = PL.pfield(n, n, 3, 2, seed_base * 1000 + 3, 0.5, 8)
+		var col: Color = ramp[0].lerp(ramp[1], 0.25 + 0.3 * big[i])
+		cv.r[i] = col.r
+		cv.g[i] = col.g
+		cv.b[i] = col.b
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed_base * 7919 + 5
-	# Tufos: leque de lâminas curvas, base escura e ponta clara (luz de cima). Pintados de cima
-	# para baixo, para o tufo de baixo cobrir a base do de cima.
-	var clumps: Array = []
-	for k: int in 4200:
-		clumps.append(Vector2(rng.randf() * n, rng.randf() * n))
-	clumps.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.y < q.y)
-	for p: Vector2 in clumps:
+	var tufts: Array = []
+	for k: int in 1300:
+		tufts.append(Vector2(rng.randf() * n, rng.randf() * n))
+	tufts.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.y < q.y)
+	var u: float = 64.0 * SS
+	# parâmetros sorteados antes, para poder repintar a faixa de cima no fim (ordem certa na volta)
+	var plan: Array = []
+	for p: Vector2 in tufts:
 		var pi: int = cv.idx(int(p.x), int(p.y))
-		var v: float = val[pi]
-		var main_ang: float = dirf[pi] * TAU * 1.5 + rng.randf_range(-0.5, 0.5)
-		var blades: int = rng.randi_range(4, 7)
-		var size: float = rng.randf_range(0.8, 1.3)
-		var dv: float = rng.randf_range(-0.06, 0.06)
-		for bl: int in blades:
-			var ang: float = main_ang + rng.randf_range(-0.8, 0.8)
-			var length: float = rng.randf_range(16.0, 34.0) * size
-			var bend: float = rng.randf_range(-1.0, 1.0)
-			var pts: PackedVector2Array = PL.arc_pts(p + Vector2(rng.randf_range(-3, 3), rng.randf_range(-3, 3)), ang, length, bend, 4)
-			var radii: PackedFloat32Array = PL.taper(4, rng.randf_range(2.0, 3.0), 0.6, 1.0)
-			var c0: Color = PL.ramp_at(ramp, v - 0.3 + dv)
-			var c1: Color = PL.ramp_at(ramp, v + 0.2 + dv)
-			cv.stroke(pts, radii, c0, c1, rng.randf_range(0.6, 0.9))
-	# Lâminas de luz: traços curtos e claros só nas massas altas (grama ao sol)
-	for k: int in 1400:
-		var p := Vector2(rng.randf() * n, rng.randf() * n)
-		var pi: int = cv.idx(int(p.x), int(p.y))
-		var v: float = val[pi]
-		if v < 0.5:
-			continue
-		var ang: float = dirf[pi] * TAU * 1.5 + rng.randf_range(-0.9, 0.9)
-		var pts: PackedVector2Array = PL.arc_pts(p, ang, rng.randf_range(10.0, 20.0), rng.randf_range(-0.8, 0.8), 3)
-		cv.stroke(pts, PL.taper(3, 1.8, 0.5), PL.ramp_at(ramp, v + 0.05), PL.ramp_at(ramp, v + 0.3), rng.randf_range(0.5, 0.8))
+		var tone: float = 0.14 * (big[pi] - 0.5) + rng.randf_range(-0.05, 0.05)
+		# inclinação comum (para cima e um pouco para a direita), variando devagar
+		var lean: float = -PI * 0.5 + 0.35 + 0.8 * (lean_f[pi] - 0.5)
+		var rad: float = u * rng.randf_range(0.14, 0.31)
+		var base: Vector2 = p + Vector2(0.0, rad * 0.45)
+		var blades: Array = []
+		var order: Array = []
+		for b: int in rng.randi_range(7, 10):
+			order.append(rng.randf())
+		order.sort()
+		for f: float in order:
+			# f = quão "na frente/em cima" a lâmina está: as de trás são mais escuras
+			var ang: float = lean + rng.randf_range(-0.75, 0.75)
+			var ln: float = rad * rng.randf_range(1.0, 1.7)
+			var st: Vector2 = base + Vector2(rng.randf_range(-0.55, 0.55) * rad, rng.randf_range(-0.15, 0.2) * rad)
+			var pts: PackedVector2Array = PL.arc_pts(st, ang, ln, rng.randf_range(-0.7, 0.7), 4)
+			var w0: float = rad * rng.randf_range(0.16, 0.22)
+			blades.append([pts, w0, 0.05 + 0.3 * f + tone, 0.48 + 0.64 * f + tone])
+		plan.append([base, rad, blades])
+	# Ordem de pintura correta na volta vertical: o que vaza de um tufo da borda de baixo para o alto
+	# fica por baixo de tudo, e o que vaza de um tufo do alto para a borda de baixo fica por cima.
+	var margin: float = u * 0.8
+	var half: int = n / 2
+	for e: Array in plan:
+		if (e[0] as Vector2).y > n - margin:
+			cv.clip_lo = 0
+			cv.clip_hi = half
+			_paint_tuft(cv, e, ramp)
+	for e: Array in plan:
+		var by: float = (e[0] as Vector2).y
+		cv.clip_lo = half if by > n - margin else 0
+		cv.clip_hi = half if by < margin else n
+		_paint_tuft(cv, e, ramp)
+	for e: Array in plan:
+		if (e[0] as Vector2).y < margin:
+			cv.clip_lo = half
+			cv.clip_hi = n
+			_paint_tuft(cv, e, ramp)
+	cv.clip_lo = 0
+	cv.clip_hi = n
+	_grass_finish(cv, n, rng, big, variant_b, file)
+
+
+func _paint_tuft(cv: PL.Canvas, e: Array, ramp: Array) -> void:
+	var base: Vector2 = e[0]
+	var rad: float = e[1]
+	# sombra na base do tufo (fenda escura entre ele e o de baixo)
+	cv.blob(base.x, base.y + rad * 0.12, rad * 1.05, rad * 0.55, 0.0, ramp[0].darkened(0.3), 0.9, 0.35)
+	for bl: Array in e[2]:
+		var w0: float = bl[1]
+		cv.stroke(bl[0], PL.taper(4, w0, w0 * 0.25), PL.ramp_at(ramp, bl[2]), PL.ramp_at(ramp, bl[3]), 1.0)
+
+
+func _grass_finish(cv: PL.Canvas, n: int, rng: RandomNumberGenerator, big: PackedFloat32Array, variant_b: bool, file: String) -> void:
 	if variant_b:
-		_clovers(cv, rng, val)
+		_clovers(cv, rng, big)
 		_ground_flowers(cv, rng)
+	# amacia a borda das lâminas (meio pixel final): tira o "grão" sem apagar a forma do tufo
+	cv.r = PL.blur(cv.r, n, n, 1, true, true, 2)
+	cv.g = PL.blur(cv.g, n, n, 1, true, true, 2)
+	cv.b = PL.blur(cv.b, n, n, 1, true, true, 2)
 	var out: PL.Canvas = cv.down2()
-	PL.save_png(out.to_image(true), PL.TEX + "ground/" + file + ".png")
+	var img: Image = out.to_image(true)
+	PL.save_png(img, PL.TEX + "ground/" + file + ".png")
+	var m: Dictionary = PL.camera_metrics(img)
+	print("%s: escala 1/3 -> desvio L %.1f, |L - desfoque σ4| %.1f, L médio %.1f" % [file, m["std"], m["detail"], m["mean"]])
 
 
 ## Trevos: grupinhos de 3 folíolos redondos, verde mais frio que a grama.
@@ -428,13 +461,15 @@ func _arena_ring() -> void:
 	nz.fractal_octaves = 3
 	var n_tone: PackedFloat32Array = PL.nfield(n, n, 1.0 / 120.0, 3, 5202, 40.0, 4)
 	var n_core: PackedFloat32Array = PL.nfield(n, n, 1.0 / 70.0, 2, 5203, 30.0, 2)
-	var disk0: Color = c("#6E4A2E")
-	var disk1: Color = c("#7E5634")
-	var disk2: Color = c("#8A5E3A")
-	var core0: Color = c("#A8844E")
-	var core1: Color = c("#B8925A")
-	var cres0: Color = c("#C8AA78")
-	var cres1: Color = c("#D6BC8C")
+	# (r1) cores medidas na referência: anel de terra só um pouco mais escura, miolo claro grande,
+	# crescentes claros com pouco contraste
+	var disk0: Color = c("#8A5A36")
+	var disk1: Color = c("#925F3B")
+	var disk2: Color = c("#9A6440")
+	var core0: Color = c("#D8A862")
+	var core1: Color = c("#E2AE64")
+	var cres0: Color = c("#DBAF5C")
+	var cres1: Color = c("#E5B96F")
 	for y: int in n:
 		for x: int in n:
 			var i: int = y * n + x
@@ -444,8 +479,8 @@ func _arena_ring() -> void:
 			var wob: float = nz.get_noise_2d(cos(ang) * 60.0, sin(ang) * 60.0)
 			var tone: float = n_tone[i]
 			# Disco escuro (raio ~1,3, borda torta)
-			var rd: float = 1.3 + 0.24 * wob + 0.05 * (n_core[i] - 0.5)
-			var a_disk: float = 1.0 - smoothstep(rd - 0.03, rd + 0.03, rho)
+			var rd: float = 1.3 + 0.16 * wob + 0.05 * (n_core[i] - 0.5)
+			var a_disk: float = 1.0 - smoothstep(rd - 0.05, rd + 0.05, rho)
 			# Crescentes (oeste e leste): faixa de r 1,36 até 1,9 no meio, afinando até 0 a ±64°
 			var a_cres: float = 0.0
 			var cres_t: float = 0.0
@@ -462,8 +497,8 @@ func _arena_ring() -> void:
 					var r_in: float = 1.36 + 0.1 * wob
 					var thick: float = 0.55 if side == 0 else 0.48
 					var r_out: float = r_in + thick * prof * (1.0 + 0.35 * (n_tone[i] - 0.5))
-					var e_in: float = smoothstep(r_in - 0.02, r_in + 0.03, rho)
-					var e_out: float = 1.0 - smoothstep(r_out - 0.035, r_out + 0.025, rho)
+					var e_in: float = smoothstep(r_in - 0.04, r_in + 0.05, rho)
+					var e_out: float = 1.0 - smoothstep(r_out - 0.06, r_out + 0.04, rho)
 					var aa: float = e_in * e_out
 					if aa > a_cres:
 						a_cres = aa
@@ -473,23 +508,24 @@ func _arena_ring() -> void:
 			if a_disk > 0.0:
 				var col: Color = disk0.lerp(disk1, smoothstep(0.25, 0.6, tone)).lerp(disk2, smoothstep(0.65, 0.9, tone) * 0.7)
 				# Miolo claro torto: mancha deslocada para leste-norte com um lóbulo
-				var q: Vector2 = p - Vector2(0.16, -0.02)
-				var qq: Vector2 = Vector2(q.x * 0.8, q.y * 1.2).rotated(0.5)
-				var lobe: float = (p - Vector2(0.55, 0.42)).length() / 0.3
-				var lobe2: float = (p - Vector2(-0.18, -0.3)).length() / 0.2
-				var core_d: float = minf(minf(qq.length() / 0.52, lobe), lobe2) + 0.45 * (n_core[i] - 0.5)
-				var core: float = 1.0 - smoothstep(0.9, 1.05, core_d)
+				# Miolo claro grande e torto (raio ~0,7), fora do centro, com dois lóbulos
+				var q: Vector2 = p - Vector2(0.14, -0.04)
+				var qq: Vector2 = Vector2(q.x * 0.88, q.y * 1.12).rotated(0.5)
+				var lobe: float = (p - Vector2(0.42, 0.36)).length() / 0.36
+				var lobe2: float = (p - Vector2(-0.22, -0.28)).length() / 0.3
+				var core_d: float = minf(minf(qq.length() / 0.7, lobe), lobe2) + 0.35 * (n_core[i] - 0.5)
+				var core: float = 1.0 - smoothstep(0.82, 1.1, core_d)
 				col = col.lerp(core0.lerp(core1, smoothstep(0.3, 0.8, n_core[i] + 0.3 * (1.0 - core_d))), core)
-				# Escurece um pouco a borda de dentro do anel escuro (terra mais batida)
-				col = col.darkened(0.06 * smoothstep(0.8, 1.25, rho))
+				# borda de fora do anel um pouco mais escura (terra batida)
+				col = col.darkened(0.04 * smoothstep(0.95, 1.25, rho))
 				cv.r[i] = col.r
 				cv.g[i] = col.g
 				cv.b[i] = col.b
 				cv.a[i] = a_disk
 			if a_cres > 0.0:
 				var cc2: Color = cres0.lerp(cres1, smoothstep(0.3, 0.75, tone) * (1.0 - 0.6 * absf(cres_t - 0.5) * 2.0))
-				cc2 = cc2.darkened(0.07 * (1.0 - smoothstep(0.0, 0.22, cres_t)))
-				cv.blend(i, cc2, a_cres)
+				cc2 = cc2.darkened(0.04 * (1.0 - smoothstep(0.0, 0.22, cres_t)))
+				cv.blend(i, cc2, a_cres * 0.92)
 	# Pinceladas tangenciais suaves nos crescentes e no disco (terra alisada)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 5204
@@ -508,15 +544,15 @@ func _arena_ring() -> void:
 		var r0: float = rng.randf_range(2.5, 5.0)
 		cv.stroke(pts, PackedFloat32Array([r0 * 0.4, r0, r0 * 0.9, r0 * 0.3]), col, col, rng.randf_range(0.3, 0.55), 1)
 	# Grãos escuros e claros esparsos
-	for k: int in 70:
+	for k: int in 45:
 		var ang: float = rng.randf() * TAU
 		var rho: float = rng.randf_range(0.1, 1.9)
 		var p0: Vector2 = cc + Vector2(cos(ang), sin(ang)) * rho * u
 		var i: int = cv.idx(int(p0.x), int(p0.y))
 		if i < 0 or cv.a[i] < 0.95:
 			continue
-		var dark: bool = rng.randf() < 0.8
-		var col: Color = c("#5E3A22") if dark else c("#D6BC8C").lightened(0.1)
+		var dark: bool = rng.randf() < 0.8 and rho > 0.9
+		var col: Color = c("#7E5634") if dark else c("#E5B96F").lightened(0.08)
 		var r: float = rng.randf_range(1.6, 3.6)
 		cv.blob(p0.x, p0.y, r * 1.3, r, rng.randf() * TAU, col, 0.6, 0.5, 1)
 	# Torrões de terra média que quebram a borda dos crescentes e do disco
@@ -528,10 +564,30 @@ func _arena_ring() -> void:
 		var i: int = cv.idx(int(p0.x), int(p0.y))
 		if i < 0 or cv.a[i] < 0.5:
 			continue
-		cv.blob(p0.x, p0.y, r * 1.5, r, ang + PI * 0.5, c("#B8925A"), 0.6, 0.5, 1)
+		cv.blob(p0.x, p0.y, r * 1.5, r, ang + PI * 0.5, c("#C89A55"), 0.6, 0.5, 1)
 	var img: Image = cv.down2().to_image(false)
 	PL.dilate_rgb(img, 16)
 	PL.save_png(img, PL.TEX + "decals/arena_ring.png")
+	var dm: Color = disk_mean(img)
+	print("arena_ring: média do disco (r <= 1,3) #%s, a %.1f%% de #B27541" % [dm.to_html(false).to_upper(), PL.cdist(dm, c("#B27541")) * 100.0])
+
+
+## Média de cor dos pixels com alfa >= 0,5 dentro do raio 1,3 (83 px) do centro do arena_ring.
+static func disk_mean(img: Image) -> Color:
+	var ctr := Vector2(img.get_width(), img.get_height()) * 0.5
+	var acc := Vector3.ZERO
+	var cnt: int = 0
+	for y: int in img.get_height():
+		for x: int in img.get_width():
+			if Vector2(x + 0.5, y + 0.5).distance_to(ctr) > 1.3 * 64.0:
+				continue
+			var col: Color = img.get_pixel(x, y)
+			if col.a < 0.5:
+				continue
+			acc += Vector3(col.r, col.g, col.b)
+			cnt += 1
+	acc /= float(maxi(cnt, 1))
+	return Color(acc.x, acc.y, acc.z)
 
 
 # ---------------------------------------------------------------------------

@@ -59,8 +59,22 @@ func _initialize() -> void:
 	var lab_r: String = "REFERENCIA X2.5: TERRA L MEDIA %.0f DESVIO %.1f COR #%s" % [st_r["mean"], st_r["std"], (st_r["color"] as Color).to_html(false).to_upper()]
 	blocks.append(_hcat([_labeled(m27b, lab_m), _labeled(refb, lab_r)]))
 	print("27 graus: maquete L %.1f desvio %.1f #%s | referência L %.1f desvio %.1f #%s" % [st_m["mean"], st_m["std"], (st_m["color"] as Color).to_html(false), st_r["mean"], st_r["std"], (st_r["color"] as Color).to_html(false)])
+	# 4. (r1) Grama na escala da câmera: grass_a e grass_b reduzidas a 1/3 (~21 px/u), 2 x 2, ao lado da
+	# grama da arena da referência (caixa da frente), com desvio de L, |L - desfoque σ4| e L médio
+	var grow: Array = []
+	for e: Array in [["GRASS_A", ga], ["GRASS_B", gb]]:
+		var im: Image = e[1]
+		var m: Dictionary = PL.camera_metrics(im)
+		var small: Image = PL.tiled(im, 2, 2)
+		small.resize(roundi(1024 / 3.0), roundi(1024 / 3.0), Image.INTERPOLATE_LANCZOS)
+		grow.append(_labeled(PL.scaled(small, 2.0, Image.INTERPOLATE_NEAREST), "%s A 1/3 (X2 NA TELA): DESVIO %.1f, DETALHE %.1f, L %.0f" % [e[0], m["std"], m["detail"], m["mean"]]))
+	var ref_grass: Image = ref.get_region(Rect2i(297, 318, 128, 36))
+	var mr: Dictionary = PL.camera_metrics(ref_grass, 1.0, false)
+	grow.append(_labeled(PL.scaled(ref_grass, 4.0, Image.INTERPOLATE_NEAREST), "REFERENCIA GRAMA DA ARENA (FRENTE) X4: DESVIO %.1f, DETALHE %.1f, L %.0f" % [mr["std"], mr["detail"], mr["mean"]]))
+	print("grama a 1/3 vs referência: ver a08-chao.png (ref: desvio %.1f, detalhe %.1f, L %.1f)" % [mr["std"], mr["detail"], mr["mean"]])
+	blocks.append(_hcat(grow))
 	var out: Image = _vcat(blocks)
-	PL.text(out, "A08 LEVA 1 - CHAO. JANELA CIANO = PIXELS DE TERRA USADOS NA MEDIA E NO DESVIO DE LUMINANCIA", 12, out.get_height() - 22, 2, FG)
+	PL.text(out, "A08 LEVA 1 (R1) - CHAO. JANELA CIANO = PIXELS DE TERRA DA MEDIA E DO DESVIO. DETALHE = MEDIA DE |L - DESFOQUE GAUSSIANO 4 PX|", 12, out.get_height() - 22, 2, FG)
 	PL.save_png(out, PL.PREVIEW + "a08-chao.png")
 	quit()
 

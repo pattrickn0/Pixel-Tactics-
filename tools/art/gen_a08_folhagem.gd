@@ -57,7 +57,7 @@ static func leaf(cv: PL.Canvas, p: Vector2, ang: float, length: float, width: fl
 	cv.stroke(pts, radii, c0, c1, opacity)
 
 
-static func save_card(cv: PL.Canvas, rel: String) -> Image:
+static func save_card(cv: PL.Canvas, rel: String) -> Image:  # devolve a imagem gravada
 	var img: Image = cv.down2().to_image(false)
 	PL.dilate_rgb(img, 24)
 	PL.save_png(img, PL.TEX + rel + ".png")
@@ -139,76 +139,94 @@ func _leaf_clumps(fam: String, seed_value: int) -> void:
 func _conifer_tiers() -> void:
 	var cell: int = 256 * SS
 	var cv := PL.Canvas.new(cell * 4, cell * 2, false, false)
+	# (r1) andar = "prateleira": topo claro, saia de cachos arredondados caindo, sombra escura embaixo
 	var ramp: Array = ramp_of(CONIFER)
+	ramp.append(c("#B8C858"))
 	cv.fill(ramp[1], 0.0)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 8401
-	var widths: Array = [0.39, 0.37, 0.35, 0.32, 0.29, 0.26]
+	var widths: Array = [0.4, 0.38, 0.36, 0.33, 0.3, 0.27]
 	for k: int in 6:
 		var org := Vector2((k % 4) * cell, (k / 4) * cell)
-		_tier(cv, rng, org, cell, float(widths[k]), 0.08, 0.84, ramp)
+		_shelf(cv, rng, org, cell, float(widths[k]), 0.08, 0.93, 0.0, rng.randi_range(6, 9), ramp)
 	for k: int in 2:
 		var org := Vector2((6 + k) % 4 * cell, cell)
-		_tier(cv, rng, org, cell, 0.17 + 0.03 * k, 0.05, 0.9, ramp)
-	save_card(cv, "foliage/conifer_tiers")
+		_shelf(cv, rng, org, cell, 0.17 + 0.03 * k, 0.04, 0.93, 0.0, 3 + k, ramp)
+	var img: Image = save_card(cv, "foliage/conifer_tiers")
+	print("conifer_tiers: rampa clara (L >= L de #6E9A3A) em %.0f%% dos opacos" % (100.0 * light_share(img, c("#6E9A3A"))))
 
 
-func _tier(cv: PL.Canvas, rng: RandomNumberGenerator, org: Vector2, cell: int, half_w: float, top: float, bottom: float, ramp: Array) -> void:
+## Fração dos pixels opacos (alfa >= 128) com luminância >= a da cor de corte.
+static func light_share(img: Image, cut: Color) -> float:
+	var lc: float = PL.lum(cut)
+	var d: PackedByteArray = img.get_data()
+	var n: int = 0
+	var k: int = 0
+	for i: int in img.get_width() * img.get_height():
+		if d[i * 4 + 3] < 128:
+			continue
+		n += 1
+		if 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2] >= lc:
+			k += 1
+	return float(k) / float(maxi(n, 1))
+
+
+func _shelf(cv: PL.Canvas, rng: RandomNumberGenerator, org: Vector2, cell: int, half_w: float, top: float, bottom: float, skirt: float, clumps: int, ramp: Array) -> void:
 	var cx: float = org.x + cell * 0.5
 	var y_top: float = org.y + cell * top
 	var y_bot: float = org.y + cell * bottom
-	var hw: float = cell * half_w
 	var hgt: float = y_bot - y_top
-	# 1. Fundo escuro: triângulo de lados levemente côncavos (galhos caídos) com a barra serrilhada
-	var poly := PackedVector2Array()
-	poly.append(Vector2(cx, y_top))
-	for s: int in range(1, 9):
-		var t: float = float(s) / 8.0
-		poly.append(Vector2(cx + hw * 0.92 * pow(t, 0.85), y_top + hgt * 0.9 * t))
-	var teeth: int = rng.randi_range(7, 10)
-	for s: int in range(teeth * 2 + 1):
-		var t: float = 1.0 - float(s) / float(teeth * 2)
-		var x: float = cx + hw * 0.92 * (2.0 * t - 1.0)
-		var tip: bool = s % 2 == 0
-		var yy: float = y_bot - (0.0 if tip else rng.randf_range(0.05, 0.1) * hgt) - hgt * 0.1 * (1.0 - absf(2.0 * t - 1.0)) * 0.0
-		poly.append(Vector2(x, yy))
-	for s: int in range(8, 0, -1):
-		var t: float = float(s) / 8.0
-		poly.append(Vector2(cx - hw * 0.92 * pow(t, 0.85), y_top + hgt * 0.9 * t))
-	cv.poly_fill(poly, ramp[1])
-	# 2. Almofadas de agulhas em fileiras (de cima para baixo: a de baixo cobre a de cima)
-	var rows: int = 6
-	for r: int in rows:
-		var ty: float = (float(r) + 0.8) / float(rows)
-		var yy: float = y_top + hgt * ty * 0.9
-		var span: float = hw * 0.92 * pow(ty, 0.85)
-		var pads: int = maxi(2, roundi(span / (cell * 0.05))) + 1
-		for k: int in pads:
-			var fx: float = float(k) / float(pads - 1) * 2.0 - 1.0
-			var px: float = cx + fx * span * 1.02 + rng.randf_range(-5.0, 5.0)
-			var pc := Vector2(px, yy + rng.randf_range(-6.0, 6.0) + absf(fx) * hgt * 0.03)
-			var sz: float = cell * rng.randf_range(0.09, 0.12) * (0.75 + 0.4 * ty)
-			var lit: float = 0.2 + 0.22 * (1.0 - absf(fx)) + 0.08 * (1.0 - ty)
-			_needle_pad(cv, rng, pc, sz, fx, lit, ramp)
-	# 3. Ponta de cima (o ápice do andar), clara
-	_needle_pad(cv, rng, Vector2(cx, y_top + hgt * 0.1), cell * 0.06, 0.0, 0.55, ramp)
-
-
-## Almofada de galho de conífera vista de lado: agulhas caindo (escuras embaixo) e pontas de cima claras.
-func _needle_pad(cv: PL.Canvas, rng: RandomNumberGenerator, p: Vector2, sz: float, side: float, lit: float, ramp: Array) -> void:
-	var out_dir: float = 0.0 if side >= 0.0 else PI
-	# agulhas de baixo: caem para fora e para baixo
-	for n: int in 22:
-		var a: float = PI * 0.5 + rng.randf_range(-1.2, 1.2) + side * 0.6
-		var ln: float = sz * rng.randf_range(0.7, 1.25)
-		var pts: PackedVector2Array = PL.arc_pts(p + Vector2(rng.randf_range(-0.4, 0.4) * sz, rng.randf_range(-0.3, 0.1) * sz), a, ln, rng.randf_range(-0.5, 0.5), 3)
-		cv.stroke(pts, PL.taper(3, 2.0 * SS * 0.7 + 0.4, 0.5), PL.ramp_at(ramp, lit - 0.12), PL.ramp_at(ramp, lit + 0.06), 1.0)
-	# agulhas de cima: curtas, saindo para cima e para fora, claras (luz do céu)
-	for n: int in 14:
-		var a: float = -PI * 0.5 + rng.randf_range(-1.2, 1.2) * 0.9 + side * 0.7
-		var ln: float = sz * rng.randf_range(0.45, 0.8)
-		var pts: PackedVector2Array = PL.arc_pts(p + Vector2(rng.randf_range(-0.45, 0.45) * sz, rng.randf_range(-0.05, 0.25) * sz), a, ln, rng.randf_range(-0.4, 0.4), 3)
-		cv.stroke(pts, PL.taper(3, 1.9 * SS * 0.7 + 0.4, 0.5), PL.ramp_at(ramp, lit + 0.1), PL.ramp_at(ramp, lit + 0.38), 1.0)
+	var hw: float = cell * half_w
+	var cr: float = hw * 2.0 / float(clumps) * 0.78  # raio dos cachos
+	var y_s: float = y_bot - cr * 1.85  # linha da saia: os cachos caem dela até a barra
+	# 1. Faixa de sombra embaixo do andar (aparece entre os cachos e na metade de baixo deles)
+	var band := PackedVector2Array([Vector2(cx - hw * 0.9, y_s - cr * 0.2), Vector2(cx + hw * 0.9, y_s - cr * 0.2),
+		Vector2(cx + hw * 0.82, y_s + cr * 1.25), Vector2(cx - hw * 0.82, y_s + cr * 1.25)])
+	cv.poly_fill(band, ramp[0])
+	# 2. Corpo (cone visto de cima e de lado): fundo médio e "toques" redondos, claros em cima
+	var body := PackedVector2Array([Vector2(cx, y_top), Vector2(cx + hw * 0.95, y_s + cr * 0.1), Vector2(cx - hw * 0.95, y_s + cr * 0.1)])
+	cv.poly_fill(body, ramp[3])
+	var dabs: Array = []
+	for k: int in 260:
+		var ty: float = rng.randf()
+		var yy: float = y_top + (y_s - y_top) * sqrt(ty)
+		var span: float = hw * 0.95 * (yy - y_top) / maxf(y_s - y_top, 1.0)
+		dabs.append(Vector2(cx + rng.randf_range(-1.0, 1.0) * span * 0.92, yy))
+	dabs.sort_custom(func(a: Vector2, b: Vector2) -> bool: return a.y < b.y)
+	for p: Vector2 in dabs:
+		var fy: float = (p.y - y_top) / maxf(y_s - y_top, 1.0)
+		var t: float = clampf(1.04 - 0.3 * fy + rng.randf_range(-0.08, 0.04), 0.0, 1.0)
+		var r: float = cell * rng.randf_range(0.022, 0.036)
+		cv.blob(p.x, p.y + r * 0.25, r * 1.15, r * 0.8, 0.0, PL.ramp_at(ramp, t - 0.14), 1.0, 0.7)
+		cv.blob(p.x, p.y - r * 0.15, r * 0.85, r * 0.55, 0.0, PL.ramp_at(ramp, t), 1.0, 0.6)
+	# 2b. Tufinhos nas laterais (a beira do cone não fica reta)
+	for side: int in 2:
+		var sg: float = -1.0 if side == 0 else 1.0
+		for k: int in 4:
+			var f: float = (float(k) + 0.6) / 4.6
+			var p := Vector2(cx + sg * hw * 0.95 * f, y_top + (y_s - y_top) * f)
+			var r: float = cell * 0.035 * (0.7 + 0.5 * f)
+			cv.blob(p.x + sg * r * 0.2, p.y + r * 0.2, r * 1.2, r * 0.8, sg * 0.3, PL.ramp_at(ramp, 0.4), 1.0, 0.7)
+			cv.blob(p.x + sg * r * 0.2, p.y - r * 0.15, r * 0.9, r * 0.5, sg * 0.3, PL.ramp_at(ramp, 0.88 - 0.25 * f), 1.0, 0.6)
+	# 3. Saia: cachos arredondados caindo, metade de cima clara e de baixo escura
+	for k: int in clumps:
+		var fx: float = (float(k) + 0.5) / float(clumps) * 2.0 - 1.0
+		var p := Vector2(cx + fx * hw * 0.86 + rng.randf_range(-0.1, 0.1) * cr, y_s + cr * (0.6 + 0.2 * absf(fx)) + rng.randf_range(-0.08, 0.08) * cr)
+		var r: float = cr * rng.randf_range(0.9, 1.08)
+		# cacho caindo: oval mais alto que largo, escuro embaixo, claro em cima
+		cv.blob(p.x, p.y, r * 0.98, r * 1.12, 0.0, ramp[2], 1.0, 0.8)
+		cv.blob(p.x, p.y + r * 0.45, r * 0.8, r * 0.6, 0.0, ramp[1], 0.95, 0.5)
+		cv.blob(p.x, p.y - r * 0.3, r * 0.88, r * 0.7, 0.0, PL.ramp_at(ramp, 0.84), 1.0, 0.7)
+		cv.blob(p.x, p.y - r * 0.5, r * 0.65, r * 0.42, 0.0, PL.ramp_at(ramp, 0.94), 0.8, 0.3)
+		# textura de folhinhas no cacho
+		for d: int in 18:
+			var a: float = rng.randf() * TAU
+			var rr: float = r * sqrt(rng.randf()) * 0.75
+			var q: Vector2 = p + Vector2(cos(a), sin(a)) * rr
+			var tt: float = clampf(1.0 - 0.8 * (q.y - (p.y - r)) / (2.0 * r) + rng.randf_range(-0.06, 0.06), 0.05, 1.0)
+			cv.blob(q.x, q.y, r * 0.24, r * 0.17, rng.randf_range(-0.5, 0.5), PL.ramp_at(ramp, tt), 1.0, 0.6)
+	# 4. Ponta clara no ápice
+	cv.blob(cx, y_top + cell * 0.025, cell * 0.022, cell * 0.035, 0.0, PL.ramp_at(ramp, 0.9), 1.0, 0.6)
 
 
 # ---------------------------------------------------------------------------
