@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_kb5tx"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/ground_far.res" id="2_fvxb8"]
+
+[node name="ground_far" type="Node3D" unique_id=130006934]
+script = ExtResource("1_kb5tx")
+size = Vector3(240, 0, 240)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=981978138]
+cast_shadow = 0
+mesh = ExtResource("2_fvxb8")

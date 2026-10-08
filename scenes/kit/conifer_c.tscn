@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_86v0u"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/conifer_c.res" id="2_uqixu"]
+
+[node name="conifer_c" type="Node3D" unique_id=2023291636]
+script = ExtResource("1_86v0u")
+size = Vector3(2.6, 5.8, 2.6)
+obstacle = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=692022719]
+mesh = ExtResource("2_uqixu")

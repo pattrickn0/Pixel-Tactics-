@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_jrlsu"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/bush_d.res" id="2_iht17"]
+
+[node name="bush_d" type="Node3D" unique_id=1063657613]
+script = ExtResource("1_jrlsu")
+size = Vector3(1.3, 1.2, 1.3)
+obstacle = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=596964365]
+mesh = ExtResource("2_iht17")

@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_6ff0y"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/tall_grass_a.res" id="2_cskjl"]
+
+[node name="tall_grass_a" type="Node3D" unique_id=867279832]
+script = ExtResource("1_6ff0y")
+size = Vector3(0.8, 0.9, 0.8)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=2072676691]
+mesh = ExtResource("2_cskjl")

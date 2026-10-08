@@ -9,12 +9,12 @@ extends Camera3D
 signal yaw_changed(yaw_degrees: float)
 
 ## Inclinação para baixo, em graus (fixa).
-@export_range(15.0, 70.0, 0.5) var pitch_degrees: float = 34.0
+@export_range(15.0, 70.0, 0.5) var pitch_degrees: float = 40.0
 ## Campo de visão vertical, em graus.
 @export_range(15.0, 70.0, 0.5) var fov_degrees: float = 32.0
 @export var min_distance: float = 8.0
-@export var max_distance: float = 40.0
-@export var start_distance: float = 32.0
+@export var max_distance: float = 64.0
+@export var start_distance: float = 46.0
 ## Quanto cada clique da roda muda a distância.
 @export var zoom_step: float = 3.0
 ## Suavização do zoom (0 = instantâneo).
@@ -79,29 +79,25 @@ func setup_effects(environment_res: Environment, attributes_res: CameraAttribute
 	_update_depth_effects()
 
 
-## Reage a map_generated: reposiciona no centro da arena nova, mantendo a distância e rotação.
+## Reage a MatchState.map_loaded: mira o centro da arena, mantendo a distância e a rotação.
 func focus_on_map(map_data: MapData) -> void:
 	_arena_center = map_data.arena_center
 	_arena_size = map_data.arena_rect.size
-	_base_height = map_data.arena_floor_level * WorldScale.LEVEL_HEIGHT
-	_map_rect = Rect2(Vector2.ZERO, Vector2(map_data.size))
-	_amphitheater_rect = _built_bounds(map_data)
-	_map_top_height = map_data.get_level_range().y * WorldScale.LEVEL_HEIGHT
+	_base_height = 0.0
+	_map_rect = map_data.bounds
+	_amphitheater_rect = _structure_bounds(map_data)
+	_map_top_height = map_data.get_max_height()
 	_apply_position()
 
 
-## Caixa das células do anfiteatro (built_mask); a arena se não houver nenhuma.
-static func _built_bounds(map_data: MapData) -> Rect2:
-	var lo := Vector2i(map_data.size)
-	var hi := Vector2i(-1, -1)
-	for cz in map_data.size.y:
-		for cx in map_data.size.x:
-			if map_data.built_mask[cz * map_data.size.x + cx] == 1:
-				lo = Vector2i(mini(lo.x, cx), mini(lo.y, cz))
-				hi = Vector2i(maxi(hi.x, cx), maxi(hi.y, cz))
-	if hi.x < 0:
-		return map_data.arena_rect
-	return Rect2(Vector2(lo), Vector2(hi - lo + Vector2i.ONE))
+## Caixa dos chãos elevados e escadas (o anfiteatro); a arena se não houver nenhum.
+static func _structure_bounds(map_data: MapData) -> Rect2:
+	var result: Rect2 = map_data.arena_rect
+	for area: MapHeightArea in map_data.height_areas:
+		result = result.merge(area.rect)
+	for stair: MapStair in map_data.stairs:
+		result = result.merge(stair.rect)
+	return result
 
 
 ## "min", "max" ou "default".

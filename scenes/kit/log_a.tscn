@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_nucf5"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/log_a.res" id="2_nrndj"]
+
+[node name="log_a" type="Node3D" unique_id=1685573846]
+script = ExtResource("1_nucf5")
+size = Vector3(2.4, 0.55, 0.6)
+obstacle = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=508604857]
+mesh = ExtResource("2_nrndj")

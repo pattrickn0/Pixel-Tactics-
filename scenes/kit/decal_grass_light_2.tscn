@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_tojp7"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/decal_grass_light_2.res" id="2_m70lu"]
+
+[node name="decal_grass_light_2" type="Node3D" unique_id=689416568]
+script = ExtResource("1_tojp7")
+size = Vector3(3, 0, 2)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=832347669]
+cast_shadow = 0
+mesh = ExtResource("2_m70lu")

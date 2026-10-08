@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_bqv32"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/mushrooms_d.res" id="2_i1jb5"]
+
+[node name="mushrooms_d" type="Node3D" unique_id=17588456]
+script = ExtResource("1_bqv32")
+size = Vector3(0.5, 0.4, 0.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=126106129]
+mesh = ExtResource("2_i1jb5")

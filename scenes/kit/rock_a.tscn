@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_b4rm0"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/rock_a.res" id="2_sw1b1"]
+
+[node name="rock_a" type="Node3D" unique_id=577320276]
+script = ExtResource("1_b4rm0")
+size = Vector3(0.9, 0.6, 0.8)
+obstacle = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=517247437]
+mesh = ExtResource("2_sw1b1")

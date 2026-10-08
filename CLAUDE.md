@@ -1,39 +1,38 @@
 # Pixel Chess — Regras do Projeto
 
 Jogo **auto chess multiplayer** (até 8 jogadores, estilo TFT) em **2.5D: mundo 3D low-poly com texturas de pixel art minimalista** (alvo: `docs/reference/Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`), **pixel art de 32 texels por unidade**, feito em **Godot 4.7 + GDScript**.
-Cada partida gera um mapa procedural novo a partir de uma **seed**. Fase atual: **geração de mapa (planície/floresta, com relevo e degraus)** com um botão "Gerar mapa".
+O mapa é **um só, feito à mão** (fiel à referência), igual em toda partida: nada procedural no mapa nem na arte. Fase atual: **mapa feito à mão** com um kit de peças modulares montado numa cena (spec 011, arte A06).
 
 ## Estilo visual: 2.5D com pixel art minimalista (decidido pelo usuário em 2026-10-06)
 
-- **Mundo 3D de verdade** (`Node3D`). **Todo o cenário é modelo 3D low-poly** gerado em código, com textura pixel art: chão, terraços e muros de pedra, escadas, pedras, **árvores, arbustos, troncos caídos, tocos, monólitos, capim, flores e cogumelos** (capim, flores e cogumelos em quads cruzados fixos, sem billboard).
+- **Mundo 3D de verdade** (`Node3D`). **Todo o cenário é modelo 3D low-poly** de um **kit de peças** (`scenes/kit/`, malha gerada por script a partir de tabelas explícitas, sem ruído nem sorteio) montado à mão em `scenes/map.tscn`, com textura pixel art: chão, terraços e muros de pedra, escadas, pedras, **árvores 3D de verdade (copa em lóbulos volumosos, conífera em andares serrilhados; nada de cartão chapado), arbustos, troncos caídos, tocos, capim, flores e cogumelos** (capim, flores e cogumelos em quads cruzados fixos, sem billboard).
 - **Sprites 2D em pé** (`Sprite3D`, billboard só no eixo Y, vistos de frente): **só as peças**, no futuro.
 - **Câmera orbital:** perspectiva com inclinação fixa, **sempre mirando o centro da arena**, sem pan. **Gira 360°** em torno do centro **só pelo teclado** (A/D); **Espaço** volta ao padrão. **Sem giro pelo mouse** (o mouse fica livre para as peças). **Zoom** com limite mínimo e máximo. Como a câmera gira, os modelos mostram todos os lados e a arte não traz luz lateral pintada. Árvores e monólitos entre a câmera e a arena ficam semitransparentes (dither), para a arena nunca ficar escondida.
 - **Luz de dia claro e pós leve:** sol neutro levemente quente, com sombras reais em tudo (inclusive a sombra recortada das copas); sombras suaves esverdeadas; névoa azulada só ao fundo; bloom fraco; desfoque bem sutil só no fundo distante; **sem vinheta**; imagem limpa e nítida. Tudo via `WorldEnvironment`/`CameraAttributes`/`DirectionalLight3D` e shaders próprios, sem addons.
 - **Escala única:** 1 tile = **1 unidade 3D** = **32 texels** em toda superfície (UV em unidades do mundo). 1 nível de degrau = 0,5 unidade = 16 texels. Peças usarão `pixel_size = 1.0 / 32.0`. Filtro **Nearest** em toda textura pixel art.
-- **Pixel art minimalista:** chão com poucos tons (2 a 4), grandes áreas quase lisas e detalhe esparso; manchas de luz e bordas de terra recortadas em pixel, feitas por máscara no código (nunca seguindo o grid de tiles); muros de pedra seca com topo de musgo; árvores e props com mais detalhe que o chão. Sem contorno preto. Normal maps só em pedra e madeira, e fracos. Referência única: `docs/reference/Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`.
+- **Pixel art minimalista:** chão com poucos tons (2 a 4), grandes áreas quase lisas e detalhe esparso; manchas de grama, terra e trilha com bordas orgânicas recortadas em pixel, **desenhadas à mão** (decalques planos com alfa recortado, alinhados ao texel; nunca seguindo o grid de tiles, nunca por ruído); muros de pedra seca com topo de musgo; árvores e props com mais detalhe que o chão. Sem contorno preto. Normal maps só em pedra e madeira, e fracos. Referência única: `docs/reference/Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`.
 
 ## Design do jogo (regras fixas)
 
-- **Mapa por seed.** Cada partida tem uma seed (`int`). Mesma seed → mesmo mapa, sempre. A seed aparece na tela e pode ser reutilizada para reproduzir um mapa.
+- **Mapa feito à mão (decidido em 2026-10-07).** Um único mapa, fiel à referência, montado à mão com o kit em `scenes/map.tscn`; o usuário ajusta arrastando no editor. Sem seed, sem gerador, sem botão "Gerar mapa". A seed (`int`) fica só para o RNG da partida (combate, loja), no futuro.
 - **Arena.** Todo mapa tem uma **arena**: a área de luta, delimitada e visível. O que fica fora dela não é área de luta.
-  - **Formato fixo, sem aleatoriedade:** retângulo no centro do mapa, cerca de 10% mais largo que alto (padrão 20 × 18 unidades, mapa 44 × 44). Mesmo formato e tamanho em toda seed.
-  - **Reservas (bench estilo TFT):** nos dois lados compridos, fixas. Na câmera padrão, a minha reserva fica embaixo e a do inimigo em cima. Cada reserva é um terraço plano **2 níveis (1,0 unidade) acima do chão da arena**, com muro de pedra e musgo e escadas descendo para a arena. Peças na reserva não lutam. A mecânica de reserva (slots, regras) ainda será definida; o mapa só reserva o espaço e expõe os dados (`MapData.benches`).
-  - **Lados curtos:** muro de pedra com musgo e anéis de terraço subindo para a floresta, fechando um anfiteatro retangular. As trilhas entram pelas escadas.
-  - **Um único mapa por partida**, gerado pela seed da partida e usado por todos os jogadores em todas as rodadas. Não existe arena por jogador.
-  - O mapa expõe a arena e as reservas nos dados (`MapData.arena_rect`, `MapData.benches`) e funções como `is_inside_arena(pos: Vector2) -> bool`, `clamp_to_arena(pos: Vector2) -> Vector2` e `get_height_at(pos: Vector2) -> float`.
+  - **Formato fixo, sem aleatoriedade:** retângulo de **20 × 18** unidades, plano, no nível 0, centrado na origem do mundo (`Rect2(-10, -9, 20, 18)`). A mancha de terra no meio é desenhada à mão.
+  - **Reservas (bench estilo TFT):** nos dois lados compridos, fixas. Na câmera padrão, a minha reserva fica embaixo e a do inimigo em cima. Cada reserva fica **no terraço do anel** (decidido pelo usuário em 2026-10-07): a faixa de grama entre o degrau baixo junto da arena e o muro alto, como na referência; nível proposto na 011: **nível 1 (altura 0,5)**. Sem piso de tábuas. Peças na reserva não lutam. A mecânica de reserva (slots, regras) ainda será definida; o mapa só reserva o espaço e expõe os dados (`MapData.benches`).
+  - **Anel do anfiteatro (perfil da 011):** arena (0,0) → degrau baixo de 0,5 → terraço (0,5, largura 4, com as reservas nos lados compridos) → muro alto de pedra com musgo, crista em **1,5** (face interna de 1,0, face externa de 1,5) → exterior. **Fora do anel, o chão volta ao nível 0**, o mesmo da arena. Duas escadas, nos lados curtos, atravessam o anel do exterior até a arena; as trilhas chegam nelas.
+  - **O mesmo mapa em toda partida**, usado por todos os jogadores em todas as rodadas. Não existe arena por jogador.
+  - O mapa expõe a arena e as reservas nos dados (`MapData.arena_rect`, `MapData.benches`), montados a partir de marcadores na cena do mapa (não de um gerador), e funções como `is_inside_arena(pos: Vector2) -> bool`, `clamp_to_arena(pos: Vector2) -> Vector2` e `get_height_at(pos: Vector2) -> float`.
 - **Posicionamento livre das peças.** Diferente dos auto chess tradicionais, **não existe grid de posicionamento**: a peça pode ser colocada em **qualquer ponto dentro da arena** (posição contínua `Vector2` no plano do chão, eixos X/Z do 3D; a altura vem do terreno), mas **nunca fora dela**. Arrastar para fora → a peça é limitada à borda (clamp) ou o posicionamento é recusado.
   - As peças têm um raio de colisão e não se sobrepõem.
   - Ainda a definir com o usuário (não implementar sem pedido): regras da divisão da arena por time (o mapa já expõe as duas metades), obstáculos dentro da arena, se o degrau bloqueia movimento ou se a peça sobe pela escada, e as mecânicas de terreno alto (dano extra, cobertura, bloqueio de habilidade).
-- **Mapa único canônico (decidido em 2026-10-07):** Em vez de mapas procedurais variáveis a cada partida, o jogo utiliza um **mapa único canônico esculpido fielmente 1:1 à imagem de referência** (`docs/reference/Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`).
-- **Arena plana (sem alturas no meio):** Dentro da arena, todo o chão de combate fica no nível base (nível 0 / altura 0,0), sem morros ou plataformas elevadas no meio. O relevo em degraus (níveis 1 e 2) fica exclusivamente nos anéis de terraços/arquibancadas do anfiteatro que circundam a arena.
-- **Anfiteatro em terraços:** Dois anéis de terraços com muros de pedra seca, topo de musgo e escadas ligando a arena ao calçamento exterior e à floresta.
+- **Arena plana (sem alturas no meio):** Dentro da arena, todo o chão de combate fica no nível base (nível 0 / altura 0,0), sem morros ou plataformas elevadas no meio. O relevo (degrau baixo, terraço e muro alto) fica exclusivamente no anel que circunda a arena; o exterior (floresta, trilhas, plateia) também é nível 0.
+- **Continuidade visual (decidido em 2026-10-07):** nada de "textura colada em bloco". Grama com UV de mundo (sem emenda entre peças), manchas e bordas por decalques desenhados à mão e alinhados ao texel, muros com textura contínua ao longo do trecho (UV de mundo), pedras de contorno irregular no capeamento e quinas fechadas com amarração. Não usar render 3D em baixa resolução (recusado pelo usuário).
 
 ## Multiplayer (estrutura; rede só na fase própria)
 
 - Até **8 jogadores por partida, estilo TFT**. Agora: **um jogador hospeda** (multiplayer nativo do Godot, `ENetMultiplayerPeer` + RPC, sem addons). No futuro distante: servidor dedicado headless rodando o mesmo código.
 - **Autoritativo decide tudo.** O host (ou, offline, o "host local") valida e aplica; clientes só enviam **intenções** (ex.: "posicionar peça em X") e mostram o resultado.
 - **Lógica separada do visual.** O estado e as regras da partida vivem em classes sem visual (`RefCounted`/`Resource`, em `scripts/match/` e `scripts/map/`). Nós visuais só leem esse estado e reagem a sinais. Nenhuma regra de jogo dentro de um nó visual.
-- **Mapa sincronizado só pela seed.** Cada cliente gera o mesmo mapa localmente, então a geração do mapa é **função pura da seed** (sem depender de frame, tempo, ordem de nós ou estado global).
+- **Mapa igual para todos sem sincronizar.** Todo cliente carrega a mesma cena `scenes/map.tscn`; o `MapData` é **função pura dessa cena** (sem depender de frame, tempo, ordem de nós ou estado global).
 - **Combate roda só no autoritativo**; os clientes recebem estado/eventos. Não usar lockstep (float não é determinístico entre máquinas). Mesmo assim, usar RNG com seed para dar para reproduzir.
 - **Offline = host local.** O jogo sem rede passa pelo mesmo caminho de intenção → validação → estado, para a rede entrar depois sem reescrita.
 - Não escrever código de rede antes da spec de multiplayer.
@@ -66,7 +65,7 @@ Tarefas triviais (renomear, ajustar uma cor, corrigir typo) podem pular a spec: 
 ### Fluxo de arte (agente `artist`)
 
 1. **Lead Project** escreve a spec de arte em `docs/specs/ANN-nome.md` (o que gerar, nomes, tamanhos, critérios).
-2. **Artist** escreve/atualiza um script gerador em `tools/art/` (`extends SceneTree`, API `Image`, RNG com seed), roda no Godot headless, grava os PNG em `assets/` e uma **prévia ampliada ×4** em `docs/art-preview/`.
+2. **Artist** escreve/atualiza um script gerador em `tools/art/` (`extends SceneTree`, API `Image`; formas, posições e cores escritas no código, **sem RNG nem ruído**: cada textura é uma peça única), roda no Godot headless, grava os PNG em `assets/` e uma **prévia ampliada ×4** em `docs/art-preview/`.
 3. **Lead Project** revisa pela prévia e pelos PNG → `APROVADO` ou `AJUSTES`.
 4. **Developer** usa os PNG aprovados no jogo.
 
@@ -117,19 +116,22 @@ Saída sem `ERROR`/`SCRIPT ERROR` = passou. Warnings do nosso código devem ser 
 
 ```
 res://
-  scenes/          # .tscn (main.tscn é a cena principal)
+  scenes/          # .tscn (main.tscn é a cena principal; map.tscn = o mapa montado à mão)
+    kit/           # peças modulares do mapa (muros, quinas, escadas, terraço, árvores, props, decalques)
   scripts/
-    map/           # geração de mapa (dados, gerador, renderização, arena)
+    map/           # dados do mapa (MapData), marcadores da cena, MapLayout (cena → dados), materiais do kit
     match/         # estado e regras da partida, sem visual (autoritativo)
     net/           # rede (futuro, só com a spec de multiplayer)
     ui/            # HUD, botões
     core/          # autoloads, utilidades, RNG
   tools/
     art/           # scripts geradores de arte (rodam headless, gravam em assets/)
+    kit/           # construtor das malhas do kit (headless, tabelas explícitas, grava em assets/models/kit/)
   assets/
-    textures/      # texturas 32×32 do terreno e dos modelos 3D (+ normal maps *_n.png); cards/ = cartões com alfa
+    textures/      # texturas do terreno e do kit (32 texels/unidade; + normal maps *_n.png); cards/ = cartões com alfa; decals/ = decalques de chão
     sprites/       # sprites em pé das peças (futuro); hoje ainda os sprites cartoon antigos, até a spec 006
-    models/        # modelos 3D em arquivo, se algum dia houver (hoje tudo é gerado em código)
+    models/kit/    # malhas do kit (.res) gravadas por tools/kit/
+    materials/     # materiais do kit (.tres)
     fonts/
   docs/            # NÃO importado pelo Godot (.gdignore)
     direcao-de-arte.md   # fonte única de estilo, paleta e medidas
@@ -141,23 +143,23 @@ res://
 
 ## Convenções de código (GDScript)
 
-- **Tipagem estática sempre**: `var size: int = 32`, `func generate(seed: int) -> MapData:`.
+- **Tipagem estática sempre**: `var size: int = 32`, `func build_map_data() -> MapData:`.
 - Nomes: `snake_case` para arquivos, funções e variáveis; `PascalCase` para `class_name` e nós; `UPPER_SNAKE` para constantes.
-- Um script = uma responsabilidade. Separar **dados** (ex.: `MapData`), **geração** (ex.: `MapGenerator`) e **visual** (ex.: `MapRenderer`).
-- Geração **determinística por seed**: usar `RandomNumberGenerator` com seed explícita e `FastNoiseLite` com `seed` setada. Nunca usar `randi()`/`randf()` globais na geração.
+- Um script = uma responsabilidade. Separar **dados** (ex.: `MapData`), **montagem** (ex.: `MapLayout`, que lê a cena e monta os dados) e **visual** (as peças do kit).
+- **Nada procedural no mapa nem na arte:** sem `RandomNumberGenerator`, `FastNoiseLite` ou sorteio em `scripts/map/`, `tools/kit/` e nos geradores de arte a partir da A06 (os antigos ficam como histórico); formas e posições vêm de tabelas explícitas ou da cena. **RNG só na partida** (combate, loja, no futuro): `RandomNumberGenerator` com a seed da partida, nunca `randi()`/`randf()` globais.
 - `TEXELS_PER_UNIT = 32` (1 tile = 1 unidade 3D = 32 texels) definido em um único lugar e reutilizado.
 - Posições de peças em coordenadas contínuas (`Vector2` no plano X/Z, em unidades do mundo 3D), nunca em índice de tile.
 - Câmera: inclinação fixa; mudam só o yaw (giro de 360° em torno do centro da arena, pelo teclado) e a distância (zoom, entre limites `@export`). Sem pan e sem giro pelo mouse. Nenhuma regra de jogo depende do ângulo da câmera.
-- Parâmetros ajustáveis como `@export` (tamanho do mapa, tamanho da arena, densidade de árvores, frequência do noise...).
-- Comunicação entre sistemas por **sinais** (ex.: `map_generated(map_data)`), não por caminhos de nó frágeis (`get_node("../../X")`).
+- Parâmetros ajustáveis como `@export` (câmera, zoom, força do dither, normal_scale...).
+- Comunicação entre sistemas por **sinais** (ex.: `map_ready(map_data)`), não por caminhos de nó frágeis (`get_node("../../X")`).
 - Comentários em **português**, curtos, só onde o "porquê" não é óbvio. Identificadores em **inglês**.
 - Não editar `project.godot` à mão sem necessidade. Quando for preciso (ex.: `run/main_scene`, autoloads, filtro de textura padrão), descrever a mudança no relatório.
 
 ## Direção de arte
 
 A fonte única é **`docs/direcao-de-arte.md`** (estilo, paleta em hex, medidas, iluminação, fronteira entre arte e código). Ela vale tanto para os placeholders em código quanto para o artista. Resumo:
-- 2.5D: cenário todo em modelos 3D low-poly com textura pixel art de 32 texels por unidade (o `artist` faz texturas, normal maps de pedra e madeira e cartões; o `developer` faz forma, UV, materiais e as máscaras do chão); só as peças são sprites em pé. Filtro **Nearest**.
-- Pixel art minimalista no chão (poucos tons, detalhe esparso, bordas orgânicas recortadas em pixel feitas por máscara no código); detalhe maior nas árvores, nos muros e nos props. Dia claro, sombras suaves esverdeadas, névoa azulada ao fundo, pós leve.
+- 2.5D: cenário todo em modelos 3D low-poly com textura pixel art de 32 texels por unidade (o `artist` faz texturas, normal maps de pedra e madeira e cartões; o `developer` faz forma, UV, materiais e monta o mapa com o kit); só as peças são sprites em pé. Filtro **Nearest**.
+- Pixel art minimalista no chão (poucos tons, detalhe esparso, bordas orgânicas recortadas em pixel, desenhadas à mão como decalques); detalhe maior nas árvores, nos muros e nos props. Dia claro, sombras suaves esverdeadas, névoa azulada ao fundo, pós leve.
 - Placeholders gerados em código seguem a paleta. Nada de ruído por pixel nem de cor chapada sem forma.
 
 ## Definição de pronto

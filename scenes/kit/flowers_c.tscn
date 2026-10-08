@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_mvtw4"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/flowers_c.res" id="2_mviqj"]
+
+[node name="flowers_c" type="Node3D" unique_id=2100365951]
+script = ExtResource("1_mvtw4")
+size = Vector3(0.5, 0.5, 0.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1516018471]
+mesh = ExtResource("2_mviqj")

@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_s51nr"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/step_low_corner.res" id="2_04ep1"]
+[ext_resource type="Script" path="res://scripts/map/height_area.gd" id="3_cl10u"]
+
+[node name="step_low_corner" type="Node3D" unique_id=372728972]
+script = ExtResource("1_s51nr")
+structural = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=90008805]
+mesh = ExtResource("2_04ep1")
+
+[node name="Height" type="Node3D" parent="." unique_id=1800742162]
+script = ExtResource("3_cl10u")

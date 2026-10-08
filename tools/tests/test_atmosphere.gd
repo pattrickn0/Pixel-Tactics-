@@ -38,9 +38,6 @@ func _run() -> void:
 	var main: Node = (load("res://scenes/main.tscn") as PackedScene).instantiate()
 	root.add_child(main)
 	await _frames(SETTLE_FRAMES)
-	var match_state: MatchState = main.get("match_state")
-	match_state.request_map(42)
-	await _frames(SETTLE_FRAMES)
 
 	_test_sun(main)
 	_test_config(main)
@@ -116,7 +113,7 @@ func _test_config(main: Node) -> void:
 	_check(not env.adjustment_enabled or (env.adjustment_contrast >= 1.0 - eps and env.adjustment_contrast <= 1.05 + eps
 			and env.adjustment_saturation >= 1.05 - eps and env.adjustment_saturation <= 1.10 + eps),
 			"ajuste de cor leve (contraste %.2f, saturação %.2f)" % [env.adjustment_contrast, env.adjustment_saturation])
-	_check(main.get_node("MapRenderer").get_node_or_null("Skirt") != null, "saia de chão montada além da borda do mapa")
+	_check(_has_far_ground(main), "chão de fundo montado além da borda do mapa (ground_far)")
 
 
 ## Em vários yaws e zooms, a névoa começa depois do ponto mais longe do mapa e o DOF de
@@ -126,14 +123,12 @@ func _test_depth(main: Node) -> void:
 	var env: Environment = _env(main)
 	var attrs: CameraAttributesPractical = _attrs(main)
 	var map: MapData = (main.get("match_state") as MatchState).map_data
-	var ground_y: float = map.arena_floor_level * WorldScale.LEVEL_HEIGHT
-	var built_lo := Vector2(INF, INF)
-	var built_hi := Vector2(-INF, -INF)
-	for cz in map.size.y:
-		for cx in map.size.x:
-			if map.is_built_cell(Vector2i(cx, cz)):
-				built_lo = built_lo.min(Vector2(cx, cz))
-				built_hi = built_hi.max(Vector2(cx + 1, cz + 1))
+	var ground_y: float = 0.0
+	var built_lo: Vector2 = map.arena_rect.position
+	var built_hi: Vector2 = map.arena_rect.end
+	for area: MapHeightArea in map.height_areas:
+		built_lo = built_lo.min(area.rect.position)
+		built_hi = built_hi.max(area.rect.end)
 	var fog_ok := true
 	var dof_ok := true
 	var detail := ""
@@ -143,7 +138,8 @@ func _test_depth(main: Node) -> void:
 			camera.set_target_yaw(yaw, true)
 			var cam_pos: Vector3 = camera.global_position
 			var map_far: float = 0.0
-			for corner: Vector2 in [Vector2.ZERO, Vector2(map.size.x, 0), Vector2(map.size), Vector2(0, map.size.y)]:
+			for corner: Vector2 in [map.bounds.position, Vector2(map.bounds.end.x, map.bounds.position.y), map.bounds.end,
+					Vector2(map.bounds.position.x, map.bounds.end.y)]:
 				map_far = maxf(map_far, cam_pos.distance_to(Vector3(corner.x, ground_y, corner.y)))
 			var amph_far: float = 0.0
 			for corner: Vector2 in [built_lo, Vector2(built_hi.x, built_lo.y), built_hi, Vector2(built_lo.x, built_hi.y)]:
@@ -160,6 +156,13 @@ func _test_depth(main: Node) -> void:
 	camera.reset_to_default(true)
 
 
+func _has_far_ground(main: Node) -> bool:
+	for node: Node in main.get_node("Map").get_children():
+		if node.name == "Ground" and node.get_child_count() >= 1:
+			return true
+	return false
+
+
 func _test_fx_off(main: Node) -> void:
 	var atmosphere := main.get_node("Atmosphere") as Atmosphere
 	var env: Environment = _env(main)
@@ -169,9 +172,8 @@ func _test_fx_off(main: Node) -> void:
 	_check(not attrs.dof_blur_far_enabled and not attrs.dof_blur_near_enabled and not env.glow_enabled
 			and not env.fog_enabled and not env.ssao_enabled,
 			"--fx=off desliga DOF, bloom, névoa e SSAO")
-	_check(sun.shadow_enabled and env.background_mode == Environment.BG_SKY
-			and main.get_node("MapRenderer").get_node_or_null("Skirt") != null,
-			"--fx=off mantém sol, sombras, céu e saia")
+	_check(sun.shadow_enabled and env.background_mode == Environment.BG_SKY and _has_far_ground(main),
+			"--fx=off mantém sol, sombras, céu e chão de fundo")
 	atmosphere.set_effects_enabled(true)
 	_check(attrs.dof_blur_far_enabled and env.glow_enabled and env.fog_enabled and env.ssao_enabled
 			and not attrs.dof_blur_near_enabled,

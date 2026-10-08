@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_lmyvp"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/decal_trail_0.res" id="2_v5cmc"]
+
+[node name="decal_trail_0" type="Node3D" unique_id=842868537]
+script = ExtResource("1_lmyvp")
+size = Vector3(3, 0, 3)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1256796287]
+cast_shadow = 0
+mesh = ExtResource("2_v5cmc")

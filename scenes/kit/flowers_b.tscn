@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_ysbx4"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/flowers_b.res" id="2_rtlox"]
+
+[node name="flowers_b" type="Node3D" unique_id=2124066931]
+script = ExtResource("1_ysbx4")
+size = Vector3(0.5, 0.5, 0.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1202633367]
+mesh = ExtResource("2_rtlox")

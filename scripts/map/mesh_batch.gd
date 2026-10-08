@@ -90,7 +90,7 @@ func add_vertical_quad(p: Vector2, q: Vector2, y0: float, y1: float, normal: Vec
 		Vector2(u_l, v_top - y1), Vector2(u_r, v_top - y1), Vector2(u_r, v_top - y0), Vector2(u_l, v_top - y0))
 
 
-func commit(mesh: ArrayMesh, material: Material) -> void:
+func commit(mesh: ArrayMesh, material: Material, with_tangents: bool = true) -> void:
 	if is_empty():
 		return
 	var arrays: Array = []
@@ -100,6 +100,9 @@ func commit(mesh: ArrayMesh, material: Material) -> void:
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	var st := SurfaceTool.new()
 	st.create_from_arrays(arrays)
-	st.generate_tangents()
+	# Tangentes só para material com normal map no UV da malha (o shader projeta os outros).
+	if with_tangents:
+		st.generate_tangents()
 	st.commit(mesh)
 	mesh.surface_set_material(mesh.get_surface_count() - 1, material)
+

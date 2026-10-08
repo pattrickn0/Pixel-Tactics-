@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_1fujx"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/wall_high_2.res" id="2_qde5j"]
+[ext_resource type="Script" path="res://scripts/map/height_area.gd" id="3_4sx0t"]
+
+[node name="wall_high_2" type="Node3D" unique_id=1238507084]
+script = ExtResource("1_1fujx")
+size = Vector3(2, 1.5, 1)
+structural = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=754931061]
+mesh = ExtResource("2_qde5j")
+
+[node name="Height" type="Node3D" parent="." unique_id=145159766]
+script = ExtResource("3_4sx0t")
+top = 1.5
+size = Vector2(2, 1)

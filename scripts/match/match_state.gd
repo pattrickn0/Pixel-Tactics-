@@ -1,25 +1,19 @@
 class_name MatchState
 extends RefCounted
-## Estado mínimo da partida (sem visual, sem nós). Faz o papel do "host local":
-## recebe a intenção, valida, aplica e avisa por sinal. No multiplayer, só o
-## autoritativo chama request_map; os clientes recebem a seed e geram o mesmo mapa.
+## Estado mínimo da partida (sem visual, sem nós). Faz o papel do "host local": recebe o
+## mapa pronto (único e fixo, vindo de scenes/map.tscn), guarda e avisa por sinal.
 
-signal map_generated(map_data: MapData)
+signal map_loaded(map_data: MapData)
 
-var current_seed: int = 0
+## Semente da partida, só para o RNG de combate futuro (o mapa não depende dela).
+var match_seed: int = 0
 var map_data: MapData = null
-var generator: MapGenerator
 
 
-func _init(config: MapGenConfig = null) -> void:
-	generator = MapGenerator.new(config)
-
-
-## Intenção: "quero o mapa da seed N". Qualquer int é uma seed válida.
-func request_map(map_seed: int) -> void:
-	current_seed = map_seed
-	map_data = generator.generate(map_seed)
-	map_generated.emit(map_data)
+## Recebe o mapa lido da cena (MapLayout.map_ready).
+func set_map(new_map: MapData) -> void:
+	map_data = new_map
+	map_loaded.emit(map_data)
 
 
 func has_map() -> bool:

@@ -1,0 +1,26 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/kit_surface.gdshader" id="1_aser3"]
+[ext_resource type="Texture2D" path="res://assets/textures/props/crate_side.png" id="2_ryoxr"]
+[ext_resource type="Texture2D" path="res://assets/textures/props/crate_side_n.png" id="3_adqkq"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_aser3")
+shader_parameter/albedo_tex = ExtResource("2_ryoxr")
+shader_parameter/normal_tex = ExtResource("3_adqkq")
+shader_parameter/use_normal = true
+shader_parameter/normal_scale = 0.5
+shader_parameter/tint = null
+shader_parameter/uv_mode = 0
+shader_parameter/world_space = null
+shader_parameter/strip_axis = null
+shader_parameter/uv_scale = null
+shader_parameter/v_top = null
+shader_parameter/alpha_cut = null
+shader_parameter/clamp_uv = null
+shader_parameter/dither_on = null
+shader_parameter/cam_pos = null
+shader_parameter/arena_rect = null
+shader_parameter/dither_density = null
+shader_parameter/dither_margin = null

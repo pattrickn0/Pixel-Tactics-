@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_a8ga4"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/tree_small_b.res" id="2_r70k4"]
+
+[node name="tree_small_b" type="Node3D" unique_id=769514703]
+script = ExtResource("1_a8ga4")
+size = Vector3(2.4, 2.9, 2.4)
+obstacle = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1359174757]
+mesh = ExtResource("2_r70k4")

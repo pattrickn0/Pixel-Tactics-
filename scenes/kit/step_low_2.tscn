@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_sdods"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/step_low_2.res" id="2_f3ayx"]
+[ext_resource type="Script" path="res://scripts/map/height_area.gd" id="3_5ou1q"]
+
+[node name="step_low_2" type="Node3D" unique_id=264922146]
+script = ExtResource("1_sdods")
+size = Vector3(2, 0.5, 1)
+structural = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=98812746]
+mesh = ExtResource("2_f3ayx")
+
+[node name="Height" type="Node3D" parent="." unique_id=1196232165]
+script = ExtResource("3_5ou1q")
+size = Vector2(2, 1)

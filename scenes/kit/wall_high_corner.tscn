@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_i6040"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/wall_high_corner.res" id="2_jfwin"]
+[ext_resource type="Script" path="res://scripts/map/height_area.gd" id="3_gqqs2"]
+
+[node name="wall_high_corner" type="Node3D" unique_id=279336185]
+script = ExtResource("1_i6040")
+size = Vector3(1, 1.5, 1)
+structural = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=596757847]
+mesh = ExtResource("2_jfwin")
+
+[node name="Height" type="Node3D" parent="." unique_id=490822416]
+script = ExtResource("3_gqqs2")
+top = 1.5

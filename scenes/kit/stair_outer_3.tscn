@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_vu0qv"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/stair_outer_3.res" id="2_esjo3"]
+[ext_resource type="Script" path="res://scripts/map/stair_area.gd" id="3_y7i6r"]
+[ext_resource type="Script" path="res://scripts/map/height_area.gd" id="4_x56au"]
+
+[node name="stair_outer_3" type="Node3D" unique_id=1241137529]
+script = ExtResource("1_vu0qv")
+size = Vector3(3, 1.5, 3)
+structural = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1831239731]
+mesh = ExtResource("2_esjo3")
+
+[node name="Stair" type="Node3D" parent="." unique_id=222986416]
+script = ExtResource("3_y7i6r")
+size = Vector2(2, 3)
+
+[node name="Height" type="Node3D" parent="." unique_id=372788689]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, 0, 0)
+script = ExtResource("4_x56au")
+top = 1.5
+size = Vector2(0.5, 3)
+
+[node name="Height2" type="Node3D" parent="." unique_id=435822569]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, 0, 0)
+script = ExtResource("4_x56au")
+top = 1.5
+size = Vector2(0.5, 3)

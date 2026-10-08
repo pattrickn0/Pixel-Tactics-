@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_jvvl0"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/forest_backdrop_a.res" id="2_lck72"]
+
+[node name="forest_backdrop_a" type="Node3D" unique_id=772116668]
+script = ExtResource("1_jvvl0")
+size = Vector3(8, 7.5, 8)
+obstacle = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=756540958]
+mesh = ExtResource("2_lck72")

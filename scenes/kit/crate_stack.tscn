@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_2xdy3"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/crate_stack.res" id="2_37s56"]
+
+[node name="crate_stack" type="Node3D" unique_id=795083649]
+script = ExtResource("1_2xdy3")
+size = Vector3(1, 0.75, 1)
+obstacle = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1071347895]
+mesh = ExtResource("2_37s56")

@@ -1,17 +1,14 @@
 extends SceneTree
-## Testes da cena principal (specs 001 e 003). Rodar depois do comando de validação 1:
+## Testes da cena principal (specs 001, 003 e 011). Rodar depois do comando de validação 1:
 ##   "$G" --headless --path . --script tools/tests/test_main_scene.gd
 ## Imprime PASS/FAIL por verificação e sai com 0 (tudo passou) ou 1.
 
-const REPEAT_SEED_TEXT: String = "777"
 const SETTLE_FRAMES: int = 6
-## Quantas vezes o teste de regenerar pede a mesma seed.
-const REGEN_COUNT: int = 10
 ## Máximo de quadros esperando a suavização da câmera chegar no alvo.
 const CONVERGE_MAX_FRAMES: int = 2000
-const HUD_BUTTONS: Array[String] = [
-	"GenerateButton", "UseSeedButton", "RotateLeftButton", "ResetRotateButton", "RotateRightButton",
-]
+const HUD_BUTTONS: Array[String] = ["RotateLeftButton", "ResetRotateButton", "RotateRightButton"]
+## Nomes que não podem mais existir no HUD (seed e botão de gerar mapa saíram na spec 011).
+const REMOVED_HUD_NODES: Array[String] = ["SeedLabel", "GenerateButton", "SeedRow", "SeedInput", "UseSeedButton", "StatusLabel"]
 
 var _failures: int = 0
 var _passes: int = 0
@@ -42,14 +39,12 @@ func _run() -> void:
 	await _frames(SETTLE_FRAMES)
 
 	_test_structure(main)
-	await _test_regeneration(main)
+	await _test_map_scene(main)
 	await _test_camera(main)
 	await _test_camera_rotation(main)
 	await _test_camera_aim(main)
 	await _test_hud_focus(main)
-	await _test_hud_seed(main)
-	await _test_placeholders(main)
-	_test_sprites(main)
+	_test_hud_without_seed(main)
 
 	main.queue_free()
 	await _frames(SETTLE_FRAMES)
@@ -80,24 +75,20 @@ func _test_structure(main: Node) -> void:
 			"DOF de longe ligado e de perto desligado via CameraAttributesPractical")
 
 
-## Pede a mesma seed 10 vezes pelo HUD: a contagem de nós não cresce e não sobra órfão.
-func _test_regeneration(main: Node) -> void:
-	var input := main.get_node("%SeedInput") as LineEdit
-	var use_button := main.get_node("%UseSeedButton") as Button
-	var counts: Array[int] = []
-	for i in REGEN_COUNT:
-		input.text = REPEAT_SEED_TEXT
-		use_button.pressed.emit()
-		await _frames(SETTLE_FRAMES)
-		counts.append(int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT)))
+## O mapa vem da cena map.tscn: o MatchState recebe o MapData e nada precisa ser gerado.
+func _test_map_scene(main: Node) -> void:
+	var map_node := main.get_node_or_null("Map") as MapLayout
 	var match_state: MatchState = main.get("match_state")
-	_check(match_state.current_seed == REPEAT_SEED_TEXT.to_int(), "HUD pediu a seed %s" % REPEAT_SEED_TEXT)
-	_check(counts[0] == counts[REGEN_COUNT - 1], "regenerar a mesma seed %d vezes não vaza nós" % REGEN_COUNT,
-			"nós depois de cada pedido: %s" % str(counts))
-	var renderer := main.get_node("MapRenderer") as MapRenderer
-	_check(renderer.get_child_count() > 0, "o renderer montou o mapa (%d nós)" % renderer.get_child_count())
+	_check(map_node != null and map_node.scene_file_path == "res://scenes/map.tscn", "main.tscn instancia scenes/map.tscn (nó Map)")
+	_check(main.get_node_or_null("MapRenderer") == null, "sem MapRenderer na cena principal")
+	_check(match_state.has_map() and match_state.map_data.arena_rect == Rect2(-10, -9, 20, 18),
+			"MatchState recebeu o mapa (arena 20 x 18) pelo sinal map_ready")
+	var camera := main.get_node("MapCamera") as MapCamera
+	_check(camera.pitch_degrees == 40.0, "câmera padrão com 40° de inclinação", str(camera.pitch_degrees))
+	var focus: Vector3 = camera.get_focus_point()
+	_check(Vector2(focus.x, focus.z) == Vector2.ZERO and is_zero_approx(focus.y), "a câmera mira o centro da arena (0, 0, 0)", str(focus))
 	var orphans: int = int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
-	_check(orphans == 0, "nenhum nó órfão depois de regenerar", "%d órfãos" % orphans)
+	_check(orphans == 0, "nenhum nó órfão", "%d órfãos" % orphans)
 
 
 ## Roda do mouse além dos limites: distância limitada e rotação igual.
@@ -246,7 +237,7 @@ func _test_camera_aim(main: Node) -> void:
 	var camera := main.get_node("MapCamera") as MapCamera
 	var match_state: MatchState = main.get("match_state")
 	var map: MapData = match_state.map_data
-	var center := Vector3(map.arena_center.x, map.arena_floor_level * WorldScale.LEVEL_HEIGHT, map.arena_center.y)
+	var center := Vector3(map.arena_center.x, 0.0, map.arena_center.y)
 	var ok := true
 	var detail := ""
 	for yaw: float in [0.0, 90.0, 180.0, 270.0]:
@@ -264,161 +255,51 @@ func _test_camera_aim(main: Node) -> void:
 	await _frames(2)
 
 
-## (e) Depois de clicar em qualquer botão do HUD, Espaço só reseta a câmera (não gera
-## mapa nem gira). O campo da seed solta o foco depois de Enter e de "Usar seed".
+## (e) Depois de clicar em qualquer botão do HUD, Espaço só reseta a câmera (não gira
+## sozinha nem deixa o botão com foco).
 func _test_hud_focus(main: Node) -> void:
 	var camera := main.get_node("MapCamera") as MapCamera
-	var match_state: MatchState = main.get("match_state")
-	var input := main.get_node("%SeedInput") as LineEdit
 	var none_ok := true
 	for button_name: String in HUD_BUTTONS:
 		if (main.get_node("%" + button_name) as Button).focus_mode != Control.FOCUS_NONE:
 			none_ok = false
-	_check(none_ok, "os 5 botões do HUD com focus_mode = none")
+	_check(none_ok, "os 3 botões do HUD com focus_mode = none")
 
-	input.text = "123"
 	var clicks_ok := true
 	var space_ok := true
 	var detail := ""
 	for button_name: String in HUD_BUTTONS:
 		var button := main.get_node("%" + button_name) as Button
-		var seed_before: int = match_state.current_seed
 		var yaw_before: float = camera.target_yaw_degrees
 		# No headless o push_input de mouse não chega aos botões: o clique é o sinal pressed.
 		button.pressed.emit()
 		await _frames(2)
-		# O clique precisa ter chegado no botão (gerou mapa ou mexeu na câmera).
-		var reacted: bool = match_state.current_seed != seed_before or not is_equal_approx(camera.target_yaw_degrees, yaw_before) \
-				or button_name == "ResetRotateButton"
+		# O clique precisa ter chegado no botão (mexeu na câmera).
+		var reacted: bool = not is_equal_approx(camera.target_yaw_degrees, yaw_before) or button_name == "ResetRotateButton"
 		if not reacted:
 			clicks_ok = false
 			detail += "clique em %s sem efeito; " % button_name
 		camera.set_target_yaw(90.0, true)
-		var seed_after_click: int = match_state.current_seed
-		var map_after_click: MapData = match_state.map_data
 		_key(KEY_SPACE, 32)
 		await _frames(2)
-		if match_state.current_seed != seed_after_click or match_state.map_data != map_after_click \
-				or not is_zero_approx(camera.target_yaw_degrees) or button.has_focus():
+		if not is_zero_approx(camera.target_yaw_degrees) or button.has_focus():
 			space_ok = false
-			detail += "%s: depois do Espaço seed %d->%d, yaw alvo %.1f, foco %s; " % [button_name, seed_after_click,
-					match_state.current_seed, camera.target_yaw_degrees, str(button.has_focus())]
-		input.text = "123"
-	_check(clicks_ok, "cliques nos 5 botões do HUD chegam aos botões", detail)
+			detail += "%s: depois do Espaço yaw alvo %.1f, foco %s; " % [button_name, camera.target_yaw_degrees, str(button.has_focus())]
+	_check(clicks_ok, "cliques nos 3 botões do HUD chegam aos botões", detail)
 	_check(space_ok, "depois de clicar em qualquer botão do HUD, Espaço só reseta a câmera", detail)
-
-	input.grab_focus()
-	input.text = "321"
-	input.text_submitted.emit(input.text)
-	await _frames(2)
-	var enter_ok: bool = not input.has_focus() and match_state.current_seed == 321
-	input.grab_focus()
-	input.text = "654"
-	(main.get_node("%UseSeedButton") as Button).pressed.emit()
-	await _frames(2)
-	var use_ok: bool = not input.has_focus() and match_state.current_seed == 654
-	camera.set_target_yaw(90.0, true)
-	_key(KEY_SPACE, 32)
-	await _frames(2)
-	_check(enter_ok and use_ok and match_state.current_seed == 654 and is_zero_approx(camera.target_yaw_degrees),
-			"campo da seed solta o foco depois de Enter e de \"Usar seed\"; Espaço volta para a câmera",
-			"enter %s, usar seed %s, seed %d" % [str(enter_ok), str(use_ok), match_state.current_seed])
 	camera.reset_to_default(true)
 	await _frames(2)
 
 
-## Seed inválida não troca o mapa; seed válida troca e aparece no rótulo.
-func _test_hud_seed(main: Node) -> void:
-	var match_state: MatchState = main.get("match_state")
-	var input := main.get_node("%SeedInput") as LineEdit
-	var use_button := main.get_node("%UseSeedButton") as Button
-	var seed_label := main.get_node("%SeedLabel") as Label
-	var status := main.get_node("%StatusLabel") as Label
-	var seed_before: int = match_state.current_seed
-	var map_before: MapData = match_state.map_data
-	input.text = "abc"
-	use_button.pressed.emit()
-	await _frames(2)
-	_check(match_state.current_seed == seed_before and match_state.map_data == map_before,
-			"seed \"abc\" não muda a seed nem o mapa")
-	_check(status.text == Hud.INVALID_SEED_TEXT, "seed \"abc\" mostra \"Seed inválida\"", status.text)
-	input.text = "42"
-	input.text_submitted.emit(input.text)
-	await _frames(2)
-	_check(match_state.current_seed == 42 and match_state.map_data.map_seed == 42,
-			"seed \"42\" (Enter) troca para a seed 42")
-	_check(seed_label.text == "Seed: 42", "rótulo mostra a seed 42", seed_label.text)
-	_check(Hud.is_valid_seed_text("-12345") and Hud.is_valid_seed_text("9223372036854775807")
-			and not Hud.is_valid_seed_text("99999999999999999999"),
-			"seeds negativas e grandes (int64) aceitas; fora do int64 recusadas")
-
-
-## Sem arte em disco (placeholders): o mapa monta com texturas geradas em código.
-func _test_placeholders(main: Node) -> void:
-	var renderer := main.get_node("MapRenderer") as MapRenderer
-	var match_state: MatchState = main.get("match_state")
-	var real_art: ArtLibrary = renderer.art
-	renderer.art = ArtLibrary.new()
-	renderer.art.force_placeholders = true
-	match_state.request_map(7)
-	await _frames(SETTLE_FRAMES)
-	var all_generated := true
-	for art_name: String in ["grass_arena_0", "step_side_grass", "wall_face", "rock"]:
-		if renderer.art.is_from_disk(art_name) or not (renderer.art.get_terrain_texture(art_name) is ImageTexture):
-			all_generated = false
-	for art_name: String in ["tree_big_0", "bush_2", "grass_tuft_2", "flower_1", "monolith_0", "monolith_1"]:
-		var tex: Texture2D = renderer.art.get_sprite_texture(art_name)
-		if not (tex is ImageTexture):
-			all_generated = false
-	var mono := renderer.art.get_sprite_texture("monolith_0")
-	var sizes_ok: bool = mono.get_width() == 32 and mono.get_height() == 96 \
-			and renderer.art.get_sprite_texture("tree_big_1").get_size() == Vector2(96, 128)
-	_check(all_generated and renderer.get_child_count() > 0, "mapa monta só com placeholders (sem arte em disco)")
-	_check(sizes_ok, "placeholders com os tamanhos da A01")
-	renderer.art = real_art
-	match_state.request_map(42)
-	await _frames(SETTLE_FRAMES)
-
-
-## Sprites sem escala (32 texels por unidade) e runa (f) na frente do monólito em z local,
-## na mesma posição do monólito.
-func _test_sprites(main: Node) -> void:
-	var renderer := main.get_node("MapRenderer") as MapRenderer
-	var art: ArtLibrary = renderer.art
-	var scale_ok := true
-	var detail := ""
-	for family: String in ArtLibrary.SPRITE_FAMILIES:
-		for v in int(ArtLibrary.SPRITE_FAMILIES[family]):
-			var sprite_name: String = art.sprite_variant_name(family, v)
-			var tex: Texture2D = art.get_sprite_texture(sprite_name)
-			var box: AABB = art.sprite_mesh(sprite_name).get_aabb()
-			var expected := Vector2(tex.get_width(), tex.get_height()) * WorldScale.PIXEL_SIZE
-			if not Vector2(box.size.x, box.size.y).is_equal_approx(expected):
-				scale_ok = false
-				detail += "%s %s (esperado %s); " % [sprite_name, Vector2(box.size.x, box.size.y), expected]
-	_check(scale_ok, "nenhum sprite escalado (tamanho = pixels / 32)", detail)
-
-	var rune_ok := true
-	for v in int(ArtLibrary.SPRITE_FAMILIES["monolith"]):
-		var mesh: ArrayMesh = art.sprite_mesh(art.sprite_variant_name("monolith", v), true)
-		var verts: PackedVector3Array = mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-		for p: Vector3 in verts:
-			if p.z <= 0.0:
-				rune_ok = false
-	_check(rune_ok, "vértices do quad da runa com z local > 0 (na frente do monólito com billboard)")
-
-	var same_pos := true
-	var rune_nodes: int = 0
-	for child: Node in renderer.get_children():
-		if not child.name.begins_with("Runes_"):
-			continue
-		rune_nodes += 1
-		var sprite_node := renderer.get_node_or_null(NodePath(String(child.name).replace("Runes_", "Sprites_"))) as MultiMeshInstance3D
-		var runes: MultiMesh = (child as MultiMeshInstance3D).multimesh
-		if sprite_node == null or sprite_node.multimesh.instance_count != runes.instance_count:
-			same_pos = false
-			continue
-		for i in runes.instance_count:
-			if not runes.get_instance_transform(i).origin.is_equal_approx(sprite_node.multimesh.get_instance_transform(i).origin):
-				same_pos = false
-	_check(same_pos and rune_nodes > 0, "runas na mesma posição do monólito (%d grupos)" % rune_nodes)
+## O HUD não tem mais seed, botão "Gerar mapa" nem rótulo de status.
+func _test_hud_without_seed(main: Node) -> void:
+	var found: Array[String] = []
+	for node_name: String in REMOVED_HUD_NODES:
+		if main.get_node_or_null("%" + node_name) != null:
+			found.append(node_name)
+	_check(found.is_empty(), "HUD sem seed, \"Gerar mapa\" e status", str(found))
+	var has_signal: bool = false
+	for sig: Dictionary in (main.get_node("HUD") as Hud).get_signal_list():
+		if str(sig["name"]) == "map_requested":
+			has_signal = true
+	_check(not has_signal, "o HUD não tem o sinal map_requested")

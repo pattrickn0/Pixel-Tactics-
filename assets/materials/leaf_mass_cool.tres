@@ -1,0 +1,24 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/kit_surface.gdshader" id="1_02l5y"]
+[ext_resource type="Texture2D" path="res://assets/textures/foliage/leaf_mass_cool.png" id="2_wqagx"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_02l5y")
+shader_parameter/albedo_tex = ExtResource("2_wqagx")
+shader_parameter/use_normal = null
+shader_parameter/normal_scale = null
+shader_parameter/tint = null
+shader_parameter/uv_mode = 1
+shader_parameter/world_space = false
+shader_parameter/strip_axis = null
+shader_parameter/uv_scale = Vector2(0.5, 0.5)
+shader_parameter/v_top = null
+shader_parameter/alpha_cut = null
+shader_parameter/clamp_uv = null
+shader_parameter/dither_on = true
+shader_parameter/cam_pos = null
+shader_parameter/arena_rect = null
+shader_parameter/dither_density = null
+shader_parameter/dither_margin = 3.0

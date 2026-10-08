@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_mdcj3"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/stair_low_3.res" id="2_fh456"]
+[ext_resource type="Script" path="res://scripts/map/stair_area.gd" id="3_ghdjt"]
+
+[node name="stair_low_3" type="Node3D" unique_id=2079740925]
+script = ExtResource("1_mdcj3")
+size = Vector3(3, 0.5, 1)
+structural = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1602023873]
+mesh = ExtResource("2_fh456")
+
+[node name="Stair" type="Node3D" parent="." unique_id=787696618]
+script = ExtResource("3_ghdjt")
+step_count = 2
+size = Vector2(3, 1)

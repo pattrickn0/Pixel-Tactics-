@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_57j83"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/decal_trail_1.res" id="2_33txg"]
+
+[node name="decal_trail_1" type="Node3D" unique_id=515515130]
+script = ExtResource("1_57j83")
+size = Vector3(3, 0, 3)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=2069690771]
+cast_shadow = 0
+mesh = ExtResource("2_33txg")

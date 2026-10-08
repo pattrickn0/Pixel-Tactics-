@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_o2v15"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/tree_broad_a.res" id="2_a8qkm"]
+
+[node name="tree_broad_a" type="Node3D" unique_id=33229418]
+script = ExtResource("1_o2v15")
+size = Vector3(3.2, 4, 3.2)
+obstacle = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=509560420]
+mesh = ExtResource("2_a8qkm")
