@@ -2,6 +2,8 @@
 
 **Revisão 1 (2026-10-08): referência `ilha-flutuante.webp`.** Esta revisão reescreve a spec. A composição livre da versão anterior (lagoa a oeste, rio atrás do muro norte, cascata a leste, árvore anciã, mirantes, trilhas longas, ilha de raio 34 a 42) **sai** e entra a composição medida na referência nova. O cenário deixa de ser pixel art. O que mudou está resumido em "Mudanças desta revisão", no fim.
 
+**Atualização de 2026-10-08, depois da revisão `revisoes/012-f1.md`:** mudaram a Tabela B (terra e círculo, medidos de novo), a Tabela C (mata mais densa e regra de encavalar), a Tabela D (cascata, arco-íris e ilha alta pela medição do developer, e o mar de nuvens em volta) e os critérios correspondentes. As mudanças estão marcadas com **(f1)**.
+
 **Vem depois de:** `011` (fechada em `revisoes/011-f3.md`). Mantém da 011 o kit, o `MapLayout`/`MapData` por marcadores, a arena, o anel, as reservas e a regra "layout feito à mão".
 **Arte:** `A08-arte-pintada-ilha.md` (substitui a `A07`). Até a A08 ser aprovada, o developer usa materiais provisórios de cor chapada e gradiente, com a paleta-alvo de `docs/direcao-de-arte.md`.
 **Referência principal:** `docs/reference/ilha-flutuante.webp` (906×509).
@@ -96,29 +98,34 @@ O `ISLAND_OUTLINE` final é uma lista literal de 56 a 90 vértices, escrita à m
 | Braseiros (10) | crista, ladeando as escadas: (±1.75, 12.5) e (±1.75, −12.5); cantos do terraço: (−12.2, −10.75), (12.2, −10.75), (−12.2, 10.75), (12.2, 10.75); fora dos portões: (−15.8, 2.0) e (15.8, −2.0) | `OmniLight3D` sem sombra em cada um |
 | Bancos e caixotes (D2) | bancos em (−6.7, −18.2), (−2.4, −18.2) e (7.3, −18.2), ao longo de X; caixotes em (1.5, −18.2) e (3.7, −18.2) | peças do kit |
 | Troncos caídos | terraço oeste (−12.3, −4.0) e terraço leste (12.2, 1.8), ao longo de Z | fora das reservas |
-| Terra da arena | mancha de cerca de 14,5 × 11, centro em (0.5, −1.0) | decalque |
-| Círculo de pedra | centro em (0.4, −0.9), raio externo de cerca de 2,7, quebrado | decalque plano |
+| Terra da arena | mancha de cerca de 13 a 14,5 × 10 a 11, centro em (0.3, −1.0), alongada em X | decalque; **(f1)** borda escura avermelhada e plantinhas dentro (A08) |
+| Círculo de pedra **(f1)** | centro em (0.4, −0.9). Medido de novo: **disco de terra escura** de raio cerca de 1,3 com miolo claro irregular; **dois crescentes claros** (terra batida/pedra lisa) a oeste e a leste, até raio 1,9, abertos ao norte e ao sul; **anel externo quebrado** de 5 a 7 pedras compridas e curvas (1,2 a 1,8 × 0,25 a 0,4) em raio de 3,5 a 4,5, com falhas | decalque plano (A08 `arena_ring` + `arena_slabs`). Não é um anel regular de lajes |
 
-### Tabela C — mata por zona (contagens tiradas da imagem)
+### Tabela C — mata por zona (contagens tiradas da imagem; **(f1)** recontadas)
+Na referência, a mata do noroeste e a do leste são **maciços contínuos e escuros**: as copas se tocam e se sobrepõem, encostam na face externa do muro e passam da borda da ilha. O respiro vem das áreas abertas fixas (faixa norte, faixa sul, terraço, entorno das lajes e do caminho), não de espaço entre cada árvore.
+
 | Zona | Área (x; z) | Conteúdo |
 |---|---|---|
-| Noroeste (`M`) | x −27 a −10; z −23 a −5 | 14 a 20 árvores: coníferas altas no fundo e folhosas redondas na frente e na borda oeste. É a massa mais alta à esquerda do quadro |
-| Oeste perto do portão (`o`) | x −23 a −16; z −5 a 3 | 3 a 5 folhosas e arbustos, deixando livre a plataforma oeste |
+| Noroeste (`M`) | x −27 a −10; z −23 a −5 | **(f1)** 24 a 32 árvores: coníferas altas e escuras no fundo e entremeadas, folhosas redondas na frente e na borda oeste. Massa contínua do muro até a borda, sem gramado aparecendo entre as copas na câmera padrão. É a massa mais alta à esquerda do quadro |
+| Oeste perto do portão (`o`) | x −23 a −16; z −5 a 3 | **(f1)** 4 a 6 folhosas e arbustos, deixando livre a plataforma oeste |
 | Norte central | x −9 a 10; z −21 a −14,5 | **aberta**: grama, bancos, 1 ou 2 folhosas na ponta oeste, cerca de (−9.2, −16.6). A cascata aparece por cima dessa faixa |
-| Nordeste (`o`) | x 10 a 19; z −23 a −15 | 4 a 6 folhosas redondas à esquerda do caminho |
-| Leste (`T`) | x 20 a 31; z −25 a −4 | 12 a 18 coníferas altas e densas, à direita do caminho |
-| Frente leste (`o`) | x 16 a 22; z −4 a 11 | 5 a 7 folhosas redondas grandes, cerca de (19.2, −3.3), (19.9, 2.3), (15.1, 5.8) e (16.1, 9.8) |
-| Sul (`"`) | faixa entre o muro e a borda | sem árvores: arbustos, flores, raízes à mostra e tufos |
+| Nordeste (`o`) | x 10 a 19; z −23 a −15 | **(f1)** 6 a 9 folhosas redondas, em grupo fechado, à esquerda do caminho, e 1 ou 2 coníferas no meio |
+| Leste (`T`) | x 20 a 31; z −25 a −4 | **(f1)** 18 a 26 árvores, pelo menos 2/3 coníferas altas e escuras, do caminho até a borda (copas passando da borda), com 3 a 5 folhosas verde-amareladas entremeadas no meio da massa |
+| Frente leste (`o`) | x 16 a 22; z −4 a 11 | **(f1)** 6 a 8 folhosas redondas **grandes** (copa de 4,5 a 5,5), cerca de (19.2, −3.3), (19.9, 2.3), (15.1, 5.8) e (16.1, 9.8), mais arbustos entre elas |
+| Sul (`"`) **(f1)** | faixa entre o muro e a borda | sem árvores. **18 a 26 arbustos** em grupos (ao pé do muro e na borda, deixando a escada e o patamar livres), **4 a 6 raízes de superfície** grossas serpenteando pela grama até a borda (peça nova `root_surface_a..c`, provisória), flores e tufos densos (MultiMesh), cipós na face externa do muro sul (6 a 10 cartões) |
 | Ilhotas oeste e leste | — | uma folhosa grande em cada uma, mais arbustos |
 
-Total na ilha principal: **de 40 a 58 árvores**. Valem as regras da versão anterior: nenhuma copa encavalada (distância entre centros ≥ 0,8 × (r_a + r_b)), tronco a ≥ 1,5 do muro, ≥ 0,75 de uma laje e ≥ 1,0 da borda da ilha (copas podem passar da borda, como na imagem).
+Total na ilha principal: **(f1) de 60 a 82 árvores** (eram 40 a 58). Regras **(f1)**:
+- **Encavalar:** a distância entre troncos é ≥ max(1,2; 0,45 × (r_a + r_b)), com r = raio da copa. Copas podem se sobrepor até cerca da metade, como na imagem. (Antes: ≥ 0,8 × (r_a + r_b), que deixava a mata rala.)
+- Tronco a ≥ 1,5 da face externa do muro (a copa pode encostar no muro, mas não passa da crista para o terraço), ≥ 0,75 de uma laje ou do caminho e ≥ 1,0 da borda da ilha (copas podem passar da borda).
+- O pedido antigo "as árvores às vezes estão muito juntas" era sobre a mata uniforme da 011. Vale a ordem mais nova, "igual a tudo". O respiro fica nas áreas abertas listadas acima.
 
 ### Tabela D — fora da ilha
 | Item | Posição | Notas |
 |---|---|---|
-| Ilha alta | corpo de x −13 a 23, z −55 a −70, topo em y de 7,5 a 9 | lábio da frente em z ≈ −56, com 2 ou 3 blocos e um esporão de rocha central entre a lâmina do meio e a da direita, que desce até y ≈ −7. Mata baixa no topo. Fundo cônico que some nas nuvens |
-| Cascata (3 lâminas) | esquerda x −9 a −4; meio x −2,5 a 14,5; direita x 18,5 a 21,5; do lábio (y ≈ 7) até y ≈ −13, em z ≈ −56,5 | névoa de puffs na base (y −10 a −15), que se funde ao mar de nuvens |
-| Arco-íris | fita em arco no plano z ≈ −55, do pé em (1, −13) ao topo em (12.5, −2.5) e descendo até (21, −6) | visível só da metade sul da órbita (yaw de 270° a 90° passando por 0°) |
+| Ilha alta **(f1)** | corpo de x −13 a 23, z −55 a −70, topo em y de **6,5 a 7,5** | lábio da água em **y ≈ 6,3** (na tela, v ≈ 0,05). Blocos de rocha entre as lâminas: bloco esquerdo de x −6,8 a −3,3 descendo até y ≈ −4 (tela v ≈ 0,21); **esporão central de x 5,8 a 11,5**, que desce até y ≈ −10 (v ≈ 0,29); bloco direito depois de x 14,1 descendo até y ≈ 0 (v ≈ 0,15). Mata baixa e o rio no topo. O fundo cônico fica **atrás das lâminas e da névoa**: na câmera padrão, abaixo do lábio só aparecem água, esses blocos, névoa e nuvem (ver critério da cascata) |
+| Cascata (3 lâminas) **(f1)** | medida pelo developer e conferida: esquerda x −9,0 a −6,8; **meio x −3,3 a 5,6, visível inteira** (nada na frente dela); direita x 11,5 a 14,1; do lábio (y ≈ 6,3) até y ≈ −13, em z ≈ −56,45 | névoa de puffs na base (y −10 a −15, e subindo até y ≈ −4 entre as lâminas), que se funde ao mar de nuvens |
+| Arco-íris **(f1)** | fita em arco no plano z ≈ −55,2, do pé em (−0.5, −12.5), topo em (8.6, −1.8), descendo até (15.5, −5.5) (a tabela `RAINBOW_ARC` do developer) | visível só da metade sul da órbita (yaw de 270° a 90° passando por 0°) |
 | Ilhota das ruínas | centro em (−34, 0, −58), raio de cerca de 9 | 4 a 6 colunas (duas com lintel formando um pórtico, as outras quebradas), tambores caídos, 3 a 5 coníferas e folhosas pequenas |
 | Ilhota pequena nordeste | centro em (43, −3, −78), raio de cerca de 3,5 | uma coluna e verde no topo |
 | Ilhota oeste (`w`) | centro em (−27, −1.2, 6), raio de cerca de 3,5 | ponte oeste; folhosa grande |
@@ -126,6 +133,7 @@ Total na ilha principal: **de 40 a 58 árvores**. Valem as regras da versão ant
 | Rochas grandes com cipós (decisão 6) | (−41, 10, −30) e (43, 8, −30) | caem nos cantos de cima do quadro em yaw 0 |
 | Rochas flutuantes | 8 a 12, de 0,5 a 2,5 de tamanho, por exemplo (45, 8, −40), (46, −8, −40), (−39, 4, −40), (−52, −10, −40) e uma pequena com grama perto da ilhota leste | opcional: sobe e desce devagar, determinístico por `TIME` |
 | Mar de nuvens | aglomerados de y −6 a −30 em volta e embaixo da ilha, mais denso nos lados esquerdo e direito do quadro e embaixo da borda sul | não projeta sombra |
+| Anel de nuvens do horizonte **(f1)** | 10 a 16 aglomerados largos em volta da ilha inteira, com raio horizontal de 35 a 60 e topo em y de −2 a −6 | aparecem logo acima da borda distante nas vistas giradas (y90, y180, y270), para a borda ler como "fim da ilha" e não como fim de um morro. Valem a regra da órbita e a visibilidade da arena |
 
 Regra da órbita: todo vértice fora da ilha principal com raio horizontal r ≤ 60 fica com r ≥ 55, **ou** abaixo de y = 0,51 × r − 4 (0,51 = tan 27°). Assim a câmera nunca entra nem fica atrás dessas peças.
 
@@ -167,8 +175,8 @@ A posição esperada na tela é a da referência, normalizada (0 a 1, a partir d
 ### Fase 2: estilo pintado (depois da A08, leva 1)
 12. **Shaders do cenário** (sem addons): chão (mistura de 2 ou 3 gramas por máscara de mundo, AO por cor de vértice), pedra (musgo pela normal, chanfro claro), folhagem (normais esféricas, wrap, gradiente por altura, luz de borda quente, alpha scissor + alpha-to-coverage, balanço leve), penhasco (triplanar, escurece e esfria para baixo). O `kit_surface.gdshader` em pixel art fica só para referência, ou sai.
 13. **Texturas:** filtro linear com mipmaps e anisotrópico em todas as do cenário. Densidade de 64 px por unidade (constante própria, separada da `TEXELS_PER_UNIT` dos personagens).
-14. **Luz e pós** conforme a direção de arte: sol `#FFE9C8` do oeste-noroeste, ambiente do céu, SSAO leve, bloom leve, névoa de profundidade lavanda depois da borda e névoa de altura abaixo de −3, desfoque só no fundo, Filmic ou AgX, MSAA 4×, sem TAA/FXAA e sem vinheta. `test_atmosphere` é atualizado para esses valores.
-15. **Arena:** decalques de terra, círculo de pedra, lajes soltas e pedrinhas (A08), e tufos baixos e flores espalhados.
+14. **Luz e pós** conforme a direção de arte: sol `#FFE9C8` do oeste-noroeste, ambiente do céu, SSAO leve, bloom leve, névoa de profundidade lavanda depois da borda e névoa de altura abaixo de −3, desfoque só no fundo e **fraco** (**(f1)**: na Fase 1, a ilhota das ruínas e a ilha alta saem borradas demais; na referência, elas são nítidas e só a névoa as suaviza), Filmic ou AgX, MSAA 4×, sem TAA/FXAA e sem vinheta. `test_atmosphere` é atualizado para esses valores.
+15. **Arena:** decalques de terra, círculo de pedra, lajes soltas e pedrinhas (A08), e tufos baixos e flores espalhados. **(f1)** O círculo segue a Tabela B nova (disco escuro, crescentes claros e anel externo de pedras compridas). As lajes soltas atuais (cartões cinza retangulares de borda dura) saem.
 
 ### Fase 3: água, penhasco, nuvens e efeitos (depois da A08, leva 2) e comparação final
 16. Cascata (riscos rolando, espuma, névoa), arco-íris, penhasco e fundo com a arte nova, raízes e cipós, nuvens (puffs billboard pintados com alfa suave, ordenados por aglomerado, mais o mar de nuvens embaixo), chama em flipbook e vaga-lumes (28 a 48, em tabela, em volta das matas noroeste e leste e da cascata).
@@ -199,7 +207,7 @@ A posição esperada na tela é a da referência, normalizada (0 a 1, a partir d
 - [ ] `test_map_layout`: arena, reservas, `terrace_rect` e justiça por rotação de 180° iguais aos da 011. A crista em 1,0 passa a ser conferida em (±5, ±12.5) e (±13.5, 0). Alturas novas: (0, 12.25) = 0,75; (0, 12.75) = 1,0; (0, 13.25) = 0,75; (0, 13.75) = 0,5; (0, 14.25) = 0,25; (0, 14.75) = 0; e o simétrico no norte. A reserva em (0, 11.5) continua 0,5. O fingerprint é atualizado e registrado no relatório.
 - [ ] `get_height_at` em (−13.5, 4.5) e (13.5, −4.5) = 1,0, e ao andar pelo eixo de cada escada (as 4) a altura muda só em saltos de 0,25. Nenhum `wall_high_*` tem pegada que cruze `Rect2(-14, 3, 1, 3)`, `Rect2(13, -6, 1, 3)`, `Rect2(-1.5, 12, 3, 1)` ou `Rect2(-1.5, -13, 3, 1)`.
 - [ ] `ISLAND_OUTLINE`: de 56 a 90 vértices, polígono simples, arestas ≤ 3, a ≤ 0,75 de cada âncora da Tabela A. O muro externo inteiro (`Rect2(-14, -13, 28, 26)`) fica dentro, a ≥ 0,75 da borda.
-- [ ] Mata: de 40 a 58 árvores na ilha principal, com as contagens por zona da Tabela C. Nenhum par encavalado. As distâncias de tronco da Tabela C são respeitadas. A faixa norte central (x −8 a 10, z −21 a −14,5) não tem tronco de árvore.
+- [ ] Mata **(f1)**: de 60 a 82 árvores na ilha principal, com as contagens por zona da Tabela C. Nenhum par de troncos a menos de max(1,2; 0,45 × (r_a + r_b)). As distâncias de tronco da Tabela C são respeitadas. Faixa sul: de 18 a 26 arbustos e de 4 a 6 `root_surface_*`, nenhum sobre a escada ou o patamar. A faixa norte central (x −8 a 10, z −21 a −14,5) não tem tronco de árvore.
 - [ ] Regra da órbita (Tabela D) válida para todos os vértices de `Sky`. `max_distance` × cos 27° − 4,3 ≤ 50.
 - [ ] Visibilidade da arena com a câmera nova: 100% em yaw 0/90/180/270 e ≥ 97% em 45/135/225/315, na distância padrão e na máxima.
 - [ ] 10 braseiros e 10 `OmniLight3D`, todos com `shadow_enabled = false` e alcance ≤ 4.
@@ -210,10 +218,14 @@ A posição esperada na tela é a da referência, normalizada (0 a 1, a partir d
 
 **Por captura (Lead Project)**
 - [ ] `012-comparacao` e `012-sobreposicao`: na sobreposição, o anel, a borda da ilha, as massas de mata, a cascata, as ilhotas, as pontes e as tochas caem no mesmo lugar da referência (diferença visível ≤ cerca de 3% do quadro). Lado a lado, as duas imagens leem como "o mesmo lugar".
+- [ ] Cores **(f1, Fase 2)**: na captura padrão sem HUD (`--hud=off`), a cor média de cada caixa abaixo fica a ≤ 8% (distância RGB normalizada) do valor medido na referência ampliada para 1280×720. Caixas em pixels (x0, y0, x1, y1): terra da arena (560, 400, 640, 440) `#B3843D`; grama da arena oeste (400, 330, 480, 400) `#7F8033`; grama da arena frente (420, 450, 600, 500) `#717B22`; mata noroeste (170, 250, 300, 380) `#58572B`; coníferas leste (1000, 250, 1100, 400) `#384F21`; folhosas nordeste (800, 150, 940, 230) `#616F58`; face externa do muro sul (300, 555, 560, 575) `#2A3C27`; penhasco da frente (400, 650, 560, 710) `#38302A`. Na Fase 3, entram também: céu alto à direita (870, 0, 960, 30) `#B4BAD9`; céu alto à esquerda (130, 0, 230, 30) `#E2D1C1`; nuvem à esquerda (40, 320, 140, 380) `#D9C7C2`; nuvem embaixo à esquerda (30, 560, 150, 700) `#938B8C`; nuvem à direita (1190, 330, 1270, 420) `#B9B3BA`. O developer acrescenta essa conta ao `tools/dev/compare_images.gd` e registra a tabela no relatório.
+- [ ] Variação **(f1, Fase 2)**: a terra e a grama da arena não são chapadas. Na caixa da terra (480, 330, 800, 470), o desvio-padrão da luminância dos pixels de terra fica ≥ 22 (a referência dá 28; a Fase 1 deu 16).
 - [ ] Estilo (Fase 2 e 3): cenário pintado, sem pixel aparente nem Nearest, com copas redondas e fofas, pedra bege com musgo no topo, terra alaranjada, penhasco marrom em blocos e nuvens fofas lavanda e brancas. Dia claro com toque quente, sem tarde dourada e sem vinheta.
-- [ ] Nas 4 capturas de giro: o fundo é mata → borda → nuvens/céu, e a ilha lê como flutuante em todas. Em `012-y180`, a ilha alta não aparece entre a câmera e a arena.
+- [ ] Nas 4 capturas de giro: o fundo é mata → borda → nuvens/céu, e a ilha lê como flutuante em todas. **(f1)** Em y90, y180 e y270, nuvens do anel do horizonte aparecem logo acima da borda distante em pelo menos metade da largura dela. Em `012-y180`, a ilha alta não aparece entre a câmera e a arena.
 - [ ] `012-escada-sul`: a escada sai da crista entre as duas tochas e desce até o patamar com os pilares, sem muro atravessado e sem fresta.
-- [ ] Mata: grupos com respiro, nenhuma copa encavalada, e a faixa norte aberta.
+- [ ] Mata **(f1)**: as massas do noroeste e do leste leem como maciços contínuos e escuros, como na referência (sem gramado entre as copas na câmera padrão), e o respiro fica nas áreas abertas (faixa norte, faixa sul, terraço e entorno das lajes).
+- [ ] Cascata **(f1)**: na captura padrão sem HUD, a cor média da caixa u 0,484–0,539 × v 0,111–0,25 (a lâmina do meio) fica a ≤ 15% de `#BCCEDC` (≤ 8% na Fase 3) (distância RGB normalizada), e abaixo do lábio da ilha alta só aparecem água, os blocos da Tabela D, névoa e nuvem (o fundo cônico não aparece como massa marrom entre as lâminas).
+- [ ] Faixa sul **(f1)**: entre o muro sul e a borda, a captura mostra arbustos, raízes e flores como na referência. A cor média da caixa u 0,195–0,328 × v 0,82–0,875 fica a ≤ 12% de `#2C3F1E`.
 
 **Sempre**
 - [ ] Os dois comandos de validação do `CLAUDE.md` sem `ERROR`/`SCRIPT ERROR` nem warnings do nosso código. Todos os `tools/tests/test_*.gd` com código 0.
@@ -228,4 +240,5 @@ A posição esperada na tela é a da referência, normalizada (0 a 1, a partir d
 ## Mudanças desta revisão (para quem leu a versão anterior)
 - Saíram: o rio, a lagoa, a ponte de madeira, a cascata leste, a árvore anciã, os mirantes, as trilhas longas sudoeste/nordeste (e os decalques `decal_trail_sw/ne_a/ne_b` da A07), a ilha de raio 34 a 42, as ilhotas a 80–120 e a pixel art no cenário.
 - Entraram: a câmera medida (27° / 37° / 54 / +4,3), a passagem sul e a norte, o patamar sul, a plataforma oeste, o caminho nordeste, as pontes de corda, as ilhotas laterais, a ilha alta com a cascata e o arco-íris, a ilhota das ruínas, as rochas com cipós, os 10 braseiros, os bancos e os troncos (D2), o círculo de pedra e o teste de composição.
+- **(f1, 2026-10-08)** Mata de 60 a 82 árvores com copas que se sobrepõem (regra de troncos 0,45 × (r_a + r_b)); faixa sul com 18 a 26 arbustos, raízes de superfície e cipós no muro; cascata, arco-íris e ilha alta pela medição do developer, com o lábio em y ≈ 6,3 e o fundo cônico escondido; anel de nuvens do horizonte para as vistas giradas; círculo de pedra medido de novo; critérios de cor por caixa (Fase 2 e 3).
 - Ficaram: o kit, os marcadores do `MapData`, as passagens de crista dos portões laterais, `place_decor` com `--force`, o `map.tscn` como fonte de verdade e o limite de 500 draw calls.

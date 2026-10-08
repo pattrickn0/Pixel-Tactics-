@@ -105,7 +105,7 @@ Na referência nova, o anfiteatro tem as mesmas proporções do nosso (arena 20 
 
 - **Muros:** pedra cortada bege quente, blocos de tamanhos variados, chanfro claro, juntas escuras e quentes, **musgo e grama no topo** e cipós escorrendo em alguns trechos (como na referência).
 - **Lajes** (patamar sul, caminho leste, plataforma oeste e cabeceiras): lajes grandes e irregulares, bege-claras, com grama nas juntas.
-- **Arena:** grama viva com tufos baixos e florzinhas espalhadas. Uma **mancha de terra alaranjada** grande no centro, com borda irregular e suave, um **círculo de pedra** quebrado no meio, lajes soltas planas e pedrinhas. Tudo plano, sem obstáculo.
+- **Arena:** grama viva com tufos baixos e florzinhas espalhadas. Uma **mancha de terra marrom-alaranjada** grande no centro, com manchas escuras de terra batida, borda escura avermelhada irregular e suave, e plantinhas dentro. No meio, o **círculo** da referência: disco de terra escura com miolo claro, dois crescentes claros e um anel externo quebrado de pedras compridas e chatas. Pedrinhas soltas. Tudo plano, sem obstáculo.
 - **Penhasco:** blocos grandes de terra e rocha marrom (mais quente em cima e mais fria e escura embaixo), raízes grossas saindo da face e cipós pendurados. O fundo afunila e some nas nuvens.
 
 ## Água, nuvens e céu
@@ -136,7 +136,7 @@ Valores de referência para as texturas e os materiais, da sombra para a luz. O 
 | Grupo | Sombra → Luz |
 |---|---|
 | Grama | `#2C4520` `#3F5F22` `#5E8424` `#7FA22C` `#A8C447` |
-| Terra da arena | `#7E5A2C` `#A26A36` `#C89046` `#DDB06A` |
+| Terra da arena | `#6E4228` (borda) `#74502C` `#8A5E34` `#AE813F` (média medida) `#C89A55` `#D6AA66` (revisão 012-f1: a anterior, centrada em `#C89046`, saía laranja e clara demais) |
 | Pedra do muro | `#5C5646` `#8E8466` `#C2B58C` `#E0D2A8` |
 | Lajes | `#8E7C56` `#BBA366` `#D6BB8D` |
 | Musgo | `#56702A` `#87A23A` `#B8C85A` |

@@ -6,6 +6,8 @@
 **Decisões do usuário (2026-10-08):** "Pixel art serão só os personagens"; "esse gráfico exatamente, nessas posições, igual a todo, tudo"; dia claro com toque quente.
 **Procedural permitido (decisão do usuário, 2026-10-08):** a arte do cenário pode usar texturas, ruído e gradientes gerados por código com **seed fixa** (mesmo script → mesmo resultado). Isso substitui, só para a arte do cenário, a regra de 2026-10-07 e as regras "sem RNG/sem ruído" da A06/A07. O layout do mapa continua feito à mão.
 
+**Atualização de 2026-10-08 (revisão `revisoes/012-f1.md`):** a terra da arena, o círculo e as lajes soltas foram medidos de novo na referência, e entrou a variante de muro com musgo para as faces externas. Mudanças marcadas com **(f1)**.
+
 ## Objetivo
 Dar ao cenário as texturas pintadas que fazem a captura do jogo parecer a referência: grama viçosa, terra alaranjada com o círculo de pedra, pedra bege em blocos com musgo, lajes, folhagem em tufos redondos, coníferas, penhasco marrom com raízes e cipós, cascata, nuvens fofas, chama e madeira. Tudo deve ler bem na câmera padrão (cerca de 20 px de tela por unidade) e não pode desmanchar de perto.
 
@@ -25,10 +27,11 @@ Pastas novas, separadas das texturas pixel art antigas: `assets/textures/scenery
 | `ground/grass_a.png` | 512×512 (8 × 8), opaco, seamless 2 eixos | Grama viçosa ao sol: base `#7FA22C`, manchas de `#5E8424` e `#A8C447`, pinceladas curtas e curvas em várias direções, sem grão |
 | `ground/grass_b.png` | 512×512, idem | Variação mais verde-amarelada, com trevos e algumas florzinhas planas (rosa, branca, amarela, azul) |
 | `ground/blend_mask.png` | 256×256 (cobre 32 × 32 no shader), opaco, seamless | R: mistura a ↔ b. G: áreas mais secas ou com mais flores. Manchas grandes e orgânicas |
-| `decals/arena_dirt.png` | 1024×768 (16 × 12), alfa suave | Mancha de terra alaranjada (`#C89046`, luz `#DDB06A`, borda mais escura `#A26A36`/`#7E5A2C`) com borda irregular e esfiapada na grama, braços como os da referência, ilhas de grama e seixos. O opaco ocupa cerca de 14,5 × 11 |
-| `decals/arena_ring.png` | 384×384 (6 × 6), alfa suave | Círculo de pedra quebrado, como na referência: sulco de terra mais escura, de 10 a 14 pedras chatas faceando o chão, com falhas, e disco interno mais claro. Nada emissivo |
-| `decals/arena_slabs.png` | 512×512, alfa | Atlas 4 × 2: 6 lajes soltas (de 0,4 a 1,0) e 2 grupos de pedrinhas |
+| `decals/arena_dirt.png` **(f1)** | 1024×768 (16 × 12), alfa suave | Mancha de terra **marrom-alaranjada**, não laranja chapado. Na referência, a média da terra iluminada é `#AE813F` (a Fase 1 do jogo deu `#C1873F`, clara e uniforme demais). Rampa: terra batida escura `#74502C`/`#8A5E34` em manchas grandes (20% a 30% da área, mais no sul e no oeste da mancha), tom médio `#A87A3C`/`#B3843D`, luz `#C89A55`/`#D6AA66` em manchas, e uma **borda escura avermelhada** (`#6E4228` a `#7E5A2C`) de 0,2 a 0,5 de largura, esfiapada para dentro da grama. Dentro: 8 a 14 plantinhas verdes pintadas (tufos de 0,3 a 0,6), seixos e grãos claros esparsos. Forma de retângulo arredondado alongado em X, com braços curtos. O opaco ocupa cerca de 13 a 14,5 × 10 a 11. Desvio-padrão da luminância nos pixels opacos ≥ 24 |
+| `decals/arena_ring.png` **(f1)** | 384×384 (6 × 6), alfa suave | Centro do círculo, como na referência (não é anel regular de lajes): **disco de terra escura** marrom-avermelhada (`#6E4A2E` a `#7E5634`) de raio cerca de 1,3, com um **miolo claro irregular** (`#B8925A`) em forma de mancha torta; e **dois crescentes claros** de terra batida lisa (`#C8AA78` a `#D6BC8C`), a oeste e a leste do disco, até raio 1,9, abertos ao norte e ao sul. Borda suave. Nada emissivo |
+| `decals/arena_slabs.png` **(f1)** | 1024×512, alfa | Atlas 4 × 2 de células 256×256 (4 × 4 unidades): **5 pedras compridas e curvas** chatas (de 1,2 a 1,8 × 0,25 a 0,4), cinza-bege (`#7E786A` → `#B8AE98`, topo mais claro, meio enterradas, com terra escura na volta), que formam o anel externo quebrado em raio de 3,5 a 4,5; **1 laje gasta** (0,6 a 0,9); **2 grupos de pedrinhas**. Borda suave, nada de retângulo de borda dura |
 | `stone/wall_blocks.png` (+`_n`) | 512×128 (8 × 2), seamless 2 eixos | Pedra cortada bege (`#C2B58C`, chanfro `#E0D2A8`, sombra `#8E8466`, juntas `#5C5646`), blocos de tamanhos variados em fiadas irregulares e musgo em algumas juntas. Lê como "muro completo" em qualquer faixa de 0,5 ou 1,0 de altura |
+| `stone/wall_blocks_mossy.png` (+`_n`) **(f1)** | 512×128 (8 × 2), seamless 2 eixos | Mesma pedra e mesmas fiadas da `wall_blocks`, para as **faces externas** do muro alto: 35% a 50% coberta de musgo e folhagem escura (`#2C4520` a `#56702A`) escorrendo do topo e saindo das juntas, mais denso em cima. Na referência, a face externa sul lê como verde-escura (média `#2A3C27`, na sombra) |
 | `stone/wall_top.png` (+`_n`) | 512×128 (8 × 2), seamless horizontal | Topo de muro e de degrau: lajes de cobertura cobertas de musgo e grama (musgo ≥ 50%), com pedra aparecendo nas bordas |
 | `stone/slabs.png` (+`_n`) | 512×512, seamless 2 eixos | Lajes grandes irregulares (`#BBA366`/`#D6BB8D`), grama e musgo nas juntas. Serve para o patamar sul, a plataforma oeste, o caminho nordeste e o piso das escadas |
 | `foliage/leaf_clumps_warm.png`, `_mid.png`, `_cool.png` | 1024×1024 cada, alfa recortado | Atlas 4 × 4 de tufos de folha redondos (16 diferentes por arquivo). Topo do tufo mais claro (`#C8D870` no warm), miolo escuro (`#33522A`), borda feita de folhinhas recortadas e sem contorno. As três famílias: verde-amarelada, verde-média e verde-fria |
@@ -60,8 +63,8 @@ Pastas novas, separadas das texturas pixel art antigas: `assets/textures/scenery
 
 ## Prévias (`docs/art-preview/`)
 - `a08-paleta-medida.png`: as regiões amostradas da referência, marcadas, e a tabela de valores medidos ao lado da paleta-alvo.
-- `a08-chao.png`: `grass_a` e `grass_b` misturadas pela máscara em mosaico 3 × 3; maquete de cima da arena (20 × 18) com a terra, o círculo e as lajes; e um recorte da referência (a terra da arena) ao lado, na mesma escala aproximada.
-- `a08-pedra.png`: elevação de 8 unidades do muro (face de 1,0 com o topo) e da face de 0,5; o mosaico das lajes; um recorte da referência (muro sul) ao lado.
+- `a08-chao.png`: `grass_a` e `grass_b` misturadas pela máscara em mosaico 3 × 3; maquete de cima da arena (20 × 18) com a terra, o círculo e as lajes; e um recorte da referência (a terra da arena) ao lado, na mesma escala aproximada. **(f1)** Mais uma maquete da terra **vista a 27°** (achatada em Z por sin 27° ≈ 0,45), ao lado do recorte da referência na mesma escala, com a média e o desvio-padrão da luminância das duas escritos na prévia.
+- `a08-pedra.png`: elevação de 8 unidades do muro (face de 1,0 com o topo) e da face de 0,5, com `wall_blocks` e com `wall_blocks_mossy`; o mosaico das lajes; um recorte da referência (muro sul) ao lado.
 - `a08-folhagem.png`: os três atlas sobre cinza médio e uma **montagem 2D de uma copa** (de 25 a 40 tufos sobrepostos de trás para frente) ao lado de um recorte de copa da referência.
 - Leva 2: `a08-ilha-agua.png`, `a08-ceu-fx.png` e `a08-props.png`, cada uma com o recorte equivalente da referência ao lado.
 
@@ -84,7 +87,7 @@ Pastas novas, separadas das texturas pixel art antigas: `assets/textures/scenery
 
 **Visuais (Lead Project, pelas prévias, contra os recortes da referência)**
 - [ ] A grama lê como a grama viçosa da referência (pinceladas e manchas), não como carpete nem como ruído.
-- [ ] A terra é alaranjada, com borda esfiapada e suave, e o círculo de pedra lê como o da imagem.
+- [ ] **(f1)** A terra é marrom-alaranjada com manchas escuras de terra batida, borda escura avermelhada esfiapada e plantinhas, e na maquete a 27° lê como o recorte da referência. O centro lê como o da imagem: disco escuro com miolo claro, dois crescentes claros e o anel externo quebrado de pedras compridas.
 - [ ] O muro lê como blocos bege com chanfro claro e musgo no topo.
 - [ ] A montagem da copa lê como uma copa redonda e fofa da referência. As coníferas leem como as do leste da imagem.
 - [ ] (Leva 2) O penhasco lê como blocos de terra e rocha marrom, a cascata como água branca-azulada caindo e as nuvens como cúmulos fofos.
