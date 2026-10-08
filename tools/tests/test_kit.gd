@@ -285,6 +285,23 @@ func _check_trees() -> void:
 			bad.append("conífera %d: %d andares" % [i, tiers.size()])
 	_check(bad.is_empty(), "cada conífera tem de 5 a 9 andares", str(bad))
 	bad.clear()
+	# Revisão 012-f2: coníferas altas e estreitas (base = 2 x o maior alcance dos cartões, de 2,0 a 3,2; altura de
+	# 6 a 9 e >= 2,4 x base), de 7 a 9 cartões por andar e alcances fora de uma reta (pelo menos 1 andar sobe).
+	for i in KitTables.CONIFERS.size():
+		var base: float = 2.0 * SceneryPieces.conifer_radius(i)
+		var height: float = SceneryPieces.conifer_height(i)
+		var tiers_i: Array = KitTables.CONIFERS[i]["tiers"]
+		var cards_ok: bool = true
+		var bumps: int = 0
+		for t in tiers_i.size():
+			var cards: int = int(tiers_i[t][4])
+			cards_ok = cards_ok and cards >= 7 and cards <= 9
+			if t > 0 and t < tiers_i.size() - 1 and float(tiers_i[t][2]) > float(tiers_i[t - 1][2]):
+				bumps += 1
+		if base < 2.0 or base > 3.2 or height < 6.0 or height > 9.0 or height < 2.4 * base or not cards_ok or bumps < 1:
+			bad.append("conífera %d: base %.2f, altura %.2f, cartões ok %s, andares fora da reta %d" % [i, base, height, str(cards_ok), bumps])
+	_check(bad.is_empty(), "coníferas: base de 2,0 a 3,2, altura de 6 a 9 e >= 2,4 x base, 7 a 9 cartões por andar, raios irregulares", str(bad))
+	bad.clear()
 	for tree_name: String in ["tree_broad_a", "tree_broad_e", "tree_small_a", "conifer_a", "conifer_f", "bush_a"]:
 		var mesh := load(MESH_DIR + tree_name + ".res") as ArrayMesh
 		var foliage_tris: int = 0

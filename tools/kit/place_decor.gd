@@ -10,8 +10,9 @@ extends SceneTree
 const MAP_PATH: String = "res://scenes/map.tscn"
 const KIT_DIR: String = "res://scenes/kit/"
 const SCATTER_DIR: String = "res://assets/models/scatter/"
-## Tufos e flores (MultiMesh) que entram no grupo Small: [nome do nó, arquivo].
-const SCATTER_NODES: Array = [["TuftsArena", "tufts_arena"], ["TuftsOuter", "tufts_outer"], ["Flowers", "flowers"]]
+## Tufos, flores e vaga-lumes (MultiMesh): [nome do nó, arquivo, grupo].
+const SCATTER_NODES: Array = [["TuftsArena", "tufts_arena", "Small"], ["TuftsOuter", "tufts_outer", "Small"], ["Flowers", "flowers", "Small"],
+		["Fireflies", "fireflies", "Fx"]]
 
 
 func _initialize() -> void:
@@ -71,7 +72,7 @@ func _initialize() -> void:
 		mmi.name = str(spec[0])
 		mmi.multimesh = load(SCATTER_DIR + str(spec[1]) + ".res") as MultiMesh
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		(groups["Small"] as Node3D).add_child(mmi)
+		(groups[str(spec[2])] as Node3D).add_child(mmi)
 		mmi.owner = map_root
 		counter += 1
 	var packed_map := PackedScene.new()

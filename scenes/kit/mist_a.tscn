@@ -1,0 +1,13 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_x2rwo"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/mist_a.res" id="2_ua8tj"]
+
+[node name="mist_a" type="Node3D" unique_id=2005461135]
+script = ExtResource("1_x2rwo")
+size = Vector3(6, 3, 3)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1035030198]
+cast_shadow = 0
+extra_cull_margin = 3.0
+mesh = ExtResource("2_ua8tj")

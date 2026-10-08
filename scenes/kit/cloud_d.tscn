@@ -9,4 +9,5 @@ size = Vector3(14, 4, 6)
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=1247099434]
 cast_shadow = 0
+extra_cull_margin = 4.0
 mesh = ExtResource("2_07vef")

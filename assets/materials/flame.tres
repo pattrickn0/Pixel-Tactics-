@@ -1,12 +1,12 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/flame.gdshader" id="1_17b13"]
+[ext_resource type="Shader" path="res://assets/materials/flame.gdshader" id="1_huyv3"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/fx/fire_flipbook.png" id="2_7l6ac"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_17b13")
-shader_parameter/color_edge = null
-shader_parameter/color_mid = null
-shader_parameter/color_core = null
+shader = ExtResource("1_huyv3")
+shader_parameter/flipbook = ExtResource("2_7l6ac")
+shader_parameter/frames = null
+shader_parameter/fps = null
 shader_parameter/energy = null
-shader_parameter/flicker_fps = null

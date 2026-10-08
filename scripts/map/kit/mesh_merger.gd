@@ -13,6 +13,10 @@ extends Node
 ## Grupos com lote próprio cada um (saem do quadro quando a câmera gira e podem ser descartados).
 @export var separate_groups: PackedStringArray = ["Sky", "Fx"]
 
+## Malhas com estes shaders ficam de fora (billboards de nuvem e névoa: o shader usa a matriz da própria peça e a
+## transparência é ordenada por aglomerado).
+@export var unmerged_shaders: PackedStringArray = ["cloud_puff.gdshader"]
+
 ## Quantas MeshInstance3D foram escondidas na última junção.
 var merged_sources: int = 0
 
@@ -49,6 +53,8 @@ func _merge_batch(map_root: Node3D, roots: Array[Node], batch_name: String) -> i
 			if mi == null or not mi.visible or not (mi.mesh is ArrayMesh):
 				continue
 			var mesh := mi.mesh as ArrayMesh
+			if _keeps_own_node(mi):
+				continue
 			var xf: Transform3D = to_local * mi.global_transform
 			for s in mesh.get_surface_count():
 				if mesh.surface_get_primitive_type(s) != Mesh.PRIMITIVE_TRIANGLES:
@@ -83,6 +89,15 @@ func _merge_batch(map_root: Node3D, roots: Array[Node], batch_name: String) -> i
 		mi.visible = false
 	merged_sources += sources.size()
 	return count
+
+
+## A malha usa algum shader de unmerged_shaders?
+func _keeps_own_node(mi: MeshInstance3D) -> bool:
+	for s in mi.mesh.get_surface_count():
+		var sm := mi.get_active_material(s) as ShaderMaterial
+		if sm != null and sm.shader != null and unmerged_shaders.has(sm.shader.resource_path.get_file()):
+			return true
+	return false
 
 
 ## Eixo local da faixa (kit_surface com uv_mode 2): 0 = X, 1 = Z; -1 = não é faixa.

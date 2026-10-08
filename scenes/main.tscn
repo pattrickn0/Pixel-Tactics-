@@ -11,11 +11,13 @@
 
 [sub_resource type="ShaderMaterial" id="SkyMaterial_main"]
 shader = ExtResource("7_sky")
-shader_parameter/zenith = Color(0.561, 0.69, 0.847, 1)
-shader_parameter/middle = Color(0.788, 0.827, 0.918, 1)
-shader_parameter/horizon = Color(0.918, 0.851, 0.863, 1)
-shader_parameter/below = Color(0.773, 0.792, 0.886, 1)
-shader_parameter/sun_glow = Color(1, 0.941, 0.847, 1)
+shader_parameter/zenith = Vector3(0.181, 0.32, 0.702)
+shader_parameter/middle = Vector3(0.511, 0.629, 1.108)
+shader_parameter/horizon = Vector3(1.108, 0.718, 0.77)
+shader_parameter/below_near = Vector3(0.26, 0.32, 0.85)
+shader_parameter/below = Vector3(0.255, 0.332, 0.615)
+shader_parameter/warm_side = Vector3(1.0, 0.54, 0.33)
+shader_parameter/sun_glow = Vector3(2.2, 1.33, 0.702)
 
 [sub_resource type="Sky" id="Sky_main"]
 sky_material = SubResource("SkyMaterial_main")
@@ -25,11 +27,11 @@ background_mode = 2
 sky = SubResource("Sky_main")
 ambient_light_source = 2
 ambient_light_color = Color(0.722, 0.769, 0.863, 1)
-ambient_light_energy = 0.3
+ambient_light_energy = 0.2
 reflected_light_source = 1
 tonemap_mode = 2
 tonemap_exposure = 1.25
-tonemap_white = 6.0
+tonemap_white = 3.0
 ssao_enabled = true
 ssao_radius = 1.0
 ssao_intensity = 1.0
@@ -77,13 +79,13 @@ environment = SubResource("Environment_main")
 camera_attributes = SubResource("CameraAttributes_main")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-44, -112.5, 0)
+rotation_degrees = Vector3(-34, -112.5, 0)
 light_color = Color(1, 0.914, 0.784, 1)
-light_energy = 1.45
+light_energy = 1.65
 shadow_enabled = true
 shadow_bias = 0.02
 shadow_normal_bias = 1.0
-shadow_blur = 1.5
+shadow_blur = 2.5
 directional_shadow_mode = 2
 directional_shadow_split_1 = 0.2
 directional_shadow_split_2 = 0.4

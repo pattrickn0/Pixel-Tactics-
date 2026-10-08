@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/cloud_sea.gdshader" id="1_j7oik"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/sky/cloud_sea.png" id="2_aix8c"]
+
+[resource]
+render_priority = -20
+shader = ExtResource("1_j7oik")
+shader_parameter/sea = ExtResource("2_aix8c")
+shader_parameter/tile_units = null
+shader_parameter/drift = null
+shader_parameter/tint = null
+shader_parameter/energy = null
+shader_parameter/fade_radius = null
+shader_parameter/opacity = null

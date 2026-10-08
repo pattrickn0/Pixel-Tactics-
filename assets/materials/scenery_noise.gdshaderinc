@@ -75,19 +75,6 @@ bool sn_occluded(vec3 world, vec3 cam, vec4 arena, float margin, float density, 
 	return sn_bayer4(frag) < amount;
 }
 
-// Brilho do sol espalhado no ar (spec 012, Fase 2): do lado da vista que fica contra o sol, o cenário ganha
-// um véu quente que cresce com a distância (como a referência, quente no alto à esquerda). Vai na emissão
-// (não depende da luz). sun_from = de onde vem o sol (oposto à luz do Sun da cena principal).
-vec3 sn_sun_haze(vec3 world, vec3 cam, vec3 sun_from, vec3 color, float strength, float dist_scale) {
-	vec3 d = world - cam;
-	float dist = length(d);
-	vec2 dh = normalize(d.xz + vec2(0.0001));
-	vec2 sh = normalize(sun_from.xz + vec2(0.0001));
-	float side = smoothstep(0.5, 1.0, dot(dh, sh));
-	// Começa a 30 unidades da câmera: de perto o ar é limpo.
-	return color * strength * side * side * (1.0 - exp(-max(dist - 30.0, 0.0) / dist_scale));
-}
-
 // Perspectiva aérea (spec 012, Fase 2): além do anfiteatro, a cor vai aos poucos para o lavanda do ar (a névoa de
 // profundidade da cena só começa depois da borda). Devolve a fração (0 a 1) de troca da cor pelo ar.
 float sn_air(vec3 world, vec3 cam, float strength, float start, float dist_scale) {

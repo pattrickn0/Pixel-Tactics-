@@ -48,6 +48,19 @@ static func all() -> Dictionary:
 	d["bark"] = _st("foliage/bark", {"normal": true, "mode": 0, "scale": Vector2(bark.x, -bark.y), "offset": Vector2(0.0, 1.0),
 			"dither": true, "margin": 3.0})
 	d["bark_log"] = _st("foliage/bark", {"normal": true, "mode": 0, "scale": Vector2(bark.y, bark.x)})
+	# Fase 3 (arte A08 leva 2): raízes de superfície e caules (casca), pedra dos pilares e braseiros (blocos do
+	# muro), ruínas (tambores de coluna), madeira das pontes, corda e ferro.
+	d["bark_root"] = _st("foliage/bark", {"normal": true, "mode": 0, "scale": Vector2(bark.x, bark.y)})
+	d["stone_painted"] = _st("stone/wall_blocks", {"normal": true, "mode": 1, "scale": blocks, "v_top": 1.0, "moss": 0.35,
+			"dither": true, "margin": 3.0})
+	d["ruin_stone"] = _st("props/ruin_stone", {"normal": true, "mode": 0, "scale": Vector2(1.0 / 16.0, 1.0 / 16.0), "moss": 0.55,
+			"dither": true, "margin": 3.0})
+	d["ruin_stone_box"] = _st("props/ruin_stone", {"normal": true, "mode": 1, "scale": Vector2(1.0 / 16.0, 1.0 / 16.0), "moss": 0.55,
+			"dither": true, "margin": 3.0})
+	d["wood_painted"] = _st("props/wood_planks", {"normal": true, "mode": 0, "scale": scenery_scale(256, 256)})
+	# Corda: u dá a volta (1 / circunferência da corda de 0,035), v ao longo (8 voltas a cada 4 unidades).
+	d["rope_painted"] = _st("props/rope", {"mode": 0, "scale": Vector2(1.0 / (TAU * 0.035), 0.25)})
+	d["iron_painted"] = _st("props/iron", {"normal": true, "mode": 1, "scale": scenery_scale(128, 128), "dither": true, "margin": 3.0})
 	# Chão: grama em UV de mundo (64 texels = 2 unidades).
 	d["ground_grass_arena"] = _d("ground/ground_grass_arena", {"mode": 1, "scale": Vector2(0.5, 0.5)})
 	d["ground_grass_forest"] = _d("ground/ground_grass_forest", {"mode": 1, "scale": Vector2(0.5, 0.5)})
@@ -156,44 +169,48 @@ static func scenery() -> Dictionary:
 	d["grass_painted"] = _s("scenery_ground", _with(ground, {"tint": Color(0.8, 0.8, 0.74), "patch_amount": 0.2}))
 	d["grass_painted_inner"] = _s("scenery_ground", _with(ground, {"offset": Vector2(37.0, 11.0), "tint": Color(0.9, 0.86, 0.78),
 			"patch_amount": 0.2}))
-	d["cliff_painted"] = _s("scenery_solid", {"color_low": Color("#3e3640"), "color_high": Color("#7a5a3e"),
-			"color_patch": Color("#6e5038"), "patch_scale": 0.22, "patch_amount": 0.45, "stroke_scale": 1.2, "stroke_amount": 0.1,
-			"top_color": Color("#56661f"), "top_amount": 0.95, "top_sharpness": 6.0,
-			"world_gradient": true, "world_gradient_range": Vector2(-9.0, 0.5)})
-	d["under_painted"] = _s("scenery_solid", {"color_low": Color("#3a3440"), "color_high": Color("#6e5038"),
-			"color_patch": Color("#4a3628"), "patch_scale": 0.12, "patch_amount": 0.4, "stroke_scale": 0.8, "stroke_amount": 0.1,
-			"world_gradient": true, "world_gradient_range": Vector2(-22.0, -3.0)})
-	d["rock_painted"] = _s("scenery_solid", {"color_low": Color("#4a3e3a"), "color_high": Color("#9a7656"),
-			"color_patch": Color("#6e5038"), "patch_scale": 0.5, "patch_amount": 0.35, "stroke_amount": 0.08,
-			"top_color": Color("#6f9a30"), "top_amount": 0.9, "top_sharpness": 5.0, "dither_on": true, "dither_margin": 1.0})
-	d["stone_painted"] = _s("scenery_solid", {"color_low": Color("#8e7660"), "color_high": Color("#e0ccaa"),
-			"color_patch": Color("#bda083"), "patch_scale": 0.9, "patch_amount": 0.35, "stroke_amount": 0.06,
-			"top_color": Color("#87a23a"), "top_amount": 0.7, "top_sharpness": 4.0, "dither_on": true, "dither_margin": 3.0})
-	d["wood_painted"] = _s("scenery_solid", {"color_low": Color("#4a3426"), "color_high": Color("#a88058"),
-			"color_patch": Color("#7a5638"), "patch_scale": 1.4, "patch_amount": 0.4, "stroke_scale": 4.0, "stroke_amount": 0.1})
-	d["root_painted"] = _s("scenery_solid", {"color_low": Color("#3a2a22"), "color_high": Color("#6e5038"),
-			"color_patch": Color("#4a3426"), "patch_scale": 0.8, "patch_amount": 0.4, "stroke_amount": 0.1})
-	d["rope_painted"] = _s("scenery_solid", {"color_low": Color("#8a6a48"), "color_high": Color("#c8aa7a"),
-			"color_patch": Color("#a88058"), "patch_amount": 0.2})
-	d["iron_painted"] = _s("scenery_solid", {"color_low": Color("#2a2624"), "color_high": Color("#4e4640"),
-			"color_patch": Color("#3a3430"), "patch_amount": 0.2, "dither_on": true, "dither_margin": 3.0})
+	# Penhasco, fundo e rochas (A08 leva 2, Fase 3): triplanar com island/cliff e island/under (8 x 8 unidades).
+	var cliff: Dictionary = {"albedo_tex": SCENERY_TEX + "island/cliff.png", "normal_tex": SCENERY_TEX + "island/cliff_n.png",
+			"tex_units": 512.0 / float(WorldScale.SCENERY_TEXELS_PER_UNIT)}
+	var under: Dictionary = {"albedo_tex": SCENERY_TEX + "island/under.png", "normal_tex": SCENERY_TEX + "island/under_n.png",
+			"tex_units": 512.0 / float(WorldScale.SCENERY_TEXELS_PER_UNIT)}
+	d["cliff_painted"] = _s("scenery_cliff", _with(cliff, {"gradient_range": Vector2(-7.0, 0.5), "deep_amount": 0.55,
+			"top_color": Color("#4a5e1c"), "top_amount": 0.9}))
+	d["under_painted"] = _s("scenery_cliff", _with(under, {"gradient_range": Vector2(-20.0, -2.0), "deep_amount": 0.8}))
+	d["rock_painted"] = _s("scenery_cliff", _with(cliff, {"local_gradient": true, "gradient_range": Vector2(-6.0, 0.5), "deep_amount": 0.75,
+			"tint": Color(0.75, 0.72, 0.72), "air_strength": 0.0,
+			"top_color": Color("#4f6a22"), "top_amount": 0.9, "dither_on": true, "dither_margin": 1.0}))
+	# Raízes pendentes e cipós (A08 leva 2): cartões com uma faixa vertical do atlas (4 x 1), v = 0 preso em cima.
+	var hang: Dictionary = {"atlas_cols": 4, "atlas_rows": 1, "atlas_size": Vector2(512.0, 1024.0), "wrap_light": 0.5, "rim_amount": 0.2,
+			"under_amount": 0.0, "detail_soften": 0.2, "core_color": Color("#1e2a14")}
+	d["roots_cards"] = _s("scenery_foliage", _with(hang, {"atlas": SCENERY_TEX + "island/roots_hang.png",
+			"shade_low": Color(0.62, 0.6, 0.66), "shade_high": Color(1.0, 0.98, 0.95)}))
+	d["vines_cards"] = _s("scenery_foliage", _with(hang, {"atlas": SCENERY_TEX + "island/vines_hang.png",
+			"shade_low": Color(0.55, 0.62, 0.66), "shade_high": Color(1.0, 1.0, 0.92)}))
 	# Folhagem pintada (A08): atlas de tufos 4x4 (três famílias) e andares de conífera 4x2.
 	var leaf: Dictionary = {"atlas_cols": 4, "atlas_rows": 4, "atlas_size": Vector2(1024.0, 1024.0), "dither_on": true, "dither_margin": 3.0,
-			"wrap_light": 0.35, "rim_amount": 0.5}
+			"wrap_light": 0.35, "rim_amount": 1.0, "rim_color": Color(1.0, 0.8, 0.45), "air_strength": 0.07}
 	d["foliage_warm"] = _s("scenery_foliage", _with(leaf, {"atlas": SCENERY_TEX + "foliage/leaf_clumps_warm.png",
-			"shade_low": Color(0.4, 0.47, 0.56), "shade_high": Color(1.06, 1.04, 0.82), "core_color": Color("#26361a")}))
+			"shade_low": Color(0.3, 0.37, 0.48), "shade_high": Color(1.1, 1.0, 0.7), "core_color": Color("#26361a")}))
 	d["foliage_mid"] = _s("scenery_foliage", _with(leaf, {"atlas": SCENERY_TEX + "foliage/leaf_clumps_mid.png",
-			"shade_low": Color(0.38, 0.46, 0.58), "shade_high": Color(1.12, 1.1, 0.84), "core_color": Color("#1e3218")}))
+			"shade_low": Color(0.28, 0.36, 0.5), "shade_high": Color(1.14, 1.04, 0.72), "core_color": Color("#1e3218")}))
 	d["foliage_cool"] = _s("scenery_foliage", _with(leaf, {"atlas": SCENERY_TEX + "foliage/leaf_clumps_cool.png",
-			"shade_low": Color(0.36, 0.44, 0.6), "shade_high": Color(1.05, 1.06, 0.9), "core_color": Color("#182c1e")}))
+			"shade_low": Color(0.26, 0.34, 0.5), "shade_high": Color(1.04, 0.98, 0.8), "core_color": Color("#182c1e")}))
 	d["foliage_conifer"] = _s("scenery_foliage", {"atlas": SCENERY_TEX + "foliage/conifer_tiers.png", "atlas_cols": 4, "atlas_rows": 2,
-			"atlas_size": Vector2(1024.0, 512.0), "shade_low": Color(0.26, 0.36, 0.46), "shade_high": Color(0.86, 0.94, 0.84),
+			"atlas_size": Vector2(1024.0, 512.0), "shade_low": Color(0.17, 0.24, 0.34), "shade_high": Color(0.62, 0.7, 0.62),
 			"core_color": Color("#10200d"), "dither_on": true, "dither_margin": 3.0, "wrap_light": 0.35, "rim_amount": 0.5})
-	d["cloud_puff"] = _s("cloud_puff", {})
-	d["light_shaft"] = _s("light_shaft", {})
-	d["water_fall"] = _s("water_fall", {})
-	d["rainbow"] = _s("rainbow", {})
-	d["flame"] = _s("flame", {})
+	# Céu, água e efeitos (A08 leva 2, Fase 3).
+	d["cloud_puff"] = _s("cloud_puff", {"atlas": SCENERY_TEX + "sky/cloud_puffs.png", "atlas_cols": 2, "atlas_rows": 2})
+	d["mist_puff"] = _s("cloud_puff", {"atlas": SCENERY_TEX + "fx/mist_puff.png", "atlas_cols": 1, "atlas_rows": 1, "energy": 1.3,
+			"deep_amount": 0.0, "sun_amount": 0.1})
+	var sea: Dictionary = _s("cloud_sea", {"sea": SCENERY_TEX + "sky/cloud_sea.png"})
+	# Desenhado antes das outras transparências (fica embaixo de tudo).
+	sea["priority"] = -20
+	d["cloud_sea"] = sea
+	d["water_fall"] = _s("water_fall", {"streaks": SCENERY_TEX + "water/fall_streaks.png", "foam": SCENERY_TEX + "water/fall_foam.png"})
+	d["rainbow"] = _s("rainbow", {"bands": SCENERY_TEX + "fx/rainbow.png"})
+	d["flame"] = _s("flame", {"flipbook": SCENERY_TEX + "fx/fire_flipbook.png"})
+	d["firefly"] = _s("firefly", {})
 	# Decalques da arena (A08): terra + centro do círculo (alfa suave) e pedras soltas (atlas 4x2).
 	d["arena_ground"] = _s("arena_ground", {"dirt_tex": SCENERY_TEX + "decals/arena_dirt.png", "ring_tex": SCENERY_TEX + "decals/arena_ring.png"})
 	d["arena_stones"] = _s("scenery_decal", {"atlas": SCENERY_TEX + "decals/arena_slabs.png"})
@@ -221,6 +238,8 @@ static func _s(shader_name: String, params: Dictionary) -> Dictionary:
 static func make_scenery(entry: Dictionary) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = load(SHADER_DIR + str(entry["shader"]) + ".gdshader") as Shader
+	if entry.has("priority"):
+		mat.render_priority = int(entry["priority"])
 	var params: Dictionary = entry["params"]
 	var keys: Array = params.keys()
 	keys.sort()

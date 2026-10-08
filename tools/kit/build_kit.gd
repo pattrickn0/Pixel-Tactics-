@@ -73,7 +73,25 @@ func _write_scatter(materials: Dictionary) -> int:
 	total += _save_scatter("tufts_arena", ScatterTables.ARENA_TUFTS, ScatterTables.ARENA_TUFT_SIZE, materials["tuft_grass_arena"], false)
 	total += _save_scatter("tufts_outer", ScatterTables.OUTER_TUFTS, ScatterTables.OUTER_TUFT_SIZE, materials["tuft_grass"], false)
 	total += _save_scatter("flowers", ScatterTables.FLOWERS, ScatterTables.FLOWER_SIZE, materials["tuft_flower"], true)
+	total += _save_fireflies(materials["firefly"])
 	return total
+
+
+## Vaga-lumes (spec 012, Fase 3): um quad (cantos ±1 no plano XY, o shader faz o billboard) por ponto da tabela.
+func _save_fireflies(material: Material) -> int:
+	var m := KitMesher.new()
+	m.quad("firefly", Vector3(-1.0, 1.0, 0.0), Vector3(1.0, 1.0, 0.0), Vector3(1.0, -1.0, 0.0), Vector3(-1.0, -1.0, 0.0), Vector3(0.0, 0.0, 1.0),
+			Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.mesh = m.to_mesh({"firefly": material}, {})
+	mm.instance_count = IslandTables.FIREFLIES.size()
+	for i in IslandTables.FIREFLIES.size():
+		mm.set_instance_transform(i, Transform3D(Basis.IDENTITY, IslandTables.FIREFLIES[i]))
+	var path: String = SCATTER_DIR + "fireflies.res"
+	if ResourceSaver.save(mm, path) != OK:
+		push_error("Falha ao gravar " + path)
+	return mm.instance_count
 
 
 func _save_scatter(file_name: String, groups: Array, size: Vector2, material: Material, with_colors: bool) -> int:
@@ -148,6 +166,8 @@ func _write_scene(entry: Dictionary, mesh: ArrayMesh) -> bool:
 	mesh_node.mesh = mesh
 	mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if _no_shadow(entry) \
 			else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
+	# Billboards (nuvens e névoa) giram no shader: a margem evita o descarte na borda do quadro.
+	mesh_node.extra_cull_margin = float(entry.get("cull_margin", 0.0))
 	if entry.has("light"):
 		var light_spec: Array = entry["light"]
 		var light: OmniLight3D = root.get_node("Light")

@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/firefly.gdshader" id="1_msx81"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_msx81")
+shader_parameter/color = null
+shader_parameter/energy = null
+shader_parameter/size = null
+shader_parameter/drift = null

@@ -1,5 +1,5 @@
 extends SceneTree
-## Testes da atmosfera de dia claro (spec 004 e spec 012 Fase 2: sol #FFE9C8 do oeste-noroeste a 40-48°, céu
+## Testes da atmosfera de dia claro (spec 004 e spec 012 Fase 2, revisão f2: sol #FFE9C8 do oeste-noroeste a 32-36°, céu
 ## próprio, ambiente lavanda, névoa de profundidade lavanda depois da borda e de altura abaixo de -3, SSAO e bloom
 ## leves, desfoque fraco só no fundo, Filmic/AgX, MSAA 4x sem TAA/FXAA e sem vinheta).
 ## Rodar depois do comando de validação 1:
@@ -85,7 +85,7 @@ func _test_sun(main: Node) -> void:
 	var from: Vector3 = _sun_from(sun)
 	var elevation: float = rad_to_deg(asin(from.y))
 	_check(_color_near(sun.light_color, SUN_COLOR), "sol com cor #FFE9C8", str(sun.light_color))
-	_check(elevation >= 40.0 and elevation <= 48.0, "sol com elevação entre 40° e 48°", "%.1f°" % elevation)
+	_check(elevation >= 32.0 and elevation <= 36.0, "sol com elevação entre 32° e 36° (revisão 012-f2)", "%.1f°" % elevation)
 	# Oeste-noroeste: vem de x negativo (oeste), um pouco de z negativo (norte), mais oeste que norte.
 	_check(from.x < 0.0 and from.z < 0.0 and absf(from.x) > 2.0 * absf(from.z),
 			"sol vindo do oeste-noroeste", "direção de origem %s" % str(from))
@@ -102,9 +102,11 @@ func _test_config(main: Node) -> void:
 	_check(env.background_mode == Environment.BG_SKY and sky_mat != null and sky_mat.shader != null
 			and sky_mat.shader.resource_path.ends_with("sky_day.gdshader"),
 			"fundo de céu com o shader próprio (sky_day.gdshader)")
+	# Cores do céu em linear (antes do tonemap): luminância linear > 0,25 sai clara (L > 170 de 255) no quadro.
 	var below: Variant = sky_mat.get_shader_parameter("below") if sky_mat != null else null
-	var below_color: Color = below if below is Color else Color.BLACK
-	_check(below_color.get_luminance() > 0.6, "o céu abaixo do horizonte é claro (lavanda), sem chão escuro", str(below_color))
+	var below_lin: Vector3 = below if below is Vector3 else Vector3.ZERO
+	var below_lum: float = 0.2126 * below_lin.x + 0.7152 * below_lin.y + 0.0722 * below_lin.z
+	_check(below_lum > 0.25, "o céu abaixo do horizonte é claro (lavanda), sem chão escuro", str(below_lin))
 	_check(env.ambient_light_source == Environment.AMBIENT_SOURCE_COLOR and _color_near(env.ambient_light_color, AMBIENT_COLOR),
 			"luz ambiente lavanda-azulada #B8C4DC")
 	_check(env.fog_enabled and env.fog_mode == Environment.FOG_MODE_DEPTH and _color_near(env.fog_light_color, FOG_COLOR)

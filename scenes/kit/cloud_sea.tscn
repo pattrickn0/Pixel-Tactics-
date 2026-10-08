@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_3a701"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/cloud_sea.res" id="2_6owdd"]
+
+[node name="cloud_sea" type="Node3D" unique_id=839676503]
+script = ExtResource("1_3a701")
+size = Vector3(400, 0, 400)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=2017293406]
+cast_shadow = 0
+mesh = ExtResource("2_6owdd")

@@ -51,6 +51,35 @@ func tri(key: String, a: Vector3, b: Vector3, c: Vector3, na: Vector3, nb: Vecto
 		var tu: Vector2 = uvb
 		uvb = uvc
 		uvc = tu
+	_emit(key, pa, pb, pc, wa, wb, wc, uva, uvb, uvc)
+
+
+## Como tri(), mas com o canal g da cor (luz/AO) por vértice: ga, gb e gc (a cor do resto vem de `color`).
+func tri_g(key: String, a: Vector3, b: Vector3, c: Vector3, na: Vector3, nb: Vector3, nc: Vector3,
+		uva: Vector2, uvb: Vector2, uvc: Vector2, ga: float, gb: float, gc: float) -> void:
+	var pa: Vector3 = xf * a
+	var pb: Vector3 = xf * b
+	var pc: Vector3 = xf * c
+	var wa: Vector3 = (xf.basis * na).normalized()
+	var wb: Vector3 = (xf.basis * nb).normalized()
+	var wc: Vector3 = (xf.basis * nc).normalized()
+	var gs: Array[float] = [ga, gb, gc]
+	if (pb - pa).cross(pc - pa).dot(wa + wb + wc) > 0.0:
+		var tp: Vector3 = pb
+		pb = pc
+		pc = tp
+		var tn: Vector3 = wb
+		wb = wc
+		wc = tn
+		var tu: Vector2 = uvb
+		uvb = uvc
+		uvc = tu
+		gs = [ga, gc, gb]
+	_emit(key, pa, pb, pc, wa, wb, wc, uva, uvb, uvc, gs)
+
+
+func _emit(key: String, pa: Vector3, pb: Vector3, pc: Vector3, wa: Vector3, wb: Vector3, wc: Vector3,
+		uva: Vector2, uvb: Vector2, uvc: Vector2, gs: Array[float] = []) -> void:
 	var mb: MeshBatch = batch(key)
 	mb.vertices.append(pa)
 	mb.vertices.append(pb)
@@ -61,8 +90,12 @@ func tri(key: String, a: Vector3, b: Vector3, c: Vector3, na: Vector3, nb: Vecto
 	mb.uvs.append(uva)
 	mb.uvs.append(uvb)
 	mb.uvs.append(uvc)
-	for p: Vector3 in [pa, pb, pc]:
-		mb.colors.append(_vertex_color(p))
+	var pts: Array[Vector3] = [pa, pb, pc]
+	for i in 3:
+		var col: Color = _vertex_color(pts[i])
+		if gs.size() == 3:
+			col.g = gs[i]
+		mb.colors.append(col)
 
 
 func _vertex_color(p: Vector3) -> Color:

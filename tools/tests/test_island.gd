@@ -62,6 +62,7 @@ func _run() -> void:
 	_test_forest(map)
 	_test_orbit_rule(map)
 	_test_braziers(map)
+	_test_fireflies(map)
 	_test_no_river(map)
 	map.queue_free()
 	await process_frame
@@ -293,7 +294,10 @@ func _test_horizon_ring(sky: Node) -> void:
 			var b: AABB = mi.global_transform * mi.mesh.get_aabb()
 			box = b if first else box.merge(b)
 			first = false
-		if first or box.end.y < -6.0 or box.end.y > -2.0 or maxf(box.size.x, box.size.z) < 30.0:
+		# Fase 3: os puffs são billboards (o quad passa do desenho); o topo é o do desenho (SceneryPieces.cloud_visible_top).
+		var variant: int = "abcde".find(str(piece.scene_file_path.get_file().get_basename()).right(1))
+		var top: float = piece.global_position.y + SceneryPieces.cloud_visible_top(variant) * piece.scale.y
+		if first or top < -6.0 or top > -2.0 or maxf(box.size.x, box.size.z) < 30.0:
 			continue
 		angles.append(fposmod(rad_to_deg(atan2(piece.global_position.x, piece.global_position.z)), 360.0))
 	angles.sort()
@@ -303,6 +307,16 @@ func _test_horizon_ring(sky: Node) -> void:
 		widest = maxf(widest, next - angles[i])
 	_check(angles.size() >= 10 and angles.size() <= 16 and widest <= 60.0,
 			"anel de nuvens do horizonte: de 10 a 16 aglomerados largos (%d), raio 35 a 60, topo de -6 a -2, maior vão %.0f°" % [angles.size(), widest])
+
+
+## Fase 3: de 28 a 48 vaga-lumes em tabela (MultiMesh no grupo Fx), sem sombra.
+func _test_fireflies(map: Node3D) -> void:
+	var fx: Node = map.get_node_or_null("Fx")
+	var mmi := fx.get_node_or_null("Fireflies") as MultiMeshInstance3D if fx != null else null
+	var count: int = mmi.multimesh.instance_count if mmi != null and mmi.multimesh != null else 0
+	_check(count >= 28 and count <= 48 and count == IslandTables.FIREFLIES.size()
+			and mmi.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF,
+			"vaga-lumes: de 28 a 48 na tabela, no grupo Fx e sem sombra (%d)" % count)
 
 
 func _test_braziers(map: Node3D) -> void:

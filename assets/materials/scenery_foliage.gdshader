@@ -20,6 +20,10 @@ uniform vec4 shade_high : source_color = vec4(1.08, 1.06, 0.92, 1.0);
 // Miolo maciço (preenche entre os cartões, fica na sombra das folhas).
 uniform vec4 core_color : source_color = vec4(0.16, 0.26, 0.12, 1.0);
 uniform float alpha_cut = 0.5;
+// Suaviza o miúdo das folhas (mistura com um mip mais alto, só na cor): de longe a copa lê como massa com
+// luz única, não como granulado (revisão 012-f2, granulação <= 0,95).
+uniform float detail_soften = 0.85;
+uniform float soften_bias = 2.5;
 uniform float alpha_edge = 0.3;
 // Luz embrulhada: 0 = Lambert; 1 = a luz dá a volta até o lado oposto.
 uniform float wrap_light = 0.6;
@@ -28,6 +32,8 @@ uniform vec4 rim_color : source_color = vec4(1.0, 0.86, 0.55, 1.0);
 uniform float rim_amount = 0.35;
 // Translucidez das folhas: luz que atravessa os tufos do lado oposto ao sol.
 uniform vec4 backlight_color : source_color = vec4(0.18, 0.2, 0.06, 1.0);
+// Sombra recebida mais suave dentro da copa (os cartões recortados fazem sombra picada; a referência é macia).
+uniform float shadow_softness = 0.3;
 // Balanço lento (amplitude <= 0,03, período de 3 a 6 s, só por TIME).
 uniform float sway_amount = 0.02;
 uniform float sway_period = 4.5;
@@ -36,16 +42,14 @@ uniform vec3 cam_pos = vec3(0.0, -1000.0, 0.0);
 uniform vec4 arena_rect = vec4(-10.0, -9.0, 10.0, 9.0);
 uniform float dither_density = 0.6;
 uniform float dither_margin = 0.0;
+// Lado de baixo da copa (normal esférica para baixo) mais escuro e frio (revisão 012-f2: uma luz só por copa).
+uniform vec4 under_tint : source_color = vec4(0.62, 0.7, 0.78, 1.0);
+uniform float under_amount = 0.6;
 
-// Véu quente do lado do sol (sn_sun_haze).
-uniform vec3 haze_sun_from = vec3(-0.664, 0.695, -0.275);
-uniform vec4 haze_color : source_color = vec4(1.0, 0.82, 0.6, 1.0);
-uniform float haze_strength = 0.42;
-uniform float haze_distance = 40.0;
 
 // Perspectiva aérea (sn_air): além do anfiteatro, a cor vai para o lavanda do ar.
 uniform vec4 air_color : source_color = vec4(0.7, 0.72, 0.84, 1.0);
-uniform float air_strength = 0.17;
+uniform float air_strength = 0.03;
 uniform float air_start = 56.0;
 uniform float air_distance = 10.0;
 
@@ -78,16 +82,19 @@ void fragment() {
 		vec2 cell_uv = (vec2(float(cell % atlas_cols), float(cell / atlas_cols)) + inner)
 				/ vec2(float(atlas_cols), float(atlas_rows));
 		vec4 t = texture(atlas, cell_uv);
-		ALBEDO = t.rgb * shade * COLOR.g;
+		vec3 soft = texture(atlas, cell_uv, soften_bias).rgb;
+		ALBEDO = mix(t.rgb, soft, detail_soften) * shade * COLOR.g;
 		ALPHA = t.a;
 		ALPHA_SCISSOR_THRESHOLD = alpha_cut;
 		ALPHA_ANTIALIASING_EDGE = alpha_edge;
 		ALPHA_TEXTURE_COORDINATE = cell_uv * atlas_size;
 	}
+	vec3 n_world = normalize((INV_VIEW_MATRIX * vec4(FRONT_FACING ? NORMAL : -NORMAL, 0.0)).xyz);
+	float under = smoothstep(0.15, -0.75, n_world.y) * under_amount;
+	ALBEDO *= mix(vec3(1.0), under_tint.rgb, under);
 	float air = sn_air(v_world, CAMERA_POSITION_WORLD, air_strength, air_start, air_distance);
 	ALBEDO *= 1.0 - air;
 	EMISSION += air_color.rgb * air;
-	EMISSION += sn_sun_haze(v_world, CAMERA_POSITION_WORLD, haze_sun_from, haze_color.rgb, haze_strength, haze_distance);
 	ROUGHNESS = 1.0;
 	// Cartões de costas: mantém a normal "esférica" da copa (não inverte).
 	if (!FRONT_FACING) {
@@ -96,12 +103,13 @@ void fragment() {
 }
 
 void light() {
+	float att = LIGHT_IS_DIRECTIONAL ? mix(ATTENUATION, 1.0, shadow_softness) : ATTENUATION;
 	float ndl = dot(NORMAL, LIGHT);
 	float wrapped = clamp((ndl + wrap_light) / (1.0 + wrap_light), 0.0, 1.0);
-	DIFFUSE_LIGHT += wrapped * ATTENUATION * LIGHT_COLOR / PI;
-	DIFFUSE_LIGHT += clamp(-ndl, 0.0, 1.0) * backlight_color.rgb * ATTENUATION * LIGHT_COLOR / PI;
+	DIFFUSE_LIGHT += wrapped * att * LIGHT_COLOR / PI;
+	DIFFUSE_LIGHT += clamp(-ndl, 0.0, 1.0) * backlight_color.rgb * att * LIGHT_COLOR / PI;
 	// Borda quente: silhueta da copa quando a vista vai contra a luz.
 	float rim = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
 	float against = clamp(dot(-VIEW, LIGHT) * 0.5 + 0.5, 0.0, 1.0);
-	DIFFUSE_LIGHT += rim * against * rim_amount * rim_color.rgb * ATTENUATION * LIGHT_COLOR / PI;
+	DIFFUSE_LIGHT += rim * against * rim_amount * rim_color.rgb * att * LIGHT_COLOR / PI;
 }

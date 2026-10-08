@@ -1,12 +1,17 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/water_fall.gdshader" id="1_0dj5b"]
+[ext_resource type="Shader" path="res://assets/materials/water_fall.gdshader" id="1_d6i5k"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/water/fall_foam.png" id="2_hlj0w"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/water/fall_streaks.png" id="3_1sk1k"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_0dj5b")
-shader_parameter/color_deep = null
-shader_parameter/color_mid = null
-shader_parameter/color_light = null
-shader_parameter/color_foam = null
+shader = ExtResource("1_d6i5k")
+shader_parameter/streaks = ExtResource("3_1sk1k")
+shader_parameter/foam = ExtResource("2_hlj0w")
+shader_parameter/streak_units = null
+shader_parameter/foam_units = null
 shader_parameter/fall_speed = null
+shader_parameter/foam_start = null
+shader_parameter/tint = null
+shader_parameter/energy = null

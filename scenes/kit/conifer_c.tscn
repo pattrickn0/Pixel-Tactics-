@@ -5,7 +5,7 @@
 
 [node name="conifer_c" type="Node3D" unique_id=2023291636]
 script = ExtResource("1_86v0u")
-size = Vector3(3.58, 6.73, 3.58)
+size = Vector3(2.6, 7.25, 2.6)
 obstacle = true
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=692022719]

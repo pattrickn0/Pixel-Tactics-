@@ -1,8 +1,10 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/rainbow.gdshader" id="1_plusn"]
+[ext_resource type="Shader" path="res://assets/materials/rainbow.gdshader" id="1_4f3m4"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/fx/rainbow.png" id="2_rhenk"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_plusn")
+shader = ExtResource("1_4f3m4")
+shader_parameter/bands = ExtResource("2_rhenk")
 shader_parameter/intensity = null

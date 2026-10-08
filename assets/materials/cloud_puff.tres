@@ -1,14 +1,20 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/cloud_puff.gdshader" id="1_pryxf"]
+[ext_resource type="Shader" path="res://assets/materials/cloud_puff.gdshader" id="1_5qy7y"]
+[ext_resource type="Texture2D" path="res://assets/textures/scenery/sky/cloud_puffs.png" id="2_ul4vi"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_pryxf")
-shader_parameter/color_top = null
-shader_parameter/color_side = null
-shader_parameter/color_base = null
-shader_parameter/color_deep = null
-shader_parameter/sun_from = null
-shader_parameter/sun_boost = null
+shader = ExtResource("1_5qy7y")
+shader_parameter/atlas = ExtResource("2_ul4vi")
+shader_parameter/atlas_cols = 2
+shader_parameter/atlas_rows = 2
+shader_parameter/tint = null
+shader_parameter/energy = null
+shader_parameter/deep_tint = null
 shader_parameter/depth_range = null
+shader_parameter/deep_amount = null
+shader_parameter/alpha_scale = null
+shader_parameter/top_boost = null
+shader_parameter/sun_tint = null
+shader_parameter/sun_amount = null

@@ -32,15 +32,10 @@ uniform float vertex_ao = 1.0;
 uniform float detail_soften = 0.35;
 uniform float soften_bias = 2.5;
 
-// Véu quente do lado do sol (sn_sun_haze).
-uniform vec3 haze_sun_from = vec3(-0.664, 0.695, -0.275);
-uniform vec4 haze_color : source_color = vec4(1.0, 0.82, 0.6, 1.0);
-uniform float haze_strength = 0.42;
-uniform float haze_distance = 40.0;
 
 // Perspectiva aérea (sn_air): além do anfiteatro, a cor vai para o lavanda do ar.
 uniform vec4 air_color : source_color = vec4(0.7, 0.72, 0.84, 1.0);
-uniform float air_strength = 0.17;
+uniform float air_strength = 0.03;
 uniform float air_start = 56.0;
 uniform float air_distance = 10.0;
 
@@ -66,7 +61,6 @@ void fragment() {
 	c *= mix(vec3(1.0), patch_tint, patch_amount * 4.0);
 	c *= tint.rgb;
 	c *= mix(1.0, COLOR.g, vertex_ao);
-	EMISSION += sn_sun_haze(v_world, CAMERA_POSITION_WORLD, haze_sun_from, haze_color.rgb, haze_strength, haze_distance);
 	float air = sn_air(v_world, CAMERA_POSITION_WORLD, air_strength, air_start, air_distance);
 	ALBEDO = c * (1.0 - air);
 	EMISSION += air_color.rgb * air;

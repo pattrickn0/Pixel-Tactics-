@@ -3,8 +3,9 @@ extends Node3D
 ## sinais e lê os argumentos de linha de comando (depois de "--"):
 ## --zoom=min|max|default, --yaw=graus, --distance=N, --overview, --capture=arquivo.png,
 ## --fx=off (desliga DOF, bloom, névoa e SSAO), --ssao=off, --merge=off (não junta as malhas do mapa),
-## --hud=off (esconde o HUD; só para as capturas de comparação com a referência).
-## --distance e --overview são só para captura (fogem dos limites do zoom de jogo).
+## --hud=off (esconde o HUD; só para as capturas de comparação com a referência),
+## --focus-offset=N (desloca o ponto mirado N unidades no sentido da vista; negativo = para a câmera).
+## --distance, --overview e --focus-offset são só para captura (fogem dos limites do zoom de jogo).
 
 ## Quadros de espera antes de medir (sombras, glow e DOF estabilizarem).
 const CAPTURE_DELAY_FRAMES: int = 60
@@ -47,6 +48,8 @@ func _ready() -> void:
 
 	if args.has("zoom"):
 		_camera.set_zoom_preset(str(args["zoom"]))
+	if args.has("focus-offset"):
+		_camera.focus_forward_offset = float(args["focus-offset"])
 	if args.has("overview"):
 		_camera.set_capture_view(OVERVIEW_PITCH, OVERVIEW_DISTANCE)
 	if args.has("distance"):

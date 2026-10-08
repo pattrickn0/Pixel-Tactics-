@@ -141,8 +141,8 @@ const ITEMS: Array = [
 	["Forest", "bush_d", 20.4, 0.0, -9.8, 30.0, 1.4],
 	["Forest", "bush_c", 25.4, 0.0, -23.2, 60.0, 1.6],
 	# Frente leste: folhosas redondas grandes (copa de 4,5 a 5,5) e arbustos entre elas
-	["Forest", "tree_broad_c", 18.8, 0.0, -2.6, 0.0],
-	["Forest", "tree_broad_a", 21.8, 0.0, -1.0, 90.0],
+	["Forest", "tree_broad_c", 18.8, 0.0, -2.6, 0.0, 0.85],
+	["Forest", "conifer_e", 21.8, 0.0, -1.0, 90.0],
 	["Forest", "tree_broad_d", 17.6, 0.0, 0.8, 170.0, 0.9],
 	["Forest", "tree_broad_b", 20.4, 0.0, 2.4, 250.0],
 	["Forest", "tree_broad_c", 17.4, 0.0, 4.6, 40.0, 0.95],
@@ -257,7 +257,12 @@ const ITEMS: Array = [
 	["Sky", "rock_float_b", 47.3, -4.9, -33.6, 331.1, 1.95],
 	["Sky", "rock_float_c", 46.4, -7.7, -34.7, 324.8, 1.22],
 	["Sky", "rock_float_b", 18.4, -3.5, 13.6, 128.8, 0.9],
-	# Mar de nuvens e nuvens de fundo
+	# Embaixo à esquerda do quadro (Fase 3): a referência tem rocha escura e raízes sobre a nuvem, abaixo da ilhota oeste
+	["Sky", "rock_float_b", -24.0, -7.5, 7.0, 40.0, 4.0],
+	["Sky", "root_hang_b", -24.6, -1.2, 8.6, 42.0, 1.3],
+	["Sky", "root_hang_a", -29.4, -1.2, 8.2, -20.0, 1.1],
+	# Mar de nuvens: plano pintado bem abaixo da ilha (Fase 3) e aglomerados de puffs
+	["Sky", "cloud_sea", 0.0, -27.0, 0.0, 0.0],
 	["Sky", "cloud_b", -38.4, -9.5, -21.4, 10.0, 1.91],
 	["Sky", "cloud_a", -37.9, -11.7, -12.6, 60.0, 1.33],
 	["Sky", "cloud_e", -32.3, -20.0, -10.6, 20.0, 1.29],
@@ -310,29 +315,27 @@ const ITEMS: Array = [
 	["Sky", "rock_float_b", -50.0, 1.0, 8.0, 0.0, 2.2],
 	["Sky", "rock_float_c", 50.0, -2.0, -6.0, 0.0, 2.0],
 	# Anel de nuvens do horizonte (Tabela D, f1): 12 aglomerados largos em volta da ilha, raio de 38 a 52, topo
-	# em y de -2,5 a -5,5 (cloud_c: topo = y + 2,85 x escala; cloud_e: topo = y + 2,34 x escala), deitados
+	# em y de -2,3 a -6 (Fase 3, puffs em billboard: cloud_c: topo = y + 3,35 x escala; cloud_e: topo = y + 3,04 x escala), deitados
 	# na tangente do anel. Aparecem logo acima da borda distante em qualquer giro.
-	["Sky", "cloud_c", 0.0, -11.55, 46.0, 0.0, 3.0],
-	["Sky", "cloud_e", 23.5, -11.5, 40.7, 30.0, 3.2],
-	["Sky", "cloud_c", 41.6, -11.55, 24.0, 60.0, 3.0],
-	["Sky", "cloud_e", 50.0, -10.0, 0.0, 90.0, 3.2],
-	["Sky", "cloud_c", 45.0, -12.55, -26.0, 120.0, 3.0],
-	["Sky", "cloud_e", 21.0, -12.5, -36.4, 150.0, 3.2],
-	["Sky", "cloud_c", 0.0, -14.05, -38.0, 180.0, 3.0],
-	["Sky", "cloud_e", -21.0, -12.5, -36.4, 210.0, 3.2],
-	["Sky", "cloud_c", -43.3, -12.55, -25.0, 240.0, 3.0],
-	["Sky", "cloud_e", -48.0, -10.0, 0.0, 270.0, 3.2],
-	["Sky", "cloud_c", -40.7, -11.55, 23.5, 300.0, 3.0],
-	["Sky", "cloud_e", -23.0, -11.5, 39.8, 330.0, 3.2],
-	# Feixes de luz bem fracos sobre a mata do noroeste (Fase 2; direção de arte: opcional)
-	["Fx", "sun_shafts", 0.0, 0.0, 0.0, 0.0],
-	# Névoa na base da cascata
-	["Fx", "cloud_d", -7.6, -12.5, -55.2, 0.0, 1.5],
-	["Fx", "cloud_d", -0.5, -13.4, -54.8, 30.0, 2.0],
-	["Fx", "cloud_d", 6.2, -12.8, -54.9, 60.0, 1.8],
-	["Fx", "cloud_d", 12.8, -12.2, -55.3, 10.0, 1.4],
+	["Sky", "cloud_c", 0.0, -13.55, 46.0, 0.0, 3.0],
+	["Sky", "cloud_e", 23.5, -13.50, 40.7, 30.0, 3.2],
+	["Sky", "cloud_c", 41.6, -13.55, 24.0, 60.0, 3.0],
+	["Sky", "cloud_e", 50.0, -12.00, 0.0, 90.0, 3.2],
+	["Sky", "cloud_c", 45.0, -14.55, -26.0, 120.0, 3.0],
+	["Sky", "cloud_e", 21.0, -14.50, -36.4, 150.0, 3.2],
+	["Sky", "cloud_c", 0.0, -16.05, -38.0, 180.0, 3.0],
+	["Sky", "cloud_e", -21.0, -14.50, -36.4, 210.0, 3.2],
+	["Sky", "cloud_c", -43.3, -14.55, -25.0, 240.0, 3.0],
+	["Sky", "cloud_e", -48.0, -12.00, 0.0, 270.0, 3.2],
+	["Sky", "cloud_c", -40.7, -13.55, 23.5, 300.0, 3.0],
+	["Sky", "cloud_e", -23.0, -13.50, 39.8, 330.0, 3.2],
+	# Névoa na base da cascata (puffs de névoa pintados, Fase 3)
+	["Fx", "mist_a", -7.6, -12.5, -55.2, 0.0, 1.5],
+	["Fx", "mist_a", -0.5, -13.4, -54.8, 30.0, 2.0],
+	["Fx", "mist_a", 6.2, -12.8, -54.9, 60.0, 1.8],
+	["Fx", "mist_a", 12.8, -12.2, -55.3, 10.0, 1.4],
 	# Névoa subindo entre as lâminas (até y -4) e ao lado da direita, atrás do plano da cascata
-	["Fx", "cloud_d", -5.0, -6.0, -57.6, 0.0, 1.2],
-	["Fx", "cloud_d", 1.2, -7.5, -58.0, 40.0, 1.6],
-	["Fx", "cloud_d", 16.6, -3.0, -57.6, 20.0, 1.2],
+	["Fx", "mist_a", -5.0, -6.0, -57.6, 0.0, 1.2],
+	["Fx", "mist_a", 1.2, -7.5, -58.0, 40.0, 1.6],
+	["Fx", "mist_a", 16.6, -3.0, -57.6, 20.0, 1.2],
 ]

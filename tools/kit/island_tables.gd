@@ -416,13 +416,18 @@ const ARENA_LOOSE_STONES: Array = [
 	[6, 5.4, 0.8, 120.0], [7, -5.6, -2.6, 200.0],
 ]
 
-# ---------------------------------------------------------------- feixes de luz (Fase 2, direção de arte: opcional)
-## De onde vem o sol (oposto à direção da luz do Sun em scenes/main.tscn: rotação -44°, -112,5°), normalizado.
-const SUN_FROM: Vector3 = Vector3(-0.664, 0.695, -0.275)
-## Feixes fracos sobre a mata do noroeste (nunca sobre a arena): [ponta na copa (mundo), largura, comprimento].
-## Curtos: a ponta de cima fica abaixo da órbita da câmera (regra da órbita da Tabela D).
-const SUN_SHAFTS: Array = [
-	[Vector3(-16.5, 0.5, -10.0), 3.6, 16.0],
-	[Vector3(-13.8, 1.0, -15.5), 2.6, 15.0],
-	[Vector3(-20.5, 0.5, -5.0), 3.0, 16.0],
+# ---------------------------------------------------------------- vaga-lumes (Fase 3)
+## Vaga-lumes (28 a 48): na frente e por cima das matas noroeste e leste (fora das copas, para não sumirem nelas),
+## em volta da cascata e na faixa sul. Posições escritas à mão.
+const FIREFLIES: PackedVector3Array = [
+	Vector3(-14.8, 1.6, -11.0), Vector3(-15.2, 2.4, -7.5), Vector3(-14.6, 1.2, -4.0), Vector3(-15.6, 3.0, -1.5),
+	Vector3(-13.0, 2.2, -14.2), Vector3(-9.5, 1.8, -14.6), Vector3(-17.0, 6.5, -9.0), Vector3(-20.0, 7.5, -13.0),
+	Vector3(-23.5, 5.8, -6.5), Vector3(-18.5, 8.4, -17.0), Vector3(-15.0, 4.5, 2.5), Vector3(-25.5, 3.5, -12.0),
+	Vector3(-16.5, 1.4, 4.2), Vector3(-12.0, 5.5, -16.5),
+	Vector3(14.8, 1.6, -9.0), Vector3(15.3, 2.5, -5.0), Vector3(15.0, 1.3, -12.5), Vector3(13.0, 2.0, -14.4),
+	Vector3(17.5, 6.8, -8.0), Vector3(21.0, 7.8, -12.0), Vector3(24.5, 6.2, -4.5), Vector3(19.0, 5.5, 4.5),
+	Vector3(15.4, 3.2, 8.5), Vector3(26.5, 8.0, -17.5), Vector3(15.5, 1.8, 10.5), Vector3(22.0, 4.2, 7.5),
+	Vector3(-4.5, -3.0, -54.0), Vector3(0.6, -6.2, -54.2), Vector3(4.2, -2.4, -54.0), Vector3(8.8, -5.4, -53.8),
+	Vector3(12.4, -1.6, -54.1), Vector3(-7.8, -7.0, -54.3), Vector3(2.4, 0.8, -53.9), Vector3(10.6, -8.6, -54.0),
+	Vector3(-8.4, 0.9, 15.2), Vector3(6.6, 1.1, 15.6), Vector3(-11.6, 1.4, 13.9), Vector3(10.4, 0.8, 14.8),
 ]

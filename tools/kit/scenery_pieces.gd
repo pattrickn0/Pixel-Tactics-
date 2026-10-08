@@ -7,13 +7,14 @@ extends RefCounted
 ## sorteado. Materiais provisórios (KitMaterialDefs.scenery) até a arte da A08.
 
 const T: float = KitMesher.TEXEL
-## Direções dos cartões de cada lóbulo (copa) e o giro de cada cartão no próprio plano.
+## Direções dos cartões de cada lóbulo (copa) e o giro de cada cartão no próprio plano. Revisão 012-f2: 5 cartões
+## grandes por lóbulo (meia largura CARD_HALF x raio), em vez de 9 pequenos (que liam como couve-flor).
 const CARD_DIRS: Array[Vector3] = [
-	Vector3(0.0, 1.0, 0.0), Vector3(0.75, 0.55, 0.35), Vector3(-0.7, 0.5, 0.5), Vector3(0.3, 0.45, -0.85),
-	Vector3(-0.55, 0.5, -0.65), Vector3(0.9, -0.1, -0.4), Vector3(-0.9, -0.05, 0.3), Vector3(0.2, -0.3, 0.93),
-	Vector3(-0.25, -0.35, -0.9),
+	Vector3(0.0, 1.0, 0.0), Vector3(0.82, 0.38, 0.42), Vector3(-0.78, 0.32, 0.55), Vector3(0.4, 0.3, -0.87),
+	Vector3(-0.6, 0.42, -0.7),
 ]
-const CARD_TURNS: Array[float] = [0.0, 47.0, 94.0, 141.0, 188.0, 235.0, 282.0, 329.0, 16.0]
+const CARD_TURNS: Array[float] = [0.0, 61.0, 122.0, 203.0, 284.0]
+const CARD_HALF: float = 1.05
 ## Família de folha da tabela -> material provisório.
 const FAMILY_KEYS: Dictionary = {"green": "foliage_mid", "olive": "foliage_warm", "cool": "foliage_cool"}
 ## Tipos de cartão (canal b da cor do vértice, lido por scenery_foliage).
@@ -54,7 +55,10 @@ static func catalog() -> Array[Dictionary]:
 		out.append(_e("ruin_column_" + name_i, "column", Vector3(1.0, [3.4, 2.1, 0.9]["abc".find(name_i)], 1.0), {"variant": "abc".find(name_i)}))
 	out.append(_e("ruin_lintel", "lintel", Vector3(4.4, 0.55, 0.8), {}))
 	for i in IslandTables.CLOUDS.size():
-		out.append(_e("cloud_%s" % "abcde"[i], "cloud", Vector3(14, 4, 6), {"variant": i, "no_shadow": true}))
+		out.append(_e("cloud_%s" % "abcde"[i], "cloud", Vector3(14, 4, 6), {"variant": i, "no_shadow": true, "cull_margin": 4.0}))
+	# Névoa da base da cascata (puffs de fx/mist_puff, com o desenho do aglomerado d) e o mar de nuvens embaixo.
+	out.append(_e("mist_a", "cloud", Vector3(6, 3, 3), {"variant": 3, "material": "mist_puff", "no_shadow": true, "cull_margin": 3.0}))
+	out.append(_e("cloud_sea", "cloud_sea", Vector3(400, 0, 400), {"no_shadow": true}))
 	out.append(_e("brazier_a", "brazier", Vector3(0.5, 1.5, 0.5), {"obstacle": true, "light": [1.25, 3.5, 0.9]}))
 	out.append(_e("bridge_rope_w", "bridge", Vector3(4.9, 2.2, 1.7), {"variant": 0}))
 	out.append(_e("bridge_rope_e", "bridge", Vector3(3.6, 2.5, 1.7), {"variant": 1}))
@@ -65,7 +69,6 @@ static func catalog() -> Array[Dictionary]:
 	out.append(_e("pillar_stone", "pillar", Vector3(0.6, 1.1, 0.6), {"obstacle": true}))
 	out.append(_e("arena_ground", "arena_ground", Vector3(20, 0, 18), {"no_shadow": true}))
 	out.append(_e("arena_slabs", "arena_slabs", Vector3(12, 0.04, 9), {"no_shadow": true}))
-	out.append(_e("sun_shafts", "sun_shafts", Vector3(20, 20, 12), {"no_shadow": true}))
 	return out
 
 
@@ -95,11 +98,13 @@ static func build(m: KitMesher, entry: Dictionary) -> bool:
 		"island_under":
 			island_under(m)
 		"root":
-			_root_chains(m, IslandTables.ROOTS[v])
+			var rc: Array = ROOT_CARDS[v]
+			hang_cards(m, "roots_cards", float(rc[0]), float(rc[1]), int(rc[2]), int(rc[3]))
 		"root_surface":
 			_root_chains(m, IslandTables.SURFACE_ROOTS[v])
 		"vine":
-			vine_hang(m, IslandTables.VINES[v])
+			var vc: Array = VINE_CARDS[v]
+			hang_cards(m, "vines_cards", float(vc[0]), float(vc[1]), int(vc[2]), int(vc[3]))
 		"mass":
 			var data: Dictionary = mass_table(str(entry["mass"]))
 			var rock: bool = bool(entry.get("rock", false))
@@ -115,9 +120,12 @@ static func build(m: KitMesher, entry: Dictionary) -> bool:
 		"column":
 			column(m, v)
 		"lintel":
-			m.box("stone_painted", "stone_painted", Vector3(-s.x * 0.5, 0.0, -s.z * 0.5), Vector3(s.x * 0.5, s.y, s.z * 0.5))
+			m.box("ruin_stone_box", "ruin_stone_box", Vector3(-s.x * 0.5, 0.0, -s.z * 0.5), Vector3(s.x * 0.5, s.y, s.z * 0.5))
 		"cloud":
-			cloud(m, IslandTables.CLOUDS[v])
+			cloud(m, IslandTables.CLOUDS[v], str(entry.get("material", "cloud_puff")))
+		"cloud_sea":
+			var hs: float = s.x * 0.5
+			m.quad("cloud_sea", Vector3(-hs, 0.0, -hs), Vector3(hs, 0.0, -hs), Vector3(hs, 0.0, hs), Vector3(-hs, 0.0, hs), Vector3.UP)
 		"brazier":
 			brazier(m)
 		"bridge":
@@ -133,8 +141,6 @@ static func build(m: KitMesher, entry: Dictionary) -> bool:
 					Vector3.UP, Vector2(-10.0, -9.0), Vector2(10.0, -9.0), Vector2(10.0, 9.0), Vector2(-10.0, 9.0))
 		"arena_slabs":
 			arena_slabs(m)
-		"sun_shafts":
-			sun_shafts(m)
 		_:
 			return false
 	m.color = Color.WHITE
@@ -455,24 +461,33 @@ static func _root_chains(m: KitMesher, chains: Array) -> void:
 		for i in range(chain.size() - 1):
 			var a: Vector4 = chain[i]
 			var b: Vector4 = chain[i + 1]
-			m.tube("root_painted", "root_painted", Vector3(a.x, a.y, a.z), Vector3(b.x, b.y, b.z), a.w, b.w, 6, i == 0, true)
+			m.tube("bark_root", "bark_root", Vector3(a.x, a.y, a.z), Vector3(b.x, b.y, b.z), a.w, b.w, 6, i == 0, true)
 
 
-## Cipó: caule fino e 2 cartões de folha cruzados em cada ponto.
-static func vine_hang(m: KitMesher, pts: Array) -> void:
-	m.color = Color(0.45, 0.9, CARD_CLUMP, 0.3)
-	var card: int = 0
-	for i in pts.size():
-		var p: Vector3 = pts[i]
-		if i < pts.size() - 1:
-			m.tube("root_painted", "root_painted", p, pts[i + 1], 0.03, 0.025, 4, false, false)
-		var size: float = 0.42 - 0.02 * float(i)
-		for k in 2:
-			var ang: float = deg_to_rad(40.0 * float(i) + 90.0 * float(k))
-			var t := Vector3(cos(ang), 0.0, sin(ang))
-			var n := Vector3(-sin(ang), 0.2, cos(ang)).normalized()
-			_card(m, "foliage_mid", p - Vector3(0.0, size * 0.4, 0.0), t, Vector3.UP, size, n, card)
-			card += 1
+## Raízes pendentes e cipós (arte A08 leva 2: island/roots_hang e island/vines_hang, 4 faixas verticais de
+## 128 x 1024, v = 0 preso na borda): [comprimento, largura, faixa do cartão da frente, faixa do cartão cruzado].
+const ROOT_CARDS: Array = [[5.0, 0.8, 0, 3], [5.8, 0.9, 1, 2], [3.6, 0.65, 2, 0]]
+const VINE_CARDS: Array = [[3.3, 0.48, 0, 2], [2.3, 0.42, 1, 3]]
+
+
+## Dois cartões cruzados pendurados do pivô (topo da borda, +Z para fora): o da frente paralelo à face e o
+## outro girado 58°, para não sumir de lado. Canal r da cor = altura (gradiente), normal para fora e um pouco
+## para cima.
+static func hang_cards(m: KitMesher, key: String, length: float, width: float, strip: int, alt_strip: int) -> void:
+	m.gradient = Vector2(-length, 0.1)
+	m.color = Color(0.0, 1.0, CARD_CLUMP, 0.3)
+	for k in 2:
+		var ang: float = deg_to_rad(0.0 if k == 0 else 58.0)
+		var t := Vector3(cos(ang), 0.0, -sin(ang))
+		var n := Vector3(sin(ang), 0.3, cos(ang)).normalized()
+		var c := Vector3(0.0, 0.0, 0.14)
+		var hw: float = width * 0.5
+		var id: float = float(strip if k == 0 else alt_strip)
+		var top := Vector3(0.0, 0.1, 0.0)
+		var bot := Vector3(0.0, -length, 0.0)
+		m.tri(key, c + top - t * hw, c + top + t * hw, c + bot + t * hw, n, n, n, Vector2(0.0, id), Vector2(1.0, id), Vector2(1.0, id + 0.999))
+		m.tri(key, c + top - t * hw, c + bot + t * hw, c + bot - t * hw, n, n, n, Vector2(0.0, id), Vector2(1.0, id + 0.999), Vector2(0.0, id + 0.999))
+	m.gradient = Vector2.ZERO
 	m.color = Color.WHITE
 
 
@@ -525,32 +540,58 @@ static func _crown(m: KitMesher, key: String, lobes: Array, crown_in: Vector3, s
 	var crown: Vector3 = crown_in - Vector3(0.0, CROWN_DROP, 0.0)
 	var y_lo: float = INF
 	var y_hi: float = -INF
+	# Elipsoide da copa inteira: a normal de todo cartão sai dele (uma luz só por copa).
+	var reach_xz: float = 0.0
+	var reach_y: float = 0.0
 	for lobe: Vector4 in lobes:
 		var ly: float = crown.y + (lobe.y - crown_in.y) * CROWN_GROW
 		y_lo = minf(y_lo, ly - lobe.w * CROWN_GROW)
 		y_hi = maxf(y_hi, ly + lobe.w * CROWN_GROW)
+		reach_xz = maxf(reach_xz, Vector2(lobe.x - crown_in.x, lobe.z - crown_in.z).length() * CROWN_GROW + lobe.w * CROWN_GROW)
+	reach_y = maxf(y_hi - crown.y, crown.y - y_lo)
+	var radii := Vector3(reach_xz, reach_y, reach_xz)
 	m.gradient = Vector2(y_lo * sc, y_hi * sc)
 	var card: int = 0
 	var lobe_index: int = 0
 	for lobe: Vector4 in lobes:
 		var c: Vector3 = crown + (Vector3(lobe.x, lobe.y, lobe.z) - crown_in) * CROWN_GROW
 		var r: float = lobe.w * CROWN_GROW
-		m.color = Color(0.0, 1.0, CARD_SOLID, variation)
-		m.blob(key, c, Vector3(r * 0.8, r * 0.68, r * 0.8), 8, 5, crown, 0.6, float(lobe_index) * 0.37)
+		m.color = Color(0.0, 0.8, CARD_SOLID, variation)
+		m.blob(key, c, Vector3(r * 0.78, r * 0.66, r * 0.78), 8, 5, crown, 1.0, float(lobe_index) * 0.37)
 		for k in CARD_DIRS.size():
 			var dir: Vector3 = CARD_DIRS[k].normalized()
-			var center: Vector3 = c + dir * r * 0.5
+			var center: Vector3 = c + dir * r * 0.42
 			var helper: Vector3 = Vector3.UP if absf(dir.y) < 0.9 else Vector3.RIGHT
 			var ax: Vector3 = dir.cross(helper).normalized()
 			var ay: Vector3 = dir.cross(ax).normalized()
-			var turn: float = deg_to_rad(CARD_TURNS[k] + 31.0 * float(lobe_index))
+			var turn: float = deg_to_rad(CARD_TURNS[k] + 37.0 * float(lobe_index))
 			var tx: Vector3 = ax * cos(turn) + ay * sin(turn)
 			var ty: Vector3 = dir.cross(tx).normalized()
-			var shade: Vector3 = dir.lerp((center - crown).normalized(), 0.6).normalized()
-			m.color = Color(0.0, 0.82 if dir.y < -0.2 else 1.0, CARD_CLUMP, variation)
-			_card(m, key, center, tx, ty, r * 0.68, shade, card)
+			_crown_card(m, key, center, tx, ty, r * CARD_HALF, crown, radii, card, variation)
 			card += 1
 		lobe_index += 1
+
+
+## Cartão de tufo da copa: normal por vértice = normal do elipsoide da copa naquele ponto (esférica, contínua
+## de um cartão para o outro) e AO pela profundidade (canal g: perto do centro da copa fica mais escuro).
+static func _crown_card(m: KitMesher, key: String, c: Vector3, t: Vector3, b: Vector3, h: float, crown: Vector3,
+		radii: Vector3, card_id: int, variation: float) -> void:
+	var id: float = float(card_id)
+	var pts: Array[Vector3] = [c - t * h + b * h, c + t * h + b * h, c + t * h - b * h, c - t * h - b * h]
+	var uvs: Array[Vector2] = [Vector2(0.0, id), Vector2(1.0, id), Vector2(1.0, id + 0.999), Vector2(0.0, id + 0.999)]
+	var nrm: Array[Vector3] = []
+	var ao: Array[float] = []
+	for p: Vector3 in pts:
+		var q: Vector3 = (p - crown) / radii
+		nrm.append((q / radii).normalized() if q.length() > 0.001 else Vector3.UP)
+		ao.append(lerpf(CROWN_AO_MIN, 1.0, smoothstep(0.3, 0.95, q.length())))
+	m.color = Color(0.0, 1.0, CARD_CLUMP, variation)
+	m.tri_g(key, pts[0], pts[1], pts[2], nrm[0], nrm[1], nrm[2], uvs[0], uvs[1], uvs[2], ao[0], ao[1], ao[2])
+	m.tri_g(key, pts[0], pts[2], pts[3], nrm[0], nrm[2], nrm[3], uvs[0], uvs[2], uvs[3], ao[0], ao[2], ao[3])
+
+
+## Luz mínima (canal g) no miolo da copa.
+const CROWN_AO_MIN: float = 0.36
 
 
 ## Raio da copa pintada de uma folhosa (maior distância horizontal de um lóbulo ao tronco), já com a escala.
@@ -574,12 +615,18 @@ static func broad_height(variant: int) -> float:
 	return top * float(KitTables.BROAD_SCALE[variant])
 
 
-## Raio da base (andar mais largo) e altura de uma conífera pintada, já com a escala.
+## Raio da base (maior alcance dos cartões, com a variação da tabela e o desvio do andar) e altura de uma
+## conífera pintada, já com a escala. Base = 2 x raio (revisão 012-f2: de 2,0 a 3,2).
 static func conifer_radius(variant: int) -> float:
 	var r: float = 0.0
-	for tier: Array in KitTables.CONIFERS[variant]["tiers"]:
-		r = maxf(r, float(tier[2]))
-	return r * CONIFER_WIDEN * float(KitTables.CONIFER_SCALE[variant])
+	var tiers: Array = KitTables.CONIFERS[variant]["tiers"]
+	for t in tiers.size():
+		var tier: Array = tiers[t]
+		var off := Vector2(float(tier[5]), float(tier[6]))
+		for i in int(tier[4]):
+			var reach: float = float(tier[2]) * _conifer_card_var(variant, t, i).y
+			r = maxf(r, reach + off.length())
+	return r * float(KitTables.CONIFER_SCALE[variant])
 
 
 static func conifer_height(variant: int) -> float:
@@ -588,20 +635,19 @@ static func conifer_height(variant: int) -> float:
 	return (float(last[0]) + float(last[1]) + 0.05) * float(KitTables.CONIFER_SCALE[variant])
 
 
-## Os andares pintados abrem mais que a tabela da 011 (coníferas mais cheias, como na referência).
-const CONIFER_WIDEN: float = 1.2
+static func _conifer_card_var(variant: int, tier: int, card: int) -> Vector2:
+	var table: Array[Vector2] = KitTables.CONIFER_CARD_VAR
+	return table[(3 * card + 5 * tier + 7 * variant) % table.size()]
 
 
-## Cartões por andar de conífera, alcance da saia (fração do raio), largura do cartão (fração do alcance)
-## e queda da saia (fração da altura do andar).
-const TIER_CARDS: int = 6
-const TIER_REACH: float = 1.08
-const TIER_CARD_WIDTH: float = 0.95
-const TIER_DROOP: float = 0.14
+## Largura do cartão (fração do alcance) e queda da saia (fração da altura do andar).
+const TIER_CARD_WIDTH: float = 0.72
+const TIER_DROOP: float = 0.16
 
 
-## Conífera: tronco e andares; cada andar = cone maciço por dentro + 6 cartões inclinados com o desenho
-## do andar (atlas conifer_tiers, arte A08), do eixo até a saia.
+## Conífera (revisão 012-f2): tronco e andares; cada andar = cone maciço escuro por dentro + 7 a 9 cartões
+## inclinados com o desenho do andar (atlas conifer_tiers, arte A08), do eixo até a saia. Ângulo e alcance
+## de cada cartão variam pela tabela; a normal é suave por vértice (radial + para cima), sem faceta.
 static func painted_conifer(m: KitMesher, variant: int) -> void:
 	var c: Dictionary = KitTables.CONIFERS[variant]
 	var sc: float = float(KitTables.CONIFER_SCALE[variant])
@@ -611,42 +657,57 @@ static func painted_conifer(m: KitMesher, variant: int) -> void:
 	var top_y: float = float(last[0]) + float(last[1])
 	m.gradient = Vector2(0.0, 1.2 * sc)
 	m.color = Color(0.5, 1.0, 0.0, 0.0)
-	m.tube("bark", "bark", Vector3.ZERO, Vector3(0.0, top_y * 0.7, 0.0), 0.16, 0.05, 6, false, false)
+	m.tube("bark", "bark", Vector3.ZERO, Vector3(0.0, float(c["trunk"]), 0.0), 0.15, 0.05, 6, false, false)
 	m.gradient = Vector2(float(tiers[0][0]) * sc, top_y * sc)
-	var tier_index: int = 0
-	for tier: Array in tiers:
+	for t in tiers.size():
+		var tier: Array = tiers[t]
 		var y0: float = float(tier[0])
 		var h: float = float(tier[1])
-		var rb: float = float(tier[2])
-		var rt: float = float(tier[3])
-		var rot: float = deg_to_rad(float(tier[4]))
+		var reach0: float = float(tier[2])
+		var rot: float = deg_to_rad(float(tier[3]))
+		var cards: int = int(tier[4])
+		var axis := Vector3(float(tier[5]), 0.0, float(tier[6]))
+		var tip: bool = t == tiers.size() - 1
+		# Miolo escuro (sombra própria entre os andares).
 		m.color = Color(0.0, 1.0, CARD_SOLID, float(variant) * 0.1)
-		m.tube("foliage_conifer", "foliage_conifer", Vector3(0.0, y0 + 0.1 * h, 0.0), Vector3(0.0, y0 + h, 0.0), rb * 0.5 * CONIFER_WIDEN, rt * 0.45, 8, true, rt > 0.01)
+		m.tube("foliage_conifer", "foliage_conifer", axis + Vector3(0.0, y0 + 0.1 * h, 0.0), axis + Vector3(0.0, y0 + h * 0.8, 0.0),
+				reach0 * 0.5, 0.06, 8, true, false)
 		# Célula do atlas conifer_tiers: andares 0 a 5 do mais largo ao mais estreito; pontas 6 e 7.
-		var cell: int = mini(5, roundi(float(tier_index) * 5.0 / float(maxi(tiers.size() - 2, 1))))
-		if rt <= 0.01:
+		var cell: int = mini(5, roundi(float(t) * 5.0 / float(maxi(tiers.size() - 2, 1))))
+		if tip:
 			cell = 6 + variant % 2
-		var reach: float = rb * CONIFER_WIDEN * TIER_REACH
 		var droop: float = TIER_DROOP * h
-		var half_w: float = reach * TIER_CARD_WIDTH
-		for i in TIER_CARDS:
-			var th: float = rot + TAU * float(i) / float(TIER_CARDS)
+		for i in cards:
+			var var_i: Vector2 = _conifer_card_var(variant, t, i)
+			var th: float = rot + TAU * float(i) / float(cards) + deg_to_rad(var_i.x)
+			var reach: float = reach0 * var_i.y
+			var half_w: float = reach * TIER_CARD_WIDTH
 			var radial := Vector3(cos(th), 0.0, sin(th))
 			var tangent := Vector3(-sin(th), 0.0, cos(th))
-			# Cartão inclinado: o topo no eixo (ponta do andar), a saia embaixo, na borda do andar.
-			var top_c: Vector3 = radial * rt * 0.3 + Vector3(0.0, y0 + h + 0.05, 0.0)
-			var bot_c: Vector3 = radial * reach + Vector3(0.0, y0 - droop, 0.0)
-			var nrm: Vector3 = Vector3(cos(th) * 0.9, 0.55, sin(th) * 0.9).normalized()
-			var id: float = float(cell)
-			m.color = Color(0.0, 1.0, CARD_TIER, float(variant) * 0.1)
-			var p0: Vector3 = top_c - tangent * half_w
-			var p1: Vector3 = top_c + tangent * half_w
+			# Cartão inclinado: o topo junto do eixo (ponta do andar), a saia embaixo, na borda do andar.
+			var top_c: Vector3 = axis + radial * 0.06 + Vector3(0.0, y0 + h + 0.05, 0.0)
+			var bot_c: Vector3 = axis + radial * reach + Vector3(0.0, y0 - droop * var_i.y, 0.0)
+			var p0: Vector3 = top_c - tangent * half_w * 0.35
+			var p1: Vector3 = top_c + tangent * half_w * 0.35
 			var p2: Vector3 = bot_c + tangent * half_w
 			var p3: Vector3 = bot_c - tangent * half_w
-			m.tri("foliage_conifer", p0, p1, p2, nrm, nrm, nrm, Vector2(0.0, id), Vector2(1.0, id), Vector2(1.0, id + 0.999))
-			m.tri("foliage_conifer", p0, p2, p3, nrm, nrm, nrm, Vector2(0.0, id), Vector2(1.0, id + 0.999), Vector2(0.0, id + 0.999))
-		tier_index += 1
+			var n0: Vector3 = _conifer_normal(p0 - axis, 0.9)
+			var n1: Vector3 = _conifer_normal(p1 - axis, 0.9)
+			var n2: Vector3 = _conifer_normal(p2 - axis, 0.45)
+			var n3: Vector3 = _conifer_normal(p3 - axis, 0.45)
+			var id: float = float(cell)
+			m.color = Color(0.0, 1.0, CARD_TIER, float(variant) * 0.1)
+			m.tri("foliage_conifer", p0, p1, p2, n0, n1, n2, Vector2(0.0, id), Vector2(1.0, id), Vector2(1.0, id + 0.999))
+			m.tri("foliage_conifer", p0, p2, p3, n0, n2, n3, Vector2(0.0, id), Vector2(1.0, id + 0.999), Vector2(0.0, id + 0.999))
 	m.xf = Transform3D.IDENTITY
+
+
+## Normal suave da conífera num ponto (relativo ao eixo do andar): radial na horizontal + `up` para cima.
+static func _conifer_normal(rel: Vector3, up: float) -> Vector3:
+	var flat := Vector3(rel.x, 0.0, rel.z)
+	if flat.length() < 0.001:
+		return Vector3.UP
+	return (flat.normalized() + Vector3(0.0, up, 0.0)).normalized()
 
 
 static func painted_bush(m: KitMesher, variant: int) -> void:
@@ -715,47 +776,96 @@ static func rainbow(m: KitMesher) -> void:
 				Vector3(0.0, 0.0, 1.0), Vector2(ua, 0.0), Vector2(ub, 0.0), Vector2(ub, 1.0), Vector2(ua, 1.0))
 
 
-## Coluna de ruína: base, fuste de 8 lados e capitel (b quebrada, c toco).
+## Coluna de ruína em tambores (revisão: na referência são tambores de coluna, não tijolo): base, tambores de
+## alturas e raios da tabela com um sulco entre eles e capitel (a = inteira, b = quebrada, c = toco).
+const DRUM_HEIGHTS: Array[float] = [0.62, 0.55, 0.68, 0.58, 0.64, 0.6]
+const DRUM_RADII: Array[float] = [0.34, 0.355, 0.33, 0.345, 0.335, 0.35]
+const DRUM_SHIFT: Array[float] = [0.0, 0.02, -0.015, 0.025, -0.01, 0.015]
+
+
 static func column(m: KitMesher, variant: int) -> void:
 	var heights: Array[float] = [3.4, 2.1, 0.9]
 	var h: float = heights[variant]
 	m.gradient = Vector2(0.0, h)
-	m.box("stone_painted", "stone_painted", Vector3(-0.5, 0.0, -0.5), Vector3(0.5, 0.28, 0.5))
+	m.box("ruin_stone_box", "ruin_stone_box", Vector3(-0.5, 0.0, -0.5), Vector3(0.5, 0.28, 0.5))
 	var shaft_top: float = h - (0.3 if variant == 0 else 0.0)
-	m.tube("stone_painted", "stone_painted", Vector3(0.0, 0.28, 0.0), Vector3(0.0, shaft_top, 0.0), 0.36, 0.32, 8, false, true)
+	var y: float = 0.28
+	var i: int = variant * 2
+	while y < shaft_top - 0.05:
+		var dh: float = minf(DRUM_HEIGHTS[i % DRUM_HEIGHTS.size()], shaft_top - y)
+		var r: float = DRUM_RADII[i % DRUM_RADII.size()]
+		var off := Vector3(DRUM_SHIFT[i % DRUM_SHIFT.size()], 0.0, -DRUM_SHIFT[(i + 2) % DRUM_SHIFT.size()])
+		var top_y: float = y + dh
+		# Sulco: o tambor afina 0,03 na junta de cima.
+		m.tube("ruin_stone", "ruin_stone", off + Vector3(0.0, y, 0.0), off + Vector3(0.0, top_y - 0.05, 0.0), r, r * 0.97, 10, false, false)
+		m.tube("ruin_stone", "ruin_stone", off + Vector3(0.0, top_y - 0.05, 0.0), off + Vector3(0.0, top_y, 0.0), r * 0.9, r * 0.9, 10, false,
+				top_y >= shaft_top - 0.05)
+		y = top_y
+		i += 1
 	if variant == 0:
-		m.box("stone_painted", "stone_painted", Vector3(-0.52, shaft_top, -0.52), Vector3(0.52, h, 0.52))
+		m.box("ruin_stone_box", "ruin_stone_box", Vector3(-0.52, shaft_top, -0.52), Vector3(0.52, h, 0.52))
 
 
 ## Tambores caídos no topo da ilhota das ruínas (coordenadas locais da ilhota).
 static func ruin_drums(m: KitMesher) -> void:
 	m.gradient = Vector2(0.0, 0.8)
-	m.tube("stone_painted", "stone_painted", Vector3(1.6, 0.34, 2.8), Vector3(2.6, 0.34, 3.4), 0.34, 0.34, 8, true, true)
-	m.tube("stone_painted", "stone_painted", Vector3(-3.4, 0.3, 1.8), Vector3(-2.7, 0.3, 2.6), 0.3, 0.3, 8, true, true)
-	m.tube("stone_painted", "stone_painted", Vector3(3.6, 0.32, -1.4), Vector3(4.5, 0.32, -0.9), 0.32, 0.32, 8, true, true)
+	m.tube("ruin_stone", "ruin_stone", Vector3(1.6, 0.34, 2.8), Vector3(2.1, 0.34, 3.1), 0.34, 0.34, 10, true, true)
+	m.tube("ruin_stone", "ruin_stone", Vector3(2.15, 0.34, 3.13), Vector3(2.6, 0.34, 3.4), 0.33, 0.33, 10, true, true)
+	m.tube("ruin_stone", "ruin_stone", Vector3(-3.4, 0.3, 1.8), Vector3(-2.7, 0.3, 2.6), 0.3, 0.3, 10, true, true)
+	m.tube("ruin_stone", "ruin_stone", Vector3(3.6, 0.32, -1.4), Vector3(4.5, 0.32, -0.9), 0.32, 0.32, 10, true, true)
 	m.gradient = Vector2.ZERO
 
 
 ## Cipós pendurados da rocha grande (coordenadas locais da rocha).
 static func rock_vines(m: KitMesher) -> void:
 	var xf_saved: Transform3D = m.xf
+	var k: int = 0
 	for spot: Vector3 in [Vector3(-2.8, -1.0, 1.6), Vector3(1.4, -2.0, 2.6), Vector3(3.2, -1.4, -0.4), Vector3(-0.6, -3.4, 2.0)]:
-		m.xf = Transform3D(Basis.IDENTITY.scaled(Vector3(1.6, 1.6, 1.6)), spot)
-		vine_hang(m, IslandTables.VINES[0])
+		m.xf = Transform3D(Basis(Vector3.UP, deg_to_rad(70.0 * float(k))).scaled(Vector3(1.6, 1.6, 1.6)), spot)
+		var vc: Array = VINE_CARDS[k % 2]
+		hang_cards(m, "vines_cards", float(vc[0]), float(vc[1]), (int(vc[2]) + k) % 4, int(vc[3]))
+		k += 1
 	m.xf = xf_saved
 
 
-## Nuvem: puffs (esferas achatadas) com normais misturadas às do aglomerado.
-static func cloud(m: KitMesher, puffs: Array) -> void:
-	var center := Vector3.ZERO
-	for p: Vector4 in puffs:
-		center += Vector3(p.x, p.y, p.z)
-	center /= float(puffs.size())
-	var turn: float = 0.0
-	for p: Vector4 in puffs:
-		m.blob("cloud_puff", Vector3(p.x, p.y, p.z), Vector3(p.w, p.w * IslandTables.CLOUD_FLATTEN, p.w), 10, 6,
-				center - Vector3(0.0, 1.0, 0.0), 0.35, turn)
-		turn += 0.41
+## Nuvem (A08 leva 2, Fase 3): cada puff da tabela vira um quad em billboard (shader cloud_puff) com uma célula
+## do atlas; o tamanho cobre a esfera da tabela (o desenho ocupa 85% da largura e 60% da altura da célula).
+## A ordem dos puffs na malha é a de desenho dentro do aglomerado: de trás (z local menor) para a frente.
+const CLOUD_PUFF_SCALE: float = 1.45
+
+
+static func cloud(m: KitMesher, puffs: Array, key: String) -> void:
+	var ordered: Array = puffs.duplicate()
+	ordered.sort_custom(func(a: Vector4, b: Vector4) -> bool: return a.z < b.z)
+	var k: int = 0
+	for p: Vector4 in ordered:
+		var half: float = p.w * CLOUD_PUFF_SCALE
+		var c := Vector3(p.x, p.y - p.w * 0.13, p.z)
+		_billboard(m, key, c, half, (k * 3 + puffs.size()) % 4 if key == "cloud_puff" else 0, 2 if key == "cloud_puff" else 1,
+				0.2 + 0.15 * float(k % 5))
+		k += 1
+	m.color = Color.WHITE
+
+
+## Topo visível (local) de uma nuvem da tabela: o desenho vai até 14% da célula (72% da meia altura acima do centro).
+static func cloud_visible_top(variant: int) -> float:
+	var top: float = -INF
+	for p: Vector4 in IslandTables.CLOUDS[variant]:
+		top = maxf(top, p.y - p.w * 0.13 + p.w * CLOUD_PUFF_SCALE * 0.72)
+	return top
+
+
+## Quad de billboard no plano XY local centrado em c (meia largura half), com a célula do atlas (cols x cols) e
+## uma folga mínima no UV (o shader tira o canto do quad de fract(UV)). COLOR.r = half / 32, COLOR.a = tom.
+static func _billboard(m: KitMesher, key: String, c: Vector3, half: float, cell: int, cols: int, shade: float) -> void:
+	var du: float = 1.0 / float(cols)
+	var u0: float = float(cell % cols) * du
+	var v0: float = float(cell / cols) * du
+	var e: float = 0.002
+	m.color = Color(half / 32.0, 0.0, 0.0, shade)
+	m.quad(key, c + Vector3(-half, half, 0.0), c + Vector3(half, half, 0.0), c + Vector3(half, -half, 0.0), c + Vector3(-half, -half, 0.0),
+			Vector3(0.0, 0.0, 1.0), Vector2(u0 + e, v0 + e), Vector2(u0 + du - e, v0 + e), Vector2(u0 + du - e, v0 + du - e),
+			Vector2(u0 + e, v0 + du - e))
 
 
 # ================================================================ estruturas
@@ -803,7 +913,7 @@ static func bridge(m: KitMesher, curve: PackedVector2Array) -> void:
 		var a: Vector2 = curve[i]
 		var b: Vector2 = curve[i + 1]
 		m.color = Color(0.45 if i % 2 == 0 else 0.7, 1.0, 0.0, 1.0)
-		_plank(m, Vector3(a.x + 0.03, a.y, -hw), Vector3(b.x - 0.03, b.y, -hw), 2.0 * hw, 0.07)
+		_plank(m, Vector3(a.x + 0.03, a.y, -hw), Vector3(b.x - 0.03, b.y, -hw), 2.0 * hw, 0.07, 0.53 * float(i))
 		for side in [-1.0, 1.0]:
 			var zs: float = float(side) * (hw - 0.1)
 			m.tube("wood_painted", "wood_painted", Vector3(a.x, a.y - 0.09, zs), Vector3(b.x, b.y - 0.09, zs), 0.05, 0.05, 4, false, false)
@@ -827,20 +937,23 @@ static func bridge(m: KitMesher, curve: PackedVector2Array) -> void:
 	m.color = Color.WHITE
 
 
-## Tábua inclinada de a a b (cantos do lado -Z), largura w em Z, espessura th.
-static func _plank(m: KitMesher, a: Vector3, b: Vector3, w: float, th: float) -> void:
+## Tábua inclinada de a a b (cantos do lado -Z), largura w em Z, espessura th. UV de wood_planks: u ao longo da
+## ponte (a partir de u0, que muda por tábua) e v através dela (as tábuas pintadas correm em v).
+static func _plank(m: KitMesher, a: Vector3, b: Vector3, w: float, th: float, u0: float) -> void:
 	var dz := Vector3(0.0, 0.0, w)
 	var down := Vector3(0.0, -th, 0.0)
 	var along: Vector3 = (b - a).normalized()
 	var up: Vector3 = Vector3(0.0, 0.0, 1.0).cross(along).normalized()
 	if up.y < 0.0:
 		up = -up
-	m.quad("wood_painted", a, b, b + dz, a + dz, up)
-	m.quad("wood_painted", a + down, b + down, b + dz + down, a + dz + down, -up)
-	m.quad("wood_painted", a, b, b + down, a + down, Vector3(0.0, 0.0, -1.0))
-	m.quad("wood_painted", a + dz, b + dz, b + dz + down, a + dz + down, Vector3(0.0, 0.0, 1.0))
-	m.quad("wood_painted", a, a + dz, a + dz + down, a + down, -along)
-	m.quad("wood_painted", b, b + dz, b + dz + down, b + down, along)
+	var u1: float = u0 + a.distance_to(b)
+	m.quad("wood_painted", a, b, b + dz, a + dz, up, Vector2(u0, 0.0), Vector2(u1, 0.0), Vector2(u1, w), Vector2(u0, w))
+	m.quad("wood_painted", a + down, b + down, b + dz + down, a + dz + down, -up, Vector2(u0, 0.0), Vector2(u1, 0.0), Vector2(u1, w), Vector2(u0, w))
+	m.quad("wood_painted", a, b, b + down, a + down, Vector3(0.0, 0.0, -1.0), Vector2(u0, 0.0), Vector2(u1, 0.0), Vector2(u1, th), Vector2(u0, th))
+	m.quad("wood_painted", a + dz, b + dz, b + dz + down, a + dz + down, Vector3(0.0, 0.0, 1.0), Vector2(u0, w), Vector2(u1, w), Vector2(u1, w + th),
+			Vector2(u0, w + th))
+	m.quad("wood_painted", a, a + dz, a + dz + down, a + down, -along, Vector2(u0, 0.0), Vector2(u0, w), Vector2(u0 + th, w), Vector2(u0 + th, 0.0))
+	m.quad("wood_painted", b, b + dz, b + dz + down, b + down, along, Vector2(u1, 0.0), Vector2(u1, w), Vector2(u1 + th, w), Vector2(u1 + th, 0.0))
 
 
 ## Laje plana irregular (4 cantos com folgas da tabela), topo em y, com a borda de 0,04.
@@ -952,19 +1065,3 @@ static func _stone_card(m: KitMesher, cell: int, c: Vector2, south: Vector2) -> 
 	var sw: Vector2 = c - e + s
 	m.quad("arena_stones", Vector3(nw.x, y, nw.y), Vector3(ne.x, y, ne.y), Vector3(se.x, y, se.y), Vector3(sw.x, y, sw.y), Vector3.UP,
 			Vector2(u0, v0), Vector2(u0 + 0.25, v0), Vector2(u0 + 0.25, v0 + 0.5), Vector2(u0, v0 + 0.5))
-
-
-## Feixes de luz (coordenadas do mundo; peça na origem): cada um são duas fitas cruzadas ao longo da direção
-## do sol, da copa (UV.y = 1) até o céu (UV.y = 0).
-static func sun_shafts(m: KitMesher) -> void:
-	var from: Vector3 = IslandTables.SUN_FROM.normalized()
-	var side_a: Vector3 = from.cross(Vector3.UP).normalized()
-	var side_b: Vector3 = from.cross(side_a).normalized()
-	for e: Array in IslandTables.SUN_SHAFTS:
-		var tip: Vector3 = e[0]
-		var hw: float = float(e[1]) * 0.5
-		var top: Vector3 = tip + from * float(e[2])
-		for side: Vector3 in [side_a, side_b]:
-			var n: Vector3 = from.cross(side).normalized()
-			m.quad("light_shaft", top - side * hw, top + side * hw, tip + side * hw, tip - side * hw, n,
-					Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
