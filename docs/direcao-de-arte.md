@@ -1,6 +1,7 @@
 # Direção de Arte: Pixel Chess (cenário 3D pintado, personagens em pixel art)
 
 **Status:** reescrita em 2026-10-08 por decisão do usuário: "Pixel art serão só os personagens" e, sobre a referência nova, "esse gráfico exatamente, nessas posições, igual a tudo", com "dia claro com toque quente". **Substitui** a versão "pixel art minimalista em 2.5D" de 2026-10-06/07 (specs `A03`, `A06` e `A07` viram histórico). Specs vigentes: `012` (developer) e `A08` (artist).
+**Atualização (2026-10-08, fechamento da `012` e da `A08`):** os valores de luz, pós, folhagem, cascata e nuvens passam a ser os da entrega aprovada (`revisoes/012-f2.md` revisão 2 e `revisoes/012-f3.md`), mais as medidas de controle em "Luz e pós-processamento".
 
 Esta é a fonte única de estilo. Vale para o `artist` (scripts em `tools/art/`), para o código (malhas, materiais, shaders, luz e pós-processamento) e para a revisão. Se algo aqui conflitar com uma spec de arte (`docs/specs/ANN-*.md`), vale a spec mais recente. Se conflitar com `CLAUDE.md`, vale o `CLAUDE.md`.
 
@@ -49,18 +50,18 @@ Na referência nova, o anfiteatro tem as mesmas proporções do nosso (arena 20 
 | Terra da arena, círculo de pedra e lajes soltas | Decalques planos (`Decal` ou quad com alfa misturado), sem relevo: a arena continua plana | Decalques pintados com borda suave |
 | Muro alto, degrau baixo, crista e capeamento | Blocos com chanfro de 0,04 a 0,08. Musgo pela normal no topo. Cipós e tufos pendentes em cartões | Pedra pintada (bege quente) + `_n` suave, musgo e cartões de cipó |
 | Escada, patamar e lajes do caminho | Degraus em blocos chanfrados e lajes irregulares | Lajes pintadas + `_n` |
-| Folhosa | Tronco em prisma afinando, com raízes. Copa = 6 a 14 lóbulos, cada um uma casca de cartões de folha com normais esféricas (do centro da copa), alpha scissor e alpha-to-coverage. Gradiente por altura | Casca + atlas de tufos de folha (2 ou 3 famílias de verde) |
-| Conífera | Tronco + 5 a 9 andares de cartões serrilhados em cone, normais do eixo para fora, gradiente por altura | Casca + atlas de galhos de conífera |
+| Folhosa | Tronco em prisma afinando, com raízes. Copa = 6 a 14 lóbulos, cada um com **4 a 6 cartões grandes** sobrepostos (meia largura de 0,9 a 1,2 × o raio do lóbulo), normal do elipsoide da copa inteira, alpha scissor e alpha-to-coverage. O escuro de dentro e de baixo vem do shader (AO por profundidade na copa, base mais fria): uma luz só por copa (revisão 012-f2) | Casca + atlas de tufos de folha (2 ou 3 famílias de verde) |
+| Conífera | Tronco + **7 a 9 andares de 7 a 9 cartões**, com raio, ângulo e alcance variados por tabela (raios fora de uma reta), ponta fina, normal suave por vértice (sem faceta), escuro entre os andares pelo shader, gradiente por altura | Casca + atlas de galhos de conífera |
 | Arbusto | Lóbulos pequenos de cartões, sem tronco | O mesmo atlas da folhosa |
 | Penhasco e fundo da ilha | Face irregular em blocos (malha com degraus e reentrâncias) + fundo cônico. Triplanar, mais escuro e frio para baixo, e somindo na névoa de altura | Terra e rocha marrom pintadas + `_n` suave; cartões de raiz e de cipó |
-| Cascata e névoa | Lâminas com shader de rolagem (riscos e espuma), puffs de névoa na base | Riscos de água, espuma e puff de névoa |
+| Cascata e névoa | Lâminas em 2 camadas com shader de rolagem (riscos), faixa de espuma no lábio, puffs de névoa na base | Riscos de água, espuma e puff de névoa |
 | Arco-íris | Fita em arco com shader aditivo fraco, apagando nas pontas | Gradiente de 6 faixas |
-| Nuvens | Aglomerados de puffs billboard (alfa misturado, ordenados por aglomerado) + planos de mar de nuvem bem abaixo | 4 a 6 puffs pintados com alfa suave |
+| Nuvens | Aglomerados de puffs billboard (alfa misturado, ordenados por aglomerado) + mar de nuvem bem abaixo (y −27) | 4 a 6 puffs pintados com alfa suave |
 | Céu | Shader de céu próprio, **inclusive abaixo do horizonte** (a câmera olha para baixo e o "céu" de baixo aparece entre as nuvens) | — |
 | Braseiro | Pedestal de pedra + bacia de ferro + chama em cartões cruzados com flipbook, `OmniLight3D` sem sombra | Pedra e ferro pintados, flipbook de chama |
 | Ponte de corda | Tábuas, postes e cordas pendentes (catenária em tabela) | Tábuas e corda pintadas |
 | Ruínas | Colunas com tambores e lintel, algumas quebradas | Pedra clara de ruína + `_n` |
-| Vaga-lumes | `MultiMesh` de pontos emissivos com posições em tabela | — |
+| Vaga-lumes | `MultiMesh` de pontos emissivos com posições em tabela (38, em volta das matas e da cascata) | — |
 | **Personagens** (futuro) | `Sprite3D` billboard Y, `pixel_size = 1/32`, Nearest | Pixel art (regras na spec dos personagens) |
 
 ## Escala e medidas
@@ -118,17 +119,26 @@ Na referência nova, o anfiteatro tem as mesmas proporções do nosso (arena 20 
 
 Momento do dia: **dia claro com toque quente** (decisão do usuário, 2026-10-08). Não é tarde dourada.
 
-- **Sol:** `DirectionalLight3D` `#FFE9C8`, elevação de **32° a 36°** (alvo 34°; revisão 012-f2, para as faixas de sombra da referência), **vindo do oeste-noroeste** (na câmera padrão, de trás e da esquerda, como na referência). Sombras reais em tudo. Tufos, flores, nuvens e vaga-lumes não projetam sombra.
-- **Ambiente:** do céu, lavanda-azulado claro (`#B8C4DC`), forte o bastante para a sombra ficar verde-média e nunca preta. SSAO leve.
+- **Sol:** `DirectionalLight3D` `#FFE9C8`, energia 1,65, elevação de **34°** (`rotation_degrees = (-34, -112.5, 0)`; a faixa aceita é de 32° a 36°, revisão 012-f2, para as faixas de sombra da referência), **vindo do oeste-noroeste** (na câmera padrão, de trás e da esquerda, como na referência). A direção do sol fica só no nó `Sun`: nenhum shader copia o vetor. Sombras reais em tudo. Tufos, flores, nuvens e vaga-lumes não projetam sombra.
+- **Ambiente:** cor lavanda-azulada clara (`#B8C4DC`, energia 0,2), forte o bastante para a sombra ficar verde-escura e nunca preta. SSAO leve (raio 1, intensidade 1).
 - **Pontos de luz quente:** braseiros com `OmniLight3D` `#FFB066`, alcance ≤ 4, **sem sombra**, energia baixa (de dia, eles só aquecem o entorno).
-- **Bloom:** leve, só em chama, vaga-lume, espuma da cascata e brilho do sol nas nuvens. A grama ao sol não brilha.
-- **Feixes de luz:** fora (revisão 012-f2: leram como faixas cinza sobre o céu). Podem voltar na Fase 3 da 012 só se lerem dourados e os critérios globais da spec continuarem passando.
+- **Bloom:** leve (glow nos níveis 2 e 3, intensidade 0,3, limiar HDR 1,0), só em chama, vaga-lume, espuma da cascata e brilho do sol nas nuvens. A grama ao sol não brilha.
+- **Feixes de luz:** fora (revisão 012-f2: leram como faixas cinza sobre o céu; a 012 fechou sem eles). Só voltam com uma spec nova.
 - **Sem véu:** nada de emissão ou névoa clareando a ilha. A sombra fica verde-escura e o branco das nuvens e da espuma chega a branco quente. O ar só aparece além da borda (névoa de profundidade e de altura).
-- **Névoa:** de profundidade lavanda (`#DCD6E6`), começando depois da borda da ilha, e de altura abaixo do nível −3 (o fundo da ilha e as ilhotas "afundam" nas nuvens).
-- **Desfoque:** só no fundo distante (além da borda da ilha). O anfiteatro e a mata ficam nítidos.
-- **Tonemap** que preserve as cores (Filmic ou AgX). Saturação de 1,05 a 1,12 e contraste de 1,0 a 1,05. **Sem vinheta.**
+- **Névoa:** de profundidade lavanda (`#DCD6E6`), de 70 a 100 unidades da câmera (depois da borda da ilha), e de altura abaixo do nível −3, densidade 0,03 (o fundo da ilha e as ilhotas "afundam" nas nuvens).
+- **Desfoque:** só no fundo distante (a partir de 90, transição de 60, quantidade 0,02). O anfiteatro e a mata ficam nítidos, e a ilha alta e as ilhotas também devem ler nítidas, suavizadas só pela névoa.
+- **Tonemap:** Filmic, exposição 1,25, **branco 3** (com branco 6, nuvem, céu e espuma ficavam cinza ~210; revisão 012-f2). Ajuste de cor com saturação 1,05 (faixa de 1,05 a 1,12) e contraste 1,0 (faixa de 1,0 a 1,05). **Sem vinheta.**
 - **Antisserrilhado:** MSAA 4× (com alpha-to-coverage na folhagem). Sem TAA nem FXAA, porque borram o pixel dos personagens.
 - **Emissão:** chamas, vaga-lumes e (no futuro) efeitos das peças.
+
+### Medidas de controle (captura padrão 1280×720 sem HUD, `tools/dev/compare_images.gd --boxes`)
+
+Valem para qualquer mudança de luz, pós ou material que mexa no quadro inteiro (spec 012, critérios **(f2)**). Entre parênteses, a referência e o valor da 012 entregue.
+
+- Quadro: saturação média ≥ 0,36 (0,397; 0,408), P95 de L ≥ 226 (232; 229), pixels com L < 50 ≥ 13% (17,2%; 13,3%) e leitosos (S < 0,18 e L > 150) ≤ 30% (24,9%; 27,6%).
+- Ilha (170, 180, 1110, 700): L médio ≤ 110 (102; 110) e pixels com L < 50 ≥ 16% (19,4%; 17,6%).
+- Granulação da folhagem ≤ 0,95 nas caixas de mata (de 0,74 a 0,84 na referência).
+- Caixas de cor da 012 a ≤ 8% (cascata ≤ 8% e faixa sul ≤ 12%).
 
 ## Paleta-alvo (medida na `ilha-flutuante.webp`)
 
@@ -174,4 +184,4 @@ O layout é feito à mão (`011`) e a composição exterior é a da `012` (croqu
 - **Anel:** degrau baixo (0,5), terraço de 3 (reservas nos lados compridos), muro alto com crista em 1,0, e exterior no nível 0.
 - **Passagens:** escada no **meio do lado sul e do lado norte**, da crista para fora, com patamar de lajes (decisão do usuário, 2026-10-08), e os **portões oeste e leste** (lances da `011`), que atravessam o anel. O oeste leva à plataforma e à ponte de corda. O leste leva ao caminho de lajes que sobe para o nordeste.
 - **Exterior:** ilha compacta (de 3,5 a 6 unidades além do muro no sul, de 5 a 10 no oeste e de 8 a 17 no leste), mata como na referência, faixa norte aberta com bancos, borda de penhasco, ilha alta com cascata ao norte, ilhotas, rochas e nuvens.
-- **Legibilidade com câmera 360°:** a arena e as reservas sempre visíveis. Árvores e rochas entre a câmera e a arena ficam pontilhadas.
+- **Legibilidade com câmera 360°:** a arena e as reservas sempre visíveis. Árvores, rochas e braseiros entre a câmera e a arena (ou as reservas) ficam pontilhados.
