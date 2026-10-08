@@ -1,250 +1,176 @@
-# Direção de Arte: Pixel Chess (pixel art minimalista em 2.5D)
+# Direção de Arte: Pixel Chess (cenário 3D pintado, personagens em pixel art)
 
-**Status:** aprovada pelo usuário em 2026-10-06. **Atualização 2026-10-08:** muro alto com crista em 1,0, terraço de 3, plateia removida, e ilha flutuante com rio e nuvens (specs `012` e `A07`; os grupos de paleta novos, Água, Espuma, Nuvem, Folhagem outonal e Florada, estão na `A07`). (Reescrita em 2026-10-06; substitui a versão "HD-2D fiel ao Octopath". Atualizada em 2026-10-07 para o mapa feito à mão: specs `011` e `A06`.)
+**Status:** reescrita em 2026-10-08 por decisão do usuário: "Pixel art serão só os personagens" e, sobre a referência nova, "esse gráfico exatamente, nessas posições, igual a tudo", com "dia claro com toque quente". **Substitui** a versão "pixel art minimalista em 2.5D" de 2026-10-06/07 (specs `A03`, `A06` e `A07` viram histórico). Specs vigentes: `012` (developer) e `A08` (artist).
 
-Esta é a fonte única de estilo. Vale para o `artist` (scripts em `tools/art/`), para o código (placeholders, malhas, materiais, shaders, luz e pós-processamento) e para a revisão. O Antigravity/Gemini está pausado e não edita o projeto.
-Se algo aqui conflitar com uma spec de arte (`docs/specs/ANN-*.md`), vale a spec mais recente. Se conflitar com `CLAUDE.md`, vale o `CLAUDE.md`.
+Esta é a fonte única de estilo. Vale para o `artist` (scripts em `tools/art/`), para o código (malhas, materiais, shaders, luz e pós-processamento) e para a revisão. Se algo aqui conflitar com uma spec de arte (`docs/specs/ANN-*.md`), vale a spec mais recente. Se conflitar com `CLAUDE.md`, vale o `CLAUDE.md`.
 
 ## Visão geral
 
-O mundo é 3D de verdade (2.5D): **todo o cenário é modelo 3D low-poly** de um **kit de peças** (`scenes/kit/`) montado à mão em `scenes/map.tscn`, com **texturas em pixel art** a 32 texels por unidade (chão, terraços, muros, escadas, pedras, árvores, arbustos, troncos, tocos). **Nada é procedural:** nem o layout, nem a arte. Cada textura, decalque, árvore e prop é uma peça única e intencional, desenhada por script com formas, posições e cores explícitas (sem RNG nem ruído). Capim, flores e cogumelos são quads cruzados fixos. Só as **peças** (no futuro) serão sprites 2D em pé (billboard no eixo Y).
+Dois estilos com fronteira clara:
 
-A câmera **orbita 360°** em torno do centro da arena, com inclinação fixa e zoom limitado. Por isso todo modelo precisa funcionar de qualquer lado, e a arte não traz luz lateral pintada.
-
-**Alvo visual único:** `docs/reference/Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg` (anfiteatro de pedra numa clareira, de dia). O que faz a imagem funcionar:
-
-1. **Chão minimalista.** A grama é quase lisa: um tom domina (cerca de 75% dos pixels da grama ao sol, medido na imagem), com tracinhos esparsos de 2 a 3 px e uma florzinha de vez em quando. A variação vem de **manchas grandes** de grama mais clara e mais escura, com borda recortada em pixel, e da sombra das árvores. Nada de ruído por pixel, nada de "carpete".
-2. **Terra orgânica.** A terra é praticamente **um tom só**, em manchas grandes com borda recortada em pixel, ilhas de grama dentro e um aro de grama clara em volta. A borda nunca segue o grid de tiles.
-3. **Pedra com musgo.** Muros de pedra seca em fiadas finas, bege-acinzentado quente, com o **topo coberto de musgo** e musgo escorrendo pelas juntas. Escadas de pedra largas. Calçamento de lajes irregulares.
-4. **Contraste de detalhe.** O chão é calmo. O detalhe mora nas **árvores** (coníferas em camadas serrilhadas, folhosas feitas de muitos aglomerados de folhas), nos muros e nos props (troncos caídos, tocos, cogumelos, flores, capim alto).
-5. **Luz de dia claro.** Sol neutro, levemente quente; sombras suaves esverdeadas; névoa azulada só ao fundo. Imagem limpa e nítida, sem vinheta e sem desfoque forte.
-
-**Cor viva, não ruído.** A vibração vem de poucos tons bem escolhidos e saturados (verde vivo, bege claro, verde-amarelado nas copas ao sol), não de muitos tons misturados.
-
-### Identidade própria (o que é nosso)
-
-- **A arena é um anfiteatro retangular.** Arena 20 × 18 plana no centro, degrau baixo, terraço em volta (com as reservas nos lados compridos) e muro alto de pedra, descendo para a floresta (ver "Terreno e mapa").
-- **Monólitos rúnicos** com runa ciano (único elemento que emite luz): fora do mapa atual (spec 011); as texturas ficam guardadas.
-- **Mata mista.** Coníferas altas em camadas e folhosas de copa em aglomerados, com alturas e silhuetas diferentes. Nada de "pirulito" (bola lisa num pau), nada de cone liso, nada de árvores todas iguais.
-- **Não trocar paleta nem estilo por conta própria.** Propostas de mudança vão por escrito no relatório de entrega, nunca direto na arte.
-
-## Referência
-
-Em `docs/reference/`. Há **uma** referência.
-
-| Arquivo | O que tirar | O que NÃO tirar |
+| | Cenário (tudo que não é personagem) | Personagens (peças, no futuro) |
 |---|---|---|
-| `Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg` | Grama lisa com tracinhos esparsos e manchas grandes de luz; terra de um tom com borda orgânica recortada; muro de pedra seca com topo de musgo, pilares nos cantos e escadas largas; calçamento de lajes; coníferas em camadas serrilhadas; folhosas em aglomerados de folhas; troncos caídos com musgo, tocos, cogumelos coloridos, flores, capim alto; névoa azulada ao fundo; cores vivas e limpas. | A arena octogonal (a nossa é retangular, ver `CLAUDE.md`); o terreno em encosta (o nosso exterior é plano); luz pintada vinda de um lado (a câmera gira); contorno escuro nos troncos e cogumelos; o enquadramento fixo. A plateia (banco, caixote, troncos) **entra**, atrás do muro norte. |
+| Estilo | **3D estilizado com aparência pintada**: formas redondas e volumosas, cores suaves e saturadas, gradientes, textura pintada à mão (pinceladas largas), sem contorno | **Pixel art** |
+| Forma | Modelos 3D low/mid-poly do kit (`scenes/kit/`), montados à mão em `scenes/map.tscn` | `Sprite3D` em pé, billboard só no eixo Y |
+| Escala da textura | **64 px por unidade** no chão, na pedra e na madeira (ver "Escala e medidas") | **32 px por unidade** (`pixel_size = 1/32`, `WorldScale.PIXEL_SIZE`) |
+| Filtro | **Linear com mipmaps e anisotrópico** | **Nearest**, só nos personagens |
 
-As referências antigas do Octopath (`153426`, `153547`, `160858`) foram removidas pelo usuário e **não** são mais alvo.
+O contraste é intencional: o cenário é macio e pintado, e o personagem é nítido em pixel, o que ajuda a lê-lo em cima do cenário.
+
+O mundo é 3D de verdade. A câmera **orbita 360°** em torno do centro da arena, com inclinação fixa e zoom limitado, então todo modelo funciona de qualquer lado e nenhuma textura traz luz lateral pintada. **Na câmera padrão (yaw 0), o quadro reproduz a composição da referência**. As posições estão na spec `012`.
+
+## Referências
+
+Ficam em `docs/reference/`.
+
+| Arquivo | Papel | O que tirar | O que NÃO tirar |
+|---|---|---|---|
+| `ilha-flutuante.webp` | **Referência principal** (desde 2026-10-08): composição 1:1 na câmera padrão, estilo, paleta, luz e atmosfera | Tudo o que aparece e **na mesma posição**: ilha compacta em volta do anfiteatro, faixa de mata (mista a noroeste, coníferas a leste e folhosas na frente leste), faixa norte aberta com bancos, borda de penhasco em blocos de terra e rocha marrom com raízes e cipós, ilha alta ao fundo com cascata larga e arco-íris, ilhota com ruínas de colunas (fundo à esquerda), ilhota pequena com coluna (fundo à direita), ilhotas laterais ligadas por pontes de corda, rochas flutuantes, mar de nuvens em volta e embaixo, tochas/braseiros, escada no meio do lado sul com patamar de lajes, portões laterais, círculo de pedra na terra da arena, lajes soltas, flores, troncos no terraço, vaga-lumes dourados. A aparência pintada: volumes redondos, gradientes, pinceladas, folhagem em tufos | A **tarde dourada** forte e os feixes de luz fortes (usamos dia claro com toque quente, ver "Luz"). A **moldura de cipós e rochas presa nos cantos da imagem** (é coisa de câmera fixa; vira rochas flutuantes no mundo, ver `012`). Desfoque forte nas bordas. Os erros de render da imagem gerada (muros que não fecham, escalas que mudam). O enquadramento é o da câmera padrão, mas as outras direções da órbita também precisam ser bonitas |
+| `Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg` | **Histórico.** Valeu de 2026-10-06 a 2026-10-08 para a pixel art | A forma do anfiteatro (degrau baixo, terraço, muro alto com musgo), que já está no mapa | Estilo, paleta e pixel art do cenário |
+
+Na referência nova, o anfiteatro tem as mesmas proporções do nosso (arena 20 × 18, terraço 3 e muro). A spec `012` mediu isso com um ajuste de câmera, que deu erro médio de 6 px em 906. Por isso nada no anel muda de tamanho.
 
 ## Como o mundo é montado
 
-**Fronteira de trabalho.** O `artist` faz os **pixels**: texturas opacas, normal maps (só pedra e madeira) e cartões com alfa recortado. O `artist` também desenha os **decalques de chão** (mancha de terra, manchas de grama, terra de mata, trilha). O `developer` faz a **forma**: malhas do kit (por tabelas explícitas), UV, normais, materiais, shaders, luz, pós-processamento e a montagem à mão do mapa (posição de cada peça e decalque). O artist nunca desenha a silhueta inteira de uma árvore. O developer nunca edita PNG.
+**Fronteira de trabalho.** O `artist` faz os **pixels**: texturas pintadas (albedo, normal map suave e, quando a spec pedir, rugosidade), atlas de cartões de folha, puffs de nuvem, decalques com borda suave, flipbook de chama e o gradiente do arco-íris. O `developer` faz a **forma** e a **luz**: malhas do kit (por tabelas explícitas), UV, cor de vértice, materiais e shaders (folhagem, chão, pedra, penhasco, água, céu, nuvens), luz, pós-processamento e a montagem à mão do mapa. O artist nunca desenha a silhueta inteira de uma árvore, e o developer nunca edita PNG.
 
-| Elemento | Geometria (developer) | Arte (artist) | Ponto de vista da arte |
-|---|---|---|---|
-| Chão (nível 0, terraço, crista) | Planos com UV de mundo | Grama opaca 64×64 seamless, sem normal map | De cima |
-| Decalques de chão (terra, manchas, trilha) | Quads planos com alfa recortado, posicionados à mão em múltiplos de 1/32, rotação de 90° em 90° | Peças únicas com alfa binário e borda recortada em pixel | De cima |
-| Muro alto e degrau baixo | Faces verticais com UV de mundo (textura contínua entre peças) | Tiras longas de pedra seca (`wall_high_face`, face externa de 1,0 desde 2026-10-08; `wall_low_face` 0,5) + normal map | De frente |
-| Capeamento e crista | Lajes individuais de contorno irregular, com beiral | Tiras de lajes com musgo + normal map | De cima |
-| Musgo caindo pela borda | Cartão alfa preso no beiral, pendendo sobre a face | Cartão 128×12, seamless na horizontal | De frente |
-| Quina do muro alto | Blocos de amarração alternando longo e curto, fechada | `wall_quoin` + `wall_crest_corner` | De frente / de cima |
-| Escada | Degraus em blocos (espelho 0,25, piso 0,5), bochechas de muro | Piso e espelho com a largura do lance + normal map | Piso de cima; espelho de frente |
-| Pedra grande | Malha low-poly facetada | Textura sem direção + normal map | Sem direção |
-| Folhosa | Tronco em prisma afinando, com raízes e galhos; copa = **8 a 20 lóbulos 3D** arredondados (miolo opaco + casca um pouco maior com alfa recortado). **Nada de cartão chapado** com a silhueta da árvore | Casca, `leaf_mass_*` (opaca) e `leaf_shell_*` (alfa), seamless | Sem direção |
-| Conífera | Tronco curto + **5 a 9 andares** em tronco de cone, com a borda de baixo serrilhada **na geometria** | Casca + `conifer_needles` + `conifer_fringe` (alfa) | De frente |
-| Arbusto | Lóbulos pequenos, sem tronco | `leaf_mass_cool` + `leaf_shell_cool` (variante florida) | Sem direção |
-| Tronco caído e toco | Cilindro low-poly (6 a 8 lados), com as pontas cortadas | Casca, madeira cortada (anéis) e musgo no topo | Casca de frente; anéis de frente para a ponta |
-| Capim alto, capim, flores, cogumelos | **3 quads cruzados fixos** (sem billboard) | Cartões com alfa | De frente (de lado) |
-| Monólito rúnico (fora do mapa atual) | Prisma de 4 a 6 lados afinando | Pedra opaca + normal map; runa emissiva | De frente |
-| Banco, caixote, pilha de lenha (plateia) | Caixas e cilindros low-poly | Tábuas (`bench_floor_0`), `crate_*`, `wood_pile_end` | De frente / de cima |
-| Peças (futuro) | `Sprite3D` billboard Y | Sprite com alfa, regras na spec das peças | De frente, com leve 3/4 de cima |
+**De onde vem o "pintado"** (o modo realista de chegar à referência no nosso fluxo):
+1. **Forma:** volumes redondos e chanfrados. A copa é um aglomerado de lóbulos com cartões de folha. A pedra é bloco com chanfro. A borda da ilha é um contorno irregular. Nada de cubo seco nem cone liso.
+2. **Shader:** gradiente de cor por altura e por exposição ao sol (base mais escura e fria, topo mais claro e quente), luz "embrulhada" (wrap) e normais esféricas na folhagem, luz de borda quente contra o sol, musgo pela normal (topo das pedras) e AO por cor de vértice nos pés de muro e nos troncos.
+3. **Textura:** pinceladas largas pintadas por script, com variação de valor em manchas grandes e detalhe só onde importa (juntas da pedra, folhas na borda dos tufos). Ruído fino por pixel não pinta nada.
+4. **Atmosfera:** névoa de profundidade lavanda-azulada, névoa de altura embaixo da ilha (o fundo some nas nuvens), bloom leve e desfoque sutil só no fundo distante.
 
-**Capim e flores: o plano e o que fica em pé.**
-- O **detalhe plano** fica dentro da textura do chão e é esparso: tracinhos de 2 a 3 px e, raramente, uma florzinha de 2 a 4 px.
-- O que **fica em pé** vira geometria: 3 quads cruzados a 60°, fixos no mundo, em grupos do kit com rotação escolhida à mão. A normal desses quads aponta para cima (mesma luz do chão em volta) e eles não projetam sombra.
+**Procedural na arte (decisão do usuário, 2026-10-08):** a arte do cenário **pode** usar texturas, ruído e gradientes gerados por código **com seed fixa** (mesmo script → mesmo resultado), nos scripts de `tools/art/` e nos shaders. Isso substitui, só para a arte do cenário, a regra "nada procedural na arte" de 2026-10-07. O **layout do mapa continua feito à mão**: posições de peças, decalques e árvores ficam na cena ou em tabelas literais, sem gerador.
 
-### Ponto de vista e UV
-
-- **Textura de topo:** vista exatamente de cima, com `u = X` (leste) e `v = Z` (sul). O topo da textura é o norte. Nada "em pé" desenhado nela.
-- **Textura lateral** (muro, barranco, espelho de degrau, casca, pedra do monólito): vista de frente. O topo da textura é "para cima" no mundo.
-- **Cartões:** vistos de frente. O topo do cartão é "para cima" (nos cartões de copa, "para fora e para cima").
-- **Densidade:** 32 texels por unidade em toda superfície. O UV é em unidades do mundo: nada de esticar textura. Tolerâncias: até ±25% na volta do tronco e dos andares da conífera (para fechar a costura com repetições inteiras); compressão de até 50% no topo de cada andar de conífera. Modelos não são escalados em instância.
+| Elemento | Geometria e shader (developer) | Arte (artist) |
+|---|---|---|
+| Chão de grama (exterior, terraço e arena) | Planos com UV de mundo. Mistura de 2 ou 3 grama pintadas por máscara de baixa frequência em espaço de mundo. AO por cor de vértice perto de muros | `ground_grass_*` 512×512 seamless (8 × 8 unidades) e máscara de mistura |
+| Tufos de grama e flores | `MultiMeshInstance3D` de tufos (3 quads cruzados, normal para cima, sem sombra). Na arena, só tufos baixos (≤ 0,15) | Atlas de tufos e de flores com alfa |
+| Terra da arena, círculo de pedra e lajes soltas | Decalques planos (`Decal` ou quad com alfa misturado), sem relevo: a arena continua plana | Decalques pintados com borda suave |
+| Muro alto, degrau baixo, crista e capeamento | Blocos com chanfro de 0,04 a 0,08. Musgo pela normal no topo. Cipós e tufos pendentes em cartões | Pedra pintada (bege quente) + `_n` suave, musgo e cartões de cipó |
+| Escada, patamar e lajes do caminho | Degraus em blocos chanfrados e lajes irregulares | Lajes pintadas + `_n` |
+| Folhosa | Tronco em prisma afinando, com raízes. Copa = 6 a 14 lóbulos, cada um uma casca de cartões de folha com normais esféricas (do centro da copa), alpha scissor e alpha-to-coverage. Gradiente por altura | Casca + atlas de tufos de folha (2 ou 3 famílias de verde) |
+| Conífera | Tronco + 5 a 9 andares de cartões serrilhados em cone, normais do eixo para fora, gradiente por altura | Casca + atlas de galhos de conífera |
+| Arbusto | Lóbulos pequenos de cartões, sem tronco | O mesmo atlas da folhosa |
+| Penhasco e fundo da ilha | Face irregular em blocos (malha com degraus e reentrâncias) + fundo cônico. Triplanar, mais escuro e frio para baixo, e somindo na névoa de altura | Terra e rocha marrom pintadas + `_n` suave; cartões de raiz e de cipó |
+| Cascata e névoa | Lâminas com shader de rolagem (riscos e espuma), puffs de névoa na base | Riscos de água, espuma e puff de névoa |
+| Arco-íris | Fita em arco com shader aditivo fraco, apagando nas pontas | Gradiente de 6 faixas |
+| Nuvens | Aglomerados de puffs billboard (alfa misturado, ordenados por aglomerado) + planos de mar de nuvem bem abaixo | 4 a 6 puffs pintados com alfa suave |
+| Céu | Shader de céu próprio, **inclusive abaixo do horizonte** (a câmera olha para baixo e o "céu" de baixo aparece entre as nuvens) | — |
+| Braseiro | Pedestal de pedra + bacia de ferro + chama em cartões cruzados com flipbook, `OmniLight3D` sem sombra | Pedra e ferro pintados, flipbook de chama |
+| Ponte de corda | Tábuas, postes e cordas pendentes (catenária em tabela) | Tábuas e corda pintadas |
+| Ruínas | Colunas com tambores e lintel, algumas quebradas | Pedra clara de ruína + `_n` |
+| Vaga-lumes | `MultiMesh` de pontos emissivos com posições em tabela | — |
+| **Personagens** (futuro) | `Sprite3D` billboard Y, `pixel_size = 1/32`, Nearest | Pixel art (regras na spec dos personagens) |
 
 ## Escala e medidas
 
-**1 tile = 1 unidade 3D = 32 texels.** Peças futuras usam `pixel_size = 1/32`.
+- **Mundo:** 1 tile = 1 unidade 3D. 1 nível de degrau = 0,5 unidade (`WorldScale.LEVEL_HEIGHT`). As medidas do anel, da arena e das reservas são as do `CLAUDE.md` e da `011`/`012`.
+- **Densidade de textura do cenário:** **64 px por unidade** no chão, na pedra, na madeira e no penhasco, com UV em unidades do mundo (sem esticar). Cartões de folha e puffs têm resolução própria, definida na `A08`. Texturas seamless de 512×512 (8 × 8 unidades), com quebra de repetição no shader (mistura por máscara de baixa frequência e rotação ou deslocamento por região).
+- **Personagens:** 32 px por unidade, `pixel_size = 1/32`. `TEXELS_PER_UNIT = 32` continua sendo a constante dos personagens. A densidade do cenário vira uma constante própria (por exemplo, `SCENERY_TEXELS_PER_UNIT = 64`), definida num lugar só.
 
 | Item | Medida |
 |---|---|
-| Textura opaca | **32×32 px** por padrão; tiras longas, grama 64×64 e decalques quando a spec pedir (sempre 32 texels/unidade). Normal map `<nome>_n.png` do mesmo tamanho, só em pedra e madeira |
-| Altura de 1 nível | **0,5 unidade = 16 texels** (`WorldScale.LEVEL_HEIGHT`). A lateral de 1 nível mostra **uma faixa de 16 linhas** |
-| Degrau de escada | 2 degraus por nível: espelho de 0,25 (8 texels), piso de 0,5 (16 texels) |
-| Degrau baixo | face de 0,5 (16 texels), capeamento de 0,5 |
-| Muro alto | crista em 1,5; face interna 1,0 (32 texels), externa 1,5 (48 texels); espessura 1 |
-| Conífera | altura 4,5 a 7,5; andar de baixo com 1,8 a 3,0 de diâmetro; 5 a 9 andares |
-| Folhosa grande | altura 4,0 a 6,0; copa 2,8 a 4,0 de largura; tronco 0,35 a 0,6 de diâmetro |
-| Folhosa pequena | altura 2,4 a 3,5; copa 1,6 a 2,6 |
-| Arbusto | altura 0,6 a 1,2; largura 0,8 a 1,6 |
-| Tronco caído | comprimento 1,5 a 3,0; diâmetro 0,4 a 0,7 |
-| Toco | altura 0,3 a 0,6; diâmetro 0,4 a 0,7 |
-| Capim e flor | cartão 16×16 = 0,5 × 0,5 |
-| Capim alto | cartão 16×32 = 0,5 × 1,0 (só fora da arena) |
-| Cogumelo | cartão 16×16 = 0,5 × 0,5 (desenho de 5 a 10 texels de altura) |
-| Cartão de folhagem | 32×32 = 1 × 1 |
-| Musgo caindo | 32×16 = 1 × 0,5 |
-| Monólito | altura 1,8 a 3,0; largura 0,6 a 1,0; runa 16×16 = 0,5 × 0,5 |
-| Pedra grande | 0,6 a 1,5 de largura |
-| Peça (futuro) | cerca de 1 de largura × 1 a 1,5 de altura (32 × 32 a 48 px) |
+| Muro alto | crista em 1,0; face interna 0,5, externa 1,0; espessura 1 |
+| Degrau baixo | face de 0,5, capeamento de 0,5 |
+| Degrau de escada | espelho de 0,25, piso de 0,5 |
+| Conífera | altura de 5 a 9; base com 2,0 a 3,5 de diâmetro |
+| Folhosa grande | altura de 4,5 a 7; copa de 3,5 a 5,5 de largura (copas redondas e cheias, como na referência) |
+| Folhosa pequena | altura de 2,5 a 4; copa de 2 a 3 |
+| Arbusto | altura de 0,6 a 1,4; largura de 1 a 2 |
+| Tufo de grama | 0,2 a 0,5 de altura fora da arena; ≤ 0,15 na arena |
+| Tronco caído | comprimento de 2 a 3,5; diâmetro de 0,5 a 0,8 |
+| Braseiro | pedestal de 0,4 × 0,4 × 0,7 + bacia de 0,5 de diâmetro; chama de 0,4 × 0,6 |
+| Personagem (futuro) | cerca de 1 de largura × 1 a 1,5 de altura (32 × 32 a 48 px) |
 
-## Regras das texturas opacas
+## Regras das texturas pintadas
 
-- **Tamanho da spec, opacas e seamless.** As de topo repetem sem emenda nos dois eixos. As laterais são seamless na horizontal e seguem a regra de faixas.
-- **Poucos tons, por material.** Cada textura usa só os tons da tabela "Tons por material". Detalhe em **clusters de 2 a 6 px com forma** (tracinho, pedrinha, junta, folha). Nada de pixel solto de outra cor, nada de dithering no chão. Dithering (xadrez) só é permitido em pedra e casca, entre dois tons vizinhos, em no máximo 5% dos pixels.
-- **Tom base dominante no chão.** Nas texturas de chão, um tom (o "base") cobre a maior parte da textura. O detalhe é esparso e espalhado.
-- **Bordas neutras no chão.** Nas texturas de chão (grama, terra), as linhas e colunas 0 e 31 são só o tom base. Assim as variantes se misturam em qualquer ordem e nenhuma emenda aparece.
-- **Sem padrão de repetição visível.** Nenhum elemento marcante (maior que 4×4 px) aparece mais de uma vez por textura. As manchas grandes são decalques desenhados à mão, não a textura que repete.
-- **Luz pintada só de cima, nunca de lado.** A câmera gira. Nas texturas de topo, o centro de cada pedra ou tufo é mais claro e a borda é mais escura, sem lado preferido. Nas laterais, o topo de cada pedra é mais claro e a base e as juntas são mais escuras.
-- **Sem iluminação global:** nada de gradiente de um lado ao outro, vinheta ou canto escurecido.
-- **Sem contorno**, nem preto nem colorido. Juntas entre pedras são detalhe do material (tom escuro da rampa da pedra), não contorno.
+- **Pinceladas, não ruído.** Valor e cor variam em **manchas grandes** (de 1/8 a 1/2 da textura) com pinceladas visíveis e direcionais (grama: traços curtos e curvos; pedra: planos chapados com borda de luz; terra: manchas e seixos). Proibido: ruído por pixel tipo foto, "grão" uniforme e padrão de repetição evidente.
+- **Gradientes suaves.** Topo de pedra e de tufo mais claro, base e juntas mais escuras. A luz vem só de cima: nada de lado iluminado pintado, porque a câmera gira.
+- **Saturação controlada.** Verdes vivos ao sol, mais frios e escuros na sombra. Terra quente e alaranjada. Pedra bege quente. Nenhum tom fora da paleta-alvo por mais de 12% (distância RGB normalizada) na cor média de cada textura.
+- **Seamless** nos eixos indicados pela spec, no albedo e no `_n`.
+- **Normal maps suaves:** calculados de um mapa de altura **desfocado** (relevo de bloco a bloco e de tufo a tufo, sem micro-relevo). Convenção OpenGL. O código usa `normal_scale` entre 0,3 e 0,8. Grama e terra não têm normal map. Pedra, madeira e penhasco têm.
+- **Alfa:** cartões de folha, tufo e cipó usam alfa recortado (o motor usa alpha scissor + alpha-to-coverage com MSAA). Decalques de chão, puffs de nuvem e névoa usam alfa suave.
+- **Sem contorno** no cenário, nem preto nem colorido.
+- **Proibido nas texturas:** sombra projetada pintada, luz lateral, vinheta, glow pintado, texto e marcas d'água.
 
-### Tons por material
+## Folhagem (o que mais pesa na semelhança)
 
-| Textura | Tons distintos | Regra de cobertura |
-|---|---|---|
-| Grama da arena (base, clara, escura) | 2 a 4 (+ até 3 de flor na variante florida) | tom base ≥ 75%; pixels de detalhe entre 3% e 12% |
-| Grama de fora (anéis e floresta) | 2 a 4 | tom base ≥ 70%; detalhe entre 3% e 15% |
-| Terra | 2 a 3 | tom base ≥ 85% |
-| Calçamento | 4 a 6 | juntas entre 10% e 20% |
-| Muro (face), espelho de escada | 5 a 7 | juntas entre 12% e 25%; musgo entre 5% e 20% |
-| Topo do muro | 4 a 6 | musgo ≥ 50% |
-| Piso de escada | 4 a 6 | — |
-| Tábuas (banco da plateia, A04) | 4 a 6 | tom de tábua dominante ≥ 45%; frestas entre 8% e 16% |
-| Barranco natural | 4 a 6 | — |
-| Pedra grande, pedra do monólito | 4 a 6 | — |
-| Casca, madeira cortada, musgo | 3 a 6 | — |
-| Massa de folhas | 3 a 5 | — |
-| Cartões de folhagem e de conífera | 4 a 7 | — |
-| Capim, capim alto, cogumelo | 2 a 4 | — |
-| Flor | 3 a 6 | — |
+- Copas **redondas, cheias e com tufos** visíveis na silhueta (a borda é feita de tufos, não lisa). Topo ao sol verde-amarelado claro e base verde-escura fria. Entre os tufos há fresta e sombra própria.
+- Coníferas altas e escuras, com camadas bem marcadas e as pontas de cima mais claras. Na referência, elas formam a massa do leste e o fundo do noroeste.
+- Três famílias de folhosa (verde-amarelada, verde-média e verde-fria) e nenhuma árvore igual a outra (peça única por instância, ou variação por escala e giro em até 15%).
+- Sem vento forte. É permitido um balanço lento (amplitude ≤ 0,03, período de 3 a 6 s, determinístico por `TIME`).
 
-As árvores podem ter mais tons e detalhe que o chão: é esse contraste que deixa o chão "leve".
+## Pedra, terra e chão
 
-### Normal maps
+- **Muros:** pedra cortada bege quente, blocos de tamanhos variados, chanfro claro, juntas escuras e quentes, **musgo e grama no topo** e cipós escorrendo em alguns trechos (como na referência).
+- **Lajes** (patamar sul, caminho leste, plataforma oeste e cabeceiras): lajes grandes e irregulares, bege-claras, com grama nas juntas.
+- **Arena:** grama viva com tufos baixos e florzinhas espalhadas. Uma **mancha de terra alaranjada** grande no centro, com borda irregular e suave, um **círculo de pedra** quebrado no meio, lajes soltas planas e pedrinhas. Tudo plano, sem obstáculo.
+- **Penhasco:** blocos grandes de terra e rocha marrom (mais quente em cima e mais fria e escura embaixo), raízes grossas saindo da face e cipós pendurados. O fundo afunila e some nas nuvens.
 
-- **Só em pedra e madeira:** muros, capeamento, crista, quinas, degraus e espelhos de escada, pedras, monólito, casca, madeira cortada, tábuas e caixote (lista exata na spec de arte vigente, hoje a `A06`). **Grama e terra não têm normal map** (o chão fica liso e calmo, como na referência).
-- **Mais fracos que antes.** O relevo do normal map é de pedra a pedra, sem micro-relevo por pixel. O código usa `normal_scale` entre 0,4 e 0,7.
-- Formato: `<nome>_n.png`, 32×32, RGB8 com alfa 255, **convenção OpenGL** (vermelho = +X para a direita, verde = +Y para o topo da textura). Calculado do **mapa de altura da própria arte** (pedra alta, junta baixa, chanfro de 1 px na quina), com wrap para ficar seamless.
+## Água, nuvens e céu
 
-### Laterais (faces de muro e escada)
+- **Cascata:** larga, branco-azulada, com riscos verticais rolando, espuma na quina e névoa branca na base que se funde ao mar de nuvens. Há um **arco-íris** fraco na frente da névoa, visto da metade sul da órbita.
+- **Nuvens:** cúmulos fofos, com o topo branco-quente e a base lavanda. Formam um mar em volta e embaixo da ilha, e há aglomerados ao lado das ilhotas.
+- **Céu:** claro, azul-lavanda no alto, rosado-claro perto do horizonte e mais quente do lado do sol. **Abaixo do horizonte** continua claro (lavanda-azulado), sem "chão" escuro.
 
-- v começa no topo da face e desce: a face de 1,0 usa as 32 primeiras linhas da textura de 1,5, então o pedaço de cima também tem que ler como muro completo.
-- u corre ao longo do muro em coordenadas do mundo: as tiras são seamless na horizontal e o muro não mostra emenda entre peças.
-- Topo de cada bloco mais claro, base e juntas mais escuras; sem escurecer o pé da face (a sombra é do motor).
+## Luz e pós-processamento (motor)
 
-## Regras dos cartões (alfa recortado)
+Momento do dia: **dia claro com toque quente** (decisão do usuário, 2026-10-08). Não é tarde dourada.
 
-- Alfa **binário** (0 ou 255). Silhueta com recorte de pixel (pontas de folha, galhos, lâminas), **sem contorno**.
-- Margem de 1 px livre em volta, exceto nos cartões seamless na horizontal (`moss_fringe_*`, `grass_fringe_*`, `conifer_tier_*`).
-- Luz pintada só de cima: o topo de cada aglomerado é mais claro, a base e o miolo mais escuros. A borda de cima nunca é escura.
-- O volume da copa vem do motor (normais "esféricas" da copa). O cartão pinta só o aglomerado.
-- Capim, flor e cogumelo: a base toca a última linha e fica centralizada.
-- Sem sombra no chão desenhada: o motor projeta a sombra.
+- **Sol:** `DirectionalLight3D` `#FFE9C8`, elevação de 40° a 48°, **vindo do oeste-noroeste** (na câmera padrão, de trás e da esquerda, como na referência). Sombras reais em tudo. Tufos, flores, nuvens e vaga-lumes não projetam sombra.
+- **Ambiente:** do céu, lavanda-azulado claro (`#B8C4DC`), forte o bastante para a sombra ficar verde-média e nunca preta. SSAO leve.
+- **Pontos de luz quente:** braseiros com `OmniLight3D` `#FFB066`, alcance ≤ 4, **sem sombra**, energia baixa (de dia, eles só aquecem o entorno).
+- **Bloom:** leve, só em chama, vaga-lume, espuma da cascata e brilho do sol nas nuvens. A grama ao sol não brilha.
+- **Feixes de luz:** no máximo 2 ou 3 feixes bem fracos sobre a mata do noroeste (do lado do sol), nunca sobre a arena. Opcional. Se a captura ficar suja, saem.
+- **Névoa:** de profundidade lavanda (`#DCD6E6`), começando depois da borda da ilha, e de altura abaixo do nível −3 (o fundo da ilha e as ilhotas "afundam" nas nuvens).
+- **Desfoque:** só no fundo distante (além da borda da ilha). O anfiteatro e a mata ficam nítidos.
+- **Tonemap** que preserve as cores (Filmic ou AgX). Saturação de 1,05 a 1,12 e contraste de 1,0 a 1,05. **Sem vinheta.**
+- **Antisserrilhado:** MSAA 4× (com alpha-to-coverage na folhagem). Sem TAA nem FXAA, porque borram o pixel dos personagens.
+- **Emissão:** chamas, vaga-lumes e (no futuro) efeitos das peças.
 
-## Transições e manchas (desenhadas à mão)
+## Paleta-alvo (medida na `ilha-flutuante.webp`)
 
-O chão da referência tem bordas recortadas em pixel. Isso agora é **decalque**: uma imagem com alfa binário, desenhada pelo `artist` como peça única (contorno, ilhas, aro de grama clara, tudo escrito no script), e posicionada à mão pelo `developer` na cena do mapa.
+Valores de referência para as texturas e os materiais, da sombra para a luz. O `artist` confirma por medição na imagem (script em `tools/art/`) e registra os valores medidos na prévia da `A08`. Diferenças de até 12% são aceitas, e diferenças maiores vão por escrito no relatório.
 
-- **Alinhamento ao texel:** decalque em múltiplos de 1/32 e rotação de 90° em 90°, para o pixel do decalque cair no pixel do chão.
-- **Terra:** uma mancha grande de um tom, contorno com lóbulos e reentrâncias, ilhas de grama dentro, aro de grama clara de 1 a 3 texels, dentes e ilhotas soltas. Nenhum trecho reto de borda com mais de 6 texels.
-- **Manchas de grama:** decalques de grama clara e escura com formas diferentes entre si.
-- **Trilha:** trechos de lajes que encaixam pelas pontas, com borda irregular e aro de grama clara.
-- **Grama da arena ↔ grama de fora:** o limite fica embaixo do muro, então não precisa de transição.
-- Proibido: máscara por ruído, blend suave entre texturas, borda seguindo o grid.
-
-## Iluminação e pós-processamento (motor)
-
-Momento do dia: **dia claro**, fim de manhã.
-
-- **Sol:** `DirectionalLight3D` neutro levemente quente (`#FFF3DC`), elevação de 50° a 60°, vindo do sudoeste (na câmera padrão, frente-esquerda). Fixo no mundo por padrão.
-- **Sombras reais em tudo:** terreno, muros, árvores, troncos, monólitos e pedras. As copas projetam sombra recortada pelos cartões. Capim, flores e cogumelos não projetam sombra.
-- **Sombra suave e esverdeada.** A luz ambiente é verde-azulada clara (`#7FA898`), forte o bastante para a grama na sombra ficar verde médio (alvo na tela: perto de `#2E6B45`), nunca azul-petróleo nem quase preta. SSAO leve, só para assentar troncos, pedras e o pé dos muros.
-- **Bloom fraco:** só um halo discreto na runa e nas luzes mais altas. A grama ao sol não "brilha".
-- **Desfoque bem sutil, só no fundo distante:** nada perto da câmera é desfocado. O anfiteatro inteiro e a mata em volta dele ficam nítidos; só o que está além da borda do mapa ganha um desfoque leve.
-- **Névoa azulada só ao fundo:** névoa de profundidade com cor `#A6C4CE`, começando depois da borda do mapa. A floresta do fundo puxa para azul-esverdeado claro, como no alto da referência.
-- **Sem vinheta.** **Sem color grading forte:** no máximo saturação 1,05 a 1,10 e contraste 1,0 a 1,05. O tonemap deve preservar as cores da paleta (a grama ao sol na tela fica perto de `#5B9C47`/`#73A949`).
-- **Fundo nunca vazio:** desde a spec `012`, o mapa é uma **ilha flutuante**. Além da mata vêm a borda da ilha, o mar de nuvens, ilhotas ao longe e o céu claro, com a névoa azulada só além da borda. Nunca há chão vazio indo até o horizonte.
-- **Emissão:** só as runas (e, no futuro, efeitos das peças).
-- **Proibido na arte** (texturas e cartões): glow pintado, blur, névoa, vinheta, gradiente global, sombra projetada, semitransparência e anti-aliasing.
-
-Cores de ambiente (referência para o código; não entram nas texturas):
-
-| Uso | Hex |
+| Grupo | Sombra → Luz |
 |---|---|
-| Sol | `#FFF3DC` |
-| Luz ambiente (sombra) | `#7FA898` |
-| Céu no zênite | `#78AEDB` |
-| Céu no horizonte | `#BFD8E0` |
-| Névoa | `#A6C4CE` |
-| Alvo da grama na sombra (na tela) | `#2E6B45` |
+| Grama | `#2C4520` `#3F5F22` `#5E8424` `#7FA22C` `#A8C447` |
+| Terra da arena | `#7E5A2C` `#A26A36` `#C89046` `#DDB06A` |
+| Pedra do muro | `#5C5646` `#8E8466` `#C2B58C` `#E0D2A8` |
+| Lajes | `#8E7C56` `#BBA366` `#D6BB8D` |
+| Musgo | `#56702A` `#87A23A` `#B8C85A` |
+| Folhosa | `#33522A` `#5E8A30` `#8DB040` `#C8D870` |
+| Conífera | `#1A3016` `#2C4A1E` `#4E7A2E` `#8EB048` |
+| Tronco e madeira | `#4A3426` `#7A5638` `#A88058` |
+| Penhasco | `#3E3640` (fundo frio) `#4A3628` `#6E5038` `#9A7656` |
+| Ruínas | `#8E7660` `#BDA083` `#E0CCAA` |
+| Água | `#5A7E9C` `#7FA2BE` `#B6D0E3` `#EAF6FC` |
+| Nuvem | `#9C9CB8` `#C8C0D4` `#ECE6EE` `#FFF6EC` |
+| Céu | zênite `#8FB0D8`, meio `#C9D3EA`, horizonte e abaixo `#EAD9DC`, perto do sol `#FFF0D8` |
+| Névoa | `#DCD6E6` |
+| Fogo | `#B8501C` `#E39041` `#FFDA81` `#FFF2C0` |
+| Flores | rosa `#F08CA8`, branca `#F6F2E8`, amarela `#F4D04A`, azul `#7FA8F0`, lilás `#B898E0` |
 
-## Pixel e filtro
+## Personagens (pixel art)
 
-- Filtro **Nearest** (com mipmaps) em toda textura pixel art. Cada pixel da arte é 1 texel.
-- Em perspectiva, o tamanho do pixel na tela varia com a distância. O que precisa ser igual é a **densidade**: 32 texels por unidade.
-- Sem TAA nem FXAA, porque borram o pixel.
-- Os decalques do chão ficam alinhados ao texel: borda de pixel, nunca gradiente.
+- `Sprite3D` em pé, billboard só no eixo Y, `pixel_size = 1/32`, filtro **Nearest**, alfa binário e sem ruído por pixel.
+- A paleta e as regras de desenho vêm na spec dos personagens. O que já vale: a leitura contra o cenário pintado (silhueta clara e valor contrastante) e nada de luz lateral pintada.
 
-## Paleta (hex)
+## O que NÃO fazer
 
-Extraída da referência (amostragem de regiões da imagem com um script Godot headless em 2026-10-06) e arredondada. Use **somente** estas cores nas texturas e cartões. Não crie famílias novas: se faltar cor, proponha no relatório e não pinte. Em cada grupo, a ordem é da sombra para a luz.
-
-| Grupo | Sombra → Luz | Origem na referência |
-|---|---|---|
-| Grama da arena | `#4E9343` `#5B9C47` `#73A949` `#98B654` | `#5B9C47` cobre 75% da grama ao sol; `#73A949` nas manchas claras e no aro da terra |
-| Grama de fora (anéis e floresta) | `#2C7036` `#3D853C` `#539342` `#6A9E4A` | `#3D853C` cobre a grama dos anéis e da mata |
-| Terra | `#8E7B4C` `#A8955F` `#C0AE71` `#D4C48C` | `#C0AE71` cobre 95% da terra |
-| Terra escura (barranco) | `#3E3226` `#5A4632` `#7A6444` | — |
-| Pedra (muro, escada, calçamento, pedra grande) | `#1C2B2B` `#34403C` `#5C6250` `#7A7A66` `#989680` `#B9B597` `#D3CCB4` | juntas `#252B2A`; pedra `#878576` a `#D3CCB4` |
-| Musgo | `#2E4A1E` `#496819` `#5E7C26` `#789636` `#8FAE48` `#B0C860` | topo do muro `#87A946`, juntas `#445827` |
-| Folhagem verde (folhosa) | `#123B32` `#1F5530` `#2F6A2A` `#437B25` `#5A9628` `#76AB2A` `#9CC230` `#B5CA33` | copas da frente: `#76AB2A`, luz `#B5CA33` |
-| Folhagem oliva (folhosa amarelada) | `#1B3429` `#2B4328` `#3B5328` `#546A29` `#6E8432` `#869736` `#A6B04A` | folhosa amarelada do fundo |
-| Folhagem fria (arbusto, folhosa azulada) | `#163F3E` `#1C4948` `#245747` `#2F6A48` `#3F8650` `#58A758` `#7CC070` | arbustos |
-| Conífera | `#08262A` `#0E3330` `#16402F` `#1F4D34` `#2C5E38` `#40743C` `#5C8C40` `#86A83E` | miolo `#08262A`; pontas ao sol verde-amareladas |
-| Casca e madeira | `#1A1426` `#2C212D` `#4B3339` `#6B4C3E` `#876547` `#A37C56` `#C29A6C` `#D9BC86` | tronco caído `#A98359`, sombra `#4B3339` |
-| Pedra fria (monólito) | `#1E2C34` `#33454C` `#4E6266` `#6E8482` `#93A6A0` `#BCCAC2` | — |
-| Runa (emissiva) | `#1F7C86` `#33C2C4` `#7CF2EC` `#D9FFFA` | — |
-| Flores | rosa `#C4506E` `#E8829C` `#F8B8C8` · branca `#D8D4C4` `#F4F0E4` `#FFFDF6` · amarela `#D8A830` `#F2D04A` `#FFF08A` · azul `#4C7CD0` `#7FB0F0` | flores da referência |
-| Cogumelos | rosa `#8E3A86` `#C957B7` `#E88AD6` · azul `#2A7FA8` `#68D8E5` `#B8F2F6` · roxo `#3E2E78` `#6A4FB0` `#9C84E0` · laranja `#A8502A` `#E07A3A` `#F4A868` · pé `#B8AE98` `#E8E0C8` | cogumelos rosa `#C957B7` e azul `#68D8E5` |
-
-Uso por material:
-
-- **Grama da arena:** base `#5B9C47`; tracinhos em `#73A949` e `#4E9343`; `#98B654` só em pontas raras. A variante clara usa base `#73A949` (tracinhos `#98B654` e `#5B9C47`); a escura usa base `#4E9343` (tracinhos `#5B9C47`). Todas usam só o grupo Grama da arena (mais Flores na variante florida).
-- **Grama de fora:** base `#3D853C`; detalhe em `#2C7036`, `#539342`; folhas caídas raras em Casca e madeira (`#876547`, até 3%).
-- **Terra:** base `#C0AE71`; pedrinhas raras em `#A8955F` e `#D4C48C`; `#8E7B4C` só em pedrinhas maiores (até 3%).
-- **Calçamento:** lajes em Pedra (`#989680` a `#D3CCB4`), juntas em `#7A7A66` (com `#5C6250` só nos cruzamentos) e Musgo (`#5E7C26`, `#789636`). Sem `#34403C`/`#1C2B2B`.
-- **Muro, quina e espelho de escada:** Pedra, mais Musgo nas juntas e escorrendo.
-- **Topo do muro:** Musgo dominante, com pedra (`#B9B597`, `#D3CCB4`) aparecendo nas bordas e em falhas.
-- **Piso de escada:** Pedra clara, com Musgo e Grama da arena nas juntas.
-- **Tábuas (banco da plateia, A04):** tábuas de madeira clara em Casca e madeira (`#876547` a `#D9BC86`), frestas em `#4B3339`/`#6B4C3E`, Musgo raro (`#5E7C26`, `#789636`) só em frestas. Sem `#1A1426`/`#2C212D`.
-- **Barranco natural:** Terra escura e Pedra, com Musgo.
-- **Pedra grande:** Pedra, mais Musgo.
-- **Casca:** Casca e madeira, tons 1 a 6; a folhosa tem Musgo em placas. **Madeira cortada:** anéis em `#A37C56` `#C29A6C` `#D9BC86`.
-- **Massa de folhas:** Folhagem verde, tons 1 a 4 (o miolo escuro da copa).
-- **Cartões de folhagem:** Folhagem verde, oliva ou fria (uma família por cartão). Os 2 tons mais claros só no terço de cima de cada aglomerado.
-- **Conífera:** Conífera. `#5C8C40`/`#86A83E` só na ponta de cima de cada camada de galhos.
-- **Capim e capim alto:** Grama da arena (dentro) ou Grama de fora (fora). **Flores e cogumelos:** grupos Flores e Cogumelos, com haste e folhas em Grama da arena.
-- **Monólito:** Pedra fria, mais Musgo. A runa usa só o grupo Runa.
+- Pixel art, Nearest ou dithering no cenário (só nos personagens). O pontilhado de oclusão (árvore entre a câmera e a arena) continua permitido, porque é efeito de shader e não de arte.
+- Realismo fotográfico, texturas escaneadas e ruído por pixel.
+- Contorno preto, vinheta, tarde dourada forte, desfoque perto da câmera.
+- Mudar a composição da câmera padrão sem atualizar a `012` (ela é 1:1 com a referência).
+- Assets ou addons de terceiros sem aprovação do usuário.
 
 ## Terreno e mapa
 
-O layout é o da spec `011` (feito à mão, sem seed). Resumo visual:
+O layout é feito à mão (`011`) e a composição exterior é a da `012` (croqui e coordenadas tiradas da referência). Resumo:
 
-- **Mapa único feito à mão**, fiel à referência `Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`, montado com o kit em `scenes/map.tscn`. Nada de geração procedural.
-- **Arena 20 × 18 plana** no nível 0, grama da arena com a mancha de terra desenhada à mão.
-- **Anel:** degrau baixo de pedra (0,5) → terraço de grama (0,5, largura 3; as reservas ficam nele, nos lados compridos) → muro alto de pedra seca com capeamento de musgo (crista em 1,0; face interna 0,5, externa 1,0; revisto em 2026-10-08) → exterior no nível 0.
-- **Duas escadas** largas nos lados curtos (oeste e leste) atravessam o anel; a trilha de lajes chega a elas pelo sudoeste e sai pelo nordeste.
-- **Plateia** (banco, caixote, pilha de lenha, troncos com musgo) no chão de fora, atrás do muro norte.
-- **Fora do anfiteatro:** floresta mista densa (coníferas e folhosas, cada modelo uma peça única), troncos caídos, tocos, cogumelos, arbustos, flores e névoa azulada ao fundo.
-- **Legibilidade com câmera 360°:** arena e reservas sempre visíveis; árvores entre a câmera e a arena ficam pontilhadas (dither).
+- **Arena 20 × 18 plana** no nível 0: grama, terra alaranjada com círculo de pedra e lajes soltas.
+- **Anel:** degrau baixo (0,5), terraço de 3 (reservas nos lados compridos), muro alto com crista em 1,0, e exterior no nível 0.
+- **Passagens:** escada no **meio do lado sul e do lado norte**, da crista para fora, com patamar de lajes (decisão do usuário, 2026-10-08), e os **portões oeste e leste** (lances da `011`), que atravessam o anel. O oeste leva à plataforma e à ponte de corda. O leste leva ao caminho de lajes que sobe para o nordeste.
+- **Exterior:** ilha compacta (de 3,5 a 6 unidades além do muro no sul, de 5 a 10 no oeste e de 8 a 17 no leste), mata como na referência, faixa norte aberta com bancos, borda de penhasco, ilha alta com cascata ao norte, ilhotas, rochas e nuvens.
+- **Legibilidade com câmera 360°:** a arena e as reservas sempre visíveis. Árvores e rochas entre a câmera e a arena ficam pontilhadas.

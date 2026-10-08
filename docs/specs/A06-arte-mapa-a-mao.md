@@ -1,5 +1,7 @@
 # A06 — Arte do mapa feito à mão (peças únicas)
 
+**Histórico (2026-10-08):** o cenário deixou de ser pixel art ("Pixel art serão só os personagens"). Esta spec não vale mais para arte nova. O estilo vigente está em `docs/direcao-de-arte.md` e na `A08-arte-pintada-ilha.md`. Os PNG gerados por ela continuam no disco até o OK do usuário.
+
 **Substitui:** `A05` (nunca gerada; o que servia dela está aqui) e as texturas de chão, muro, escada e folhagem da `A03`. **Usada por:** `011` (o developer integra na Fase 3; até lá usa provisórias).
 **Depende de:** `docs/direcao-de-arte.md` (paleta, regras de textura e cartão) e a referência `docs/reference/Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`.
 **Decisões do usuário (2026-10-07):** a arte não é procedural. Cada textura, decalque e cartão é uma peça única e intencional, desenhada por script com formas, posições e cores escritas no código. Escala inalterada (32 texels/unidade, Nearest).

@@ -1,5 +1,7 @@
 # A07 — Arte da ilha flutuante, do rio e das transições
 
+**Revisão 1 (2026-10-08): referência `ilha-flutuante.webp`. SUBSTITUÍDA pela `A08-arte-pintada-ilha.md`. Não gerar.** No mesmo dia, o usuário decidiu que o cenário deixa de ser pixel art ("Pixel art serão só os personagens") e que a composição segue 1:1 a referência nova. O rio, as trilhas longas e todo o pixel art do cenário saem (ver `012`, revisão 1). A leva 1 desta spec foi interrompida antes de gravar arquivos. O texto abaixo fica só como histórico.
+
 **Usada por:** `012-ilha-flutuante-rio.md`. O developer integra na Fase 2 da 012 e, até lá, usa materiais provisórios.
 **Depende de:** `docs/direcao-de-arte.md`, `A06-arte-mapa-a-mao.md` (regras gerais, contornos e checagem, que continuam valendo) e a referência `docs/reference/Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`.
 **Pedido do usuário (2026-10-08):** "melhore a integração das texturas de terra, em alguns momentos parece que só jogou uma grama mais clara ou mais escura"; "as estradas não estão interligadas de forma natural, é possível perceber os quadrados de texturas"; rio por fora da arena; ilha flutuante; "se esforce para o lado externo da arena ser algo muito bonito visualmente".

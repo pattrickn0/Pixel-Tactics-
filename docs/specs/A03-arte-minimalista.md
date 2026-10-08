@@ -1,5 +1,7 @@
 # A03 — Arte minimalista: chão, terra, pedra com musgo, escadas, árvores e props
 
+**Histórico (2026-10-08):** o cenário deixou de ser pixel art ("Pixel art serão só os personagens"). Esta spec não vale mais para arte nova. O estilo vigente está em `docs/direcao-de-arte.md` e na `A08-arte-pintada-ilha.md`. Os PNG gerados por ela continuam no disco até o OK do usuário.
+
 **Status:** aprovada pelo usuário em 2026-10-06.
 **Substitui:** a A02 (estilo Octopath, rejeitado pelo usuário em 2026-10-06). **Depende de:** `docs/direcao-de-arte.md` reescrita (aprovada junto). **Usada por:** `005` (terreno), `006` (vegetação e props 3D).
 
