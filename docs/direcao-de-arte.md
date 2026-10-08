@@ -74,7 +74,7 @@ Na referência nova, o anfiteatro tem as mesmas proporções do nosso (arena 20 
 | Muro alto | crista em 1,0; face interna 0,5, externa 1,0; espessura 1 |
 | Degrau baixo | face de 0,5, capeamento de 0,5 |
 | Degrau de escada | espelho de 0,25, piso de 0,5 |
-| Conífera | altura de 5 a 9; base com 2,0 a 3,5 de diâmetro |
+| Conífera | altura de 6 a 9; base (com o alcance dos galhos) de 2,0 a 3,2; altura ≥ 2,4 × base (revisão 012-f2) |
 | Folhosa grande | altura de 4,5 a 7; copa de 3,5 a 5,5 de largura (copas redondas e cheias, como na referência) |
 | Folhosa pequena | altura de 2,5 a 4; copa de 2 a 3 |
 | Arbusto | altura de 0,6 a 1,4; largura de 1 a 2 |
@@ -96,8 +96,8 @@ Na referência nova, o anfiteatro tem as mesmas proporções do nosso (arena 20 
 
 ## Folhagem (o que mais pesa na semelhança)
 
-- Copas **redondas, cheias e com tufos** visíveis na silhueta (a borda é feita de tufos, não lisa). Topo ao sol verde-amarelado claro e base verde-escura fria. Entre os tufos há fresta e sombra própria.
-- Coníferas altas e escuras, com camadas bem marcadas e as pontas de cima mais claras. Na referência, elas formam a massa do leste e o fundo do noroeste.
+- Copas **redondas, cheias e com tufos** visíveis na silhueta (a borda é feita de tufos, não lisa). Topo ao sol verde-amarelado claro e base verde-escura fria. Entre os tufos há fresta e sombra própria. A copa inteira tem **uma luz só** (topo claro, miolo e base escuros): os tufos não são bolas separadas, cada uma com luz própria, o que lê como couve-flor (revisão 012-f2).
+- Coníferas altas, estreitas e escuras, com camadas marcadas e as pontas de cima mais claras. A silhueta é irregular (andares de tamanhos e ângulos variados, cachos caídos), nunca um pagode de andares iguais. Na referência, elas formam a massa do leste e o fundo do noroeste.
 - Três famílias de folhosa (verde-amarelada, verde-média e verde-fria) e nenhuma árvore igual a outra (peça única por instância, ou variação por escala e giro em até 15%).
 - Sem vento forte. É permitido um balanço lento (amplitude ≤ 0,03, período de 3 a 6 s, determinístico por `TIME`).
 
@@ -118,11 +118,12 @@ Na referência nova, o anfiteatro tem as mesmas proporções do nosso (arena 20 
 
 Momento do dia: **dia claro com toque quente** (decisão do usuário, 2026-10-08). Não é tarde dourada.
 
-- **Sol:** `DirectionalLight3D` `#FFE9C8`, elevação de 40° a 48°, **vindo do oeste-noroeste** (na câmera padrão, de trás e da esquerda, como na referência). Sombras reais em tudo. Tufos, flores, nuvens e vaga-lumes não projetam sombra.
+- **Sol:** `DirectionalLight3D` `#FFE9C8`, elevação de **32° a 36°** (alvo 34°; revisão 012-f2, para as faixas de sombra da referência), **vindo do oeste-noroeste** (na câmera padrão, de trás e da esquerda, como na referência). Sombras reais em tudo. Tufos, flores, nuvens e vaga-lumes não projetam sombra.
 - **Ambiente:** do céu, lavanda-azulado claro (`#B8C4DC`), forte o bastante para a sombra ficar verde-média e nunca preta. SSAO leve.
 - **Pontos de luz quente:** braseiros com `OmniLight3D` `#FFB066`, alcance ≤ 4, **sem sombra**, energia baixa (de dia, eles só aquecem o entorno).
 - **Bloom:** leve, só em chama, vaga-lume, espuma da cascata e brilho do sol nas nuvens. A grama ao sol não brilha.
-- **Feixes de luz:** no máximo 2 ou 3 feixes bem fracos sobre a mata do noroeste (do lado do sol), nunca sobre a arena. Opcional. Se a captura ficar suja, saem.
+- **Feixes de luz:** fora (revisão 012-f2: leram como faixas cinza sobre o céu). Podem voltar na Fase 3 da 012 só se lerem dourados e os critérios globais da spec continuarem passando.
+- **Sem véu:** nada de emissão ou névoa clareando a ilha. A sombra fica verde-escura e o branco das nuvens e da espuma chega a branco quente. O ar só aparece além da borda (névoa de profundidade e de altura).
 - **Névoa:** de profundidade lavanda (`#DCD6E6`), começando depois da borda da ilha, e de altura abaixo do nível −3 (o fundo da ilha e as ilhotas "afundam" nas nuvens).
 - **Desfoque:** só no fundo distante (além da borda da ilha). O anfiteatro e a mata ficam nítidos.
 - **Tonemap** que preserve as cores (Filmic ou AgX). Saturação de 1,05 a 1,12 e contraste de 1,0 a 1,05. **Sem vinheta.**
