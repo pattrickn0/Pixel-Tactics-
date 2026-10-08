@@ -7,14 +7,14 @@ extends MarkerBox
 
 ## 0 = sul (embaixo na câmera padrão), 1 = norte.
 @export_range(0, 1) var team: int = 0
-@export var usable_margin: Vector4 = Vector4(0.5, 0.5, 0.5, 1.0):
+@export var usable_margin: Vector4 = Vector4(0.5, 0.5, 0.5, 0.25):
 	set(value):
 		usable_margin = value
 		_refresh_gizmo()
 
 
 func _init() -> void:
-	size = Vector2(20.0, 4.0)
+	size = Vector2(20.0, 3.0)
 
 
 func gizmo_color() -> Color:

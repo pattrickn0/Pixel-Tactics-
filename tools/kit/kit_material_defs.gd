@@ -15,14 +15,18 @@ const OUT_DIR: String = "res://assets/materials/"
 static func all() -> Dictionary:
 	var d: Dictionary = {}
 	# Muro e degraus (pedra): projeção no mundo, a textura corre contínua de uma peça para a outra.
-	d["wall_high_face"] = _d("wall/wall_high_face", {"normal": true, "mode": 1, "scale": Vector2(1.0 / 8.0, 1.0 / 1.5), "v_top": 1.5, "dither": true})
+	d["wall_high_face"] = _d("wall/wall_high_face", {"normal": true, "mode": 1, "scale": Vector2(1.0 / 8.0, 1.0 / 1.5), "v_top": 1.0, "dither": true})
 	d["wall_low_face"] = _d("wall/wall_low_face", {"normal": true, "mode": 1, "scale": Vector2(1.0 / 8.0, 1.0 / 0.5), "v_top": 0.5})
-	d["wall_cap"] = _d("wall/wall_cap", {"mode": 2, "scale": Vector2(1.0 / 8.0, 1.0 / 0.5), "dither": true})
-	d["wall_cap_z"] = _d("wall/wall_cap", {"mode": 2, "scale": Vector2(1.0 / 8.0, 1.0 / 0.5), "dither": true, "axis": 1})
-	d["wall_cap_low"] = _d("wall/wall_cap", {"mode": 2, "scale": Vector2(1.0 / 8.0, 1.0 / 0.5)})
-	d["wall_crest"] = _d("wall/wall_crest", {"mode": 2, "scale": Vector2(1.0 / 8.0, 1.0), "dither": true})
-	d["wall_crest_corner"] = _d("wall/wall_crest_corner", {"mode": 0, "dither": true})
-	d["wall_cap_corner"] = _d("wall/wall_cap_corner", {"mode": 0})
+	# Pedra com normal map fraco (normal_scale 0,5; a spec pede de 0,4 a 0,7).
+	d["wall_cap"] = _d("wall/wall_cap", {"normal": true, "mode": 2, "scale": Vector2(1.0 / 8.0, 1.0 / 0.5), "dither": true})
+	d["wall_cap_z"] = _d("wall/wall_cap", {"normal": true, "mode": 2, "scale": Vector2(1.0 / 8.0, 1.0 / 0.5), "dither": true, "axis": 1})
+	d["wall_cap_low"] = _d("wall/wall_cap", {"normal": true, "mode": 2, "scale": Vector2(1.0 / 8.0, 1.0 / 0.5)})
+	d["wall_crest"] = _d("wall/wall_crest", {"normal": true, "mode": 2, "scale": Vector2(1.0 / 8.0, 1.0), "dither": true})
+	d["wall_crest_z"] = _d("wall/wall_crest", {"normal": true, "mode": 2, "scale": Vector2(1.0 / 8.0, 1.0), "dither": true, "axis": 1})
+	# Quinas (UV da malha, girada sem espelhar; clamp para o bloco de amarração que invade o canto).
+	d["wall_crest_corner"] = _d("wall/wall_crest_corner", {"normal": true, "mode": 0, "dither": true})
+	d["wall_cap_corner"] = _d("wall/wall_cap_corner", {"normal": true, "mode": 0})
+	d["wall_quoin"] = _d("wall/wall_quoin", {"normal": true, "mode": 0, "clamp": true, "dither": true})
 	d["moss_drape_0"] = _d("cards/moss_drape_0", {"mode": 2, "scale": Vector2(1.0 / 4.0, 1.0 / 0.375), "alpha": 0.5, "dither": true})
 	d["moss_drape_1"] = _d("cards/moss_drape_1", {"mode": 2, "scale": Vector2(1.0 / 4.0, 1.0 / 0.375), "alpha": 0.5, "dither": true})
 	d["moss_drape_0_z"] = _d("cards/moss_drape_0", {"mode": 2, "scale": Vector2(1.0 / 4.0, 1.0 / 0.375), "alpha": 0.5, "dither": true, "axis": 1})
@@ -48,11 +52,11 @@ static func all() -> Dictionary:
 	d["bark_0"] = _d("bark_0", {"normal": true, "mode": 0, "dither": true, "margin": 3.0})
 	d["bark_1"] = _d("bark_1", {"normal": true, "mode": 0, "dither": true, "margin": 3.0})
 	d["wood_end"] = _d("wood_end", {"mode": 0})
-	d["rock"] = _d("rock", {"mode": 1, "world": false})
+	d["rock"] = _d("rock", {"normal": true, "mode": 1, "world": false, "tint": Color(0.7, 0.66, 0.62)})
 	d["log_bark"] = _d("props/log_bark", {"normal": true, "mode": 0, "scale": Vector2(0.5, 1.0)})
 	d["crate_side"] = _d("props/crate_side", {"normal": true, "mode": 0})
 	d["crate_top"] = _d("props/crate_top", {"normal": true, "mode": 0})
-	d["wood_pile_end"] = _d("props/wood_pile_end", {"mode": 0})
+	d["wood_pile_end"] = _d("props/wood_pile_end", {"mode": 0, "clamp": true})
 	d["bench_floor_0"] = _d("bench_floor_0", {"normal": true, "mode": 0})
 	# Cartões cruzados (capim, flores, cogumelos).
 	for i in 4:
@@ -84,6 +88,8 @@ static func make(entry: Dictionary) -> ShaderMaterial:
 			mat.set_shader_parameter("use_normal", true)
 			mat.set_shader_parameter("normal_scale", 0.5)
 	mat.set_shader_parameter("uv_mode", int(entry.get("mode", 0)))
+	if entry.has("tint"):
+		mat.set_shader_parameter("tint", entry["tint"])
 	if entry.has("world"):
 		mat.set_shader_parameter("world_space", bool(entry["world"]))
 	if entry.has("axis"):

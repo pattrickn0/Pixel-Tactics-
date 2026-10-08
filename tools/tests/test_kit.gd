@@ -11,14 +11,15 @@ const TOLERANCE: float = 0.001
 const OVERHANG: float = 0.16
 const MESH_DIR: String = "res://assets/models/kit/"
 const MATERIAL_DIR: String = "res://assets/materials/"
-const TEXEL: float = 1.0 / 32.0
+const TEXEL: float = WorldScale.PIXEL_SIZE
 ## Cenas obrigatórias da tabela do Kit (nome -> pegada largura, fundo e altura).
 const REQUIRED: Dictionary = {
 	"step_low_2": Vector3(2, 0.5, 1), "step_low_1": Vector3(1, 0.5, 1), "step_low_corner": Vector3(1, 0.5, 1),
 	"terrace_fill_4x3": Vector3(4, 0.5, 3), "terrace_fill_2x3": Vector3(2, 0.5, 3),
 	"terrace_fill_1x3": Vector3(1, 0.5, 3), "terrace_fill_3x3": Vector3(3, 0.5, 3),
-	"wall_high_2": Vector3(2, 1.5, 1), "wall_high_1": Vector3(1, 1.5, 1), "wall_high_corner": Vector3(1, 1.5, 1),
-	"stair_outer_3": Vector3(3, 1.5, 3), "stair_inner_3": Vector3(3, 1.5, 2), "stair_low_3": Vector3(3, 0.5, 1),
+	"wall_high_2": Vector3(2, 1.0, 1), "wall_high_1": Vector3(1, 1.0, 1), "wall_high_corner": Vector3(1, 1.0, 1),
+	"stair_outer_3": Vector3(3, 1.0, 2), "stair_inner_3": Vector3(3, 1.0, 1), "stair_low_3": Vector3(3, 0.5, 1),
+	"terrace_fill_4x2": Vector3(4, 0.5, 2), "terrace_fill_3x2": Vector3(3, 0.5, 2),
 }
 const REQUIRED_NAMES: PackedStringArray = [
 	"ground_inner", "ground_outer", "ground_far", "decal_arena_dirt", "decal_grass_light_0", "decal_grass_light_1",
@@ -190,6 +191,18 @@ func _check_wall_continuity() -> void:
 		if not shader_text.contains(hint):
 			filters_ok = false
 	_check(filters_ok, "o shader do kit amostra com filtro Nearest")
+	_check(shader_text.contains("cross(dFdx(v_pos), dFdy(v_pos))"), "o eixo da projeção vem da normal geométrica da face (não da normal da copa)")
+	for key: String in ["wall_cap", "wall_cap_z", "wall_cap_low", "wall_crest", "wall_crest_z", "wall_crest_corner", "wall_cap_corner", "wall_quoin", "rock"]:
+		var mat := load(MATERIAL_DIR + key + ".tres") as ShaderMaterial
+		var scale: float = float(mat.get_shader_parameter("normal_scale"))
+		_check(mat.get_shader_parameter("use_normal") == true and scale >= 0.4 and scale <= 0.7, "%s usa normal map de pedra com força %.2f (0,4 a 0,7)" % [key, scale])
+	var used_keys: Dictionary = {}
+	for mesh_name: String in ["wall_high_corner", "wood_pile", "step_low_corner", "stair_outer_3"]:
+		var mesh := load(MESH_DIR + mesh_name + ".res") as ArrayMesh
+		for i in mesh.get_surface_count():
+			used_keys[(mesh.surface_get_material(i) as ShaderMaterial).resource_path.get_file().get_basename()] = true
+	for key: String in ["wall_quoin", "wall_crest_corner", "wall_cap_corner", "wood_pile_end", "wall_crest_z"]:
+		_check(used_keys.has(key), "%s está ligada a uma malha do kit" % key)
 
 
 ## Capeamento em lajes individuais: larguras variadas, beiral de 1 a 2 texels, topo variando 1 a 2.
@@ -198,11 +211,12 @@ func _check_slabs() -> void:
 		"wall_high_2 interna": KitTables.SLABS_WALL_2_INNER, "wall_high_2 externa": KitTables.SLABS_WALL_2_OUTER,
 		"wall_high_1 interna": KitTables.SLABS_WALL_1_INNER, "wall_high_1 externa": KitTables.SLABS_WALL_1_OUTER,
 		"degrau 2": KitTables.SLABS_STEP_2, "degrau 1": KitTables.SLABS_STEP_1,
-		"bochecha 3": KitTables.SLABS_CHEEK_3, "bochecha 2": KitTables.SLABS_CHEEK_2,
+		"bochecha 2 fora": KitTables.SLABS_CHEEK_2_OUT, "bochecha 2 dentro": KitTables.SLABS_CHEEK_2_IN,
+		"bochecha 1 fora": KitTables.SLABS_CHEEK_1_OUT, "bochecha 1 dentro": KitTables.SLABS_CHEEK_1_IN,
 	}
 	var lengths: Dictionary = {
 		"wall_high_2 interna": 64, "wall_high_2 externa": 64, "wall_high_1 interna": 32, "wall_high_1 externa": 32,
-		"degrau 2": 64, "degrau 1": 32, "bochecha 3": 96, "bochecha 2": 64,
+		"degrau 2": 64, "degrau 1": 32, "bochecha 2 fora": 64, "bochecha 2 dentro": 64, "bochecha 1 fora": 32, "bochecha 1 dentro": 32,
 	}
 	var problems: Array[String] = []
 	for row_name: String in rows.keys():
@@ -214,6 +228,16 @@ func _check_slabs() -> void:
 		if total != int(lengths[row_name]):
 			problems.append("%s: soma %d != %d" % [row_name, total, lengths[row_name]])
 	_check(problems.is_empty(), "lajes: larguras de 0,3 a 0,8, beiral 1 a 2 texels, topo 1 a 2 texels, somas certas", str(problems))
+	# Muro alto: lajes de 6 a 9 texels de fundo (o musgo da crista fica visível); bochechas de 6 a 7 por borda.
+	var depth_bad: Array[String] = []
+	for row_name: String in rows.keys():
+		if row_name.begins_with("degrau"):
+			continue
+		var max_depth: int = 7 if row_name.begins_with("bochecha") else 9
+		for slab: Array in rows[row_name]:
+			if int(slab[1]) < 6 or int(slab[1]) > max_depth:
+				depth_bad.append("%s: fundo %d" % [row_name, int(slab[1])])
+	_check(depth_bad.is_empty(), "lajes do muro e das bochechas com 6 a 9 texels de fundo", str(depth_bad))
 	for row_name: String in ["wall_high_2 interna", "wall_high_2 externa"]:
 		var widths: Dictionary = {}
 		for slab: Array in rows[row_name]:

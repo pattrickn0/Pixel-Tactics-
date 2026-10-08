@@ -95,9 +95,9 @@ func _test_frustum(map: MapData) -> void:
 				points.append(Vector3(corner.x, bench.height + PIECE_HEIGHT, corner.y))
 		if yaw == 0.0:
 			# Face externa do muro sul: da base (chão) ao topo da crista, nas duas pontas.
-			for x: float in [-15.0, 15.0]:
-				points.append(Vector3(x, 0.0, 14.0))
-				points.append(Vector3(x, 1.5, 14.0))
+			for x: float in [-14.0, 14.0]:
+				points.append(Vector3(x, 0.0, 13.0))
+				points.append(Vector3(x, 1.0, 13.0))
 		for p: Vector3 in points:
 			if not _in_frustum(cam, p):
 				ok = false

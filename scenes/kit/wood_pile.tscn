@@ -5,7 +5,7 @@
 
 [node name="wood_pile" type="Node3D" unique_id=1583317403]
 script = ExtResource("1_xc7xp")
-size = Vector3(1.4, 0.8, 1)
+size = Vector3(1, 0.9, 1)
 obstacle = true
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=1859900400]

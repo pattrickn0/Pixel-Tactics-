@@ -6,7 +6,7 @@
 
 [node name="wall_high_corner" type="Node3D" unique_id=279336185]
 script = ExtResource("1_i6040")
-size = Vector3(1, 1.5, 1)
+size = Vector3(1, 1, 1)
 structural = true
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=596757847]
@@ -14,4 +14,4 @@ mesh = ExtResource("2_jfwin")
 
 [node name="Height" type="Node3D" parent="." unique_id=490822416]
 script = ExtResource("3_gqqs2")
-top = 1.5
+top = 1.0

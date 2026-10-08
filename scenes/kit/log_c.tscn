@@ -5,7 +5,7 @@
 
 [node name="log_c" type="Node3D" unique_id=1695567373]
 script = ExtResource("1_or3u7")
-size = Vector3(3, 0.6, 0.65)
+size = Vector3(3, 0.7, 0.7)
 obstacle = true
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=1491921181]

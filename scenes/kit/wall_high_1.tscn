@@ -6,7 +6,7 @@
 
 [node name="wall_high_1" type="Node3D" unique_id=2976187]
 script = ExtResource("1_j7dw5")
-size = Vector3(1, 1.5, 1)
+size = Vector3(1, 1, 1)
 structural = true
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=507949940]
@@ -14,4 +14,4 @@ mesh = ExtResource("2_pqlmh")
 
 [node name="Height" type="Node3D" parent="." unique_id=1921186956]
 script = ExtResource("3_fg5eq")
-top = 1.5
+top = 1.0

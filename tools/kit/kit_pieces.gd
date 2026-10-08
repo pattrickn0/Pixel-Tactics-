@@ -10,7 +10,11 @@ const FACE_HIGH: String = "wall_high_face"
 const FACE_LOW: String = "wall_low_face"
 ## Altura do degrau baixo e do muro alto (topo).
 const STEP_H: float = 0.5
-const WALL_H: float = 1.5
+const WALL_H: float = 1.0
+## v do capeamento amostrado nas pontas e no lado de dentro das lajes (linha 2 de 16, dentro da pedra).
+const SLAB_SIDE_V: float = 0.12
+## Altura da textura wall_quoin (e das faces do muro) em unidades: 48 texels.
+const QUOIN_TEX_H: float = 1.5
 
 
 static func build(entry: Dictionary) -> KitMesher:
@@ -30,9 +34,9 @@ static func build(entry: Dictionary) -> KitMesher:
 		"wall_corner":
 			wall_corner(m, s)
 		"stair_outer":
-			stair(m, s, 6, 0.0, 2.0, true)
+			stair(m, s, 4, 0.0, 2.0, true)
 		"stair_inner":
-			stair(m, s, 4, 0.5, 2.0, true)
+			stair(m, s, 2, 0.5, 2.0, true)
 		"stair_low":
 			stair(m, s, 2, 0.0, 3.0, false)
 		"ground":
@@ -82,10 +86,13 @@ static func _dir(axis: int, sgn: float) -> Vector3:
 ## Fila de lajes individuais (capeamento). `slabs` = linhas [largura, fundo, beiral, subida] em texels.
 ## `top_y` = altura da crista; as lajes têm 4 texels de espessura, passam do plano da face (beiral) e
 ## o topo sobe 1 a 2 texels, variando de laje para laje: o contorno nunca é uma régua.
+## A face de fora usa o material da face (continua o muro); as pontas e o lado de dentro usam o
+## material do capeamento (uma linha de pedra clara), para não aparecer o traço escuro do topo da face.
 static func slab_row(m: KitMesher, axis: int, start: float, edge: float, sgn: float, slabs: Array, top_y: float,
 		cap_key: String, face_key: String, inner_from_base: bool) -> void:
 	var a: float = start
 	var yb: float = top_y - KitTables.SLAB_THICKNESS * T
+	var side_v: Vector2 = Vector2(0.0, SLAB_SIDE_V)
 	for slab: Array in slabs:
 		var w: float = float(slab[0]) * T
 		var d: float = float(slab[1]) * T
@@ -102,12 +109,14 @@ static func slab_row(m: KitMesher, axis: int, start: float, edge: float, sgn: fl
 				Vector3.UP, Vector2(a, 0.0), Vector2(a1, 0.0), Vector2(a1, o + d), Vector2(a, o + d))
 		# Face de fora (a espessura da laje, sobre a face do muro).
 		m.quad(face_key, _p(axis, a, out_edge, yb), _p(axis, a1, out_edge, yb), _p(axis, a1, out_edge, yt), _p(axis, a, out_edge, yt), n_out)
-		# Topos das pontas (visíveis quando a vizinha é mais baixa).
-		m.quad(face_key, _p(axis, a, out_edge, yb), _p(axis, a, in_edge, yb), _p(axis, a, in_edge, yt), _p(axis, a, out_edge, yt), -n_along)
-		m.quad(face_key, _p(axis, a1, out_edge, yb), _p(axis, a1, in_edge, yb), _p(axis, a1, in_edge, yt), _p(axis, a1, out_edge, yt), n_along)
-		# Lado de dentro (degrau de 1 a 2 texels sobre a crista).
+		# Pontas (visíveis quando a vizinha é mais baixa) e lado de dentro (1 a 2 texels sobre a crista).
+		m.quad(cap_key, _p(axis, a, out_edge, yb), _p(axis, a, in_edge, yb), _p(axis, a, in_edge, yt), _p(axis, a, out_edge, yt), -n_along,
+				side_v, side_v, side_v, side_v)
+		m.quad(cap_key, _p(axis, a1, out_edge, yb), _p(axis, a1, in_edge, yb), _p(axis, a1, in_edge, yt), _p(axis, a1, out_edge, yt), n_along,
+				side_v, side_v, side_v, side_v)
 		var inner_y0: float = yb if inner_from_base else top_y
-		m.quad(face_key, _p(axis, a, in_edge, inner_y0), _p(axis, a1, in_edge, inner_y0), _p(axis, a1, in_edge, yt), _p(axis, a, in_edge, yt), -n_out)
+		m.quad(cap_key, _p(axis, a, in_edge, inner_y0), _p(axis, a1, in_edge, inner_y0), _p(axis, a1, in_edge, yt), _p(axis, a, in_edge, yt), -n_out,
+				side_v, side_v, side_v, side_v)
 		a = a1
 
 
@@ -135,6 +144,8 @@ static func step_low(m: KitMesher, s: Vector3) -> void:
 
 
 ## Quina do degrau: só o quarto de capeamento (canto +X/+Z) que fecha o L entre as duas fileiras.
+## wall_cap_corner (16x16): linha 0 e coluna 15 = beiradas sobre as faces; coluna 0 e linha 15 = onde
+## o capeamento encosta. Aqui as beiradas ficam em +X e +Z: u = (z - z0) e v = (x1 - x), em texels.
 static func step_low_corner(m: KitMesher, s: Vector3) -> void:
 	var hx: float = s.x * 0.5
 	var hz: float = s.z * 0.5
@@ -150,13 +161,15 @@ static func step_low_corner(m: KitMesher, s: Vector3) -> void:
 	var z0: float = hz - w
 	var x1: float = hx + o
 	var z1: float = hz + o
-	# Topo com a laje de canto (UV 0..1 sobre 16 texels) e as quatro paredes da laje.
+	var k: float = 1.0 / (16.0 * T)
 	m.quad("wall_cap_corner", Vector3(x0, yt, z0), Vector3(x1, yt, z0), Vector3(x1, yt, z1), Vector3(x0, yt, z1), Vector3.UP,
-			Vector2(0.0, 0.0), Vector2((w + o) * 2.0, 0.0), Vector2((w + o) * 2.0, (w + o) * 2.0), Vector2(0.0, (w + o) * 2.0))
-	m.quad(FACE_LOW, Vector3(x0, yb, z1), Vector3(x1, yb, z1), Vector3(x1, yt, z1), Vector3(x0, yt, z1), Vector3(0.0, 0.0, 1.0))
-	m.quad(FACE_LOW, Vector3(x1, yb, z0), Vector3(x1, yb, z1), Vector3(x1, yt, z1), Vector3(x1, yt, z0), Vector3(1.0, 0.0, 0.0))
-	m.quad(FACE_LOW, Vector3(x0, yb, z0), Vector3(x1, yb, z0), Vector3(x1, yt, z0), Vector3(x0, yt, z0), Vector3(0.0, 0.0, -1.0))
-	m.quad(FACE_LOW, Vector3(x0, yb, z0), Vector3(x0, yb, z1), Vector3(x0, yt, z1), Vector3(x0, yt, z0), Vector3(-1.0, 0.0, 0.0))
+			Vector2((z0 - z0) * k, (x1 - x0) * k), Vector2((z0 - z0) * k, (x1 - x1) * k),
+			Vector2((z1 - z0) * k, (x1 - x1) * k), Vector2((z1 - z0) * k, (x1 - x0) * k))
+	var side: Vector2 = Vector2(0.0, SLAB_SIDE_V)
+	m.quad("wall_cap_low", Vector3(x0, yb, z1), Vector3(x1, yb, z1), Vector3(x1, yt, z1), Vector3(x0, yt, z1), Vector3(0.0, 0.0, 1.0), side, side, side, side)
+	m.quad("wall_cap_low", Vector3(x1, yb, z0), Vector3(x1, yb, z1), Vector3(x1, yt, z1), Vector3(x1, yt, z0), Vector3(1.0, 0.0, 0.0), side, side, side, side)
+	m.quad("wall_cap_low", Vector3(x0, yb, z0), Vector3(x1, yb, z0), Vector3(x1, yt, z0), Vector3(x0, yt, z0), Vector3(0.0, 0.0, -1.0), side, side, side, side)
+	m.quad("wall_cap_low", Vector3(x0, yb, z0), Vector3(x0, yb, z1), Vector3(x0, yt, z1), Vector3(x0, yt, z0), Vector3(-1.0, 0.0, 0.0), side, side, side, side)
 
 
 static func terrace(m: KitMesher, s: Vector3) -> void:
@@ -186,69 +199,93 @@ static func wall(m: KitMesher, s: Vector3) -> void:
 	drape(m, 0, -hx, hx, -0.5, -1.0, WALL_H, "moss_drape_0")
 
 
-## Quina externa do muro alto (faces -X e -Z): blocos de amarração alternando longo e curto
-## nas duas faces (cada curso é longo numa e curto na outra), sem fresta, e laje de canto em L.
+## Quina externa do muro alto (faces -X e -Z). As duas faces usam wall_quoin (32x48 = 1 x 1,5, coluna
+## 31 na aresta, coluna 0 continua a face do muro). Os blocos de amarração salientes seguem as fiadas
+## pintadas: em cada fiada um bloco é longo e invade o canto, e o outro fica rente (alterna por fiada).
+## Topo da quina: wall_crest_corner girada 90° sem espelhar (linha 0 e coluna 31 para fora).
 static func wall_corner(m: KitMesher, _s: Vector3) -> void:
 	var yb: float = WALL_H - KitTables.SLAB_THICKNESS * T
-	m.wall_z(FACE_HIGH, -0.5, 0.5, 0.0, yb, -0.5, -1.0)
-	m.wall_x(FACE_HIGH, -0.5, 0.5, 0.0, yb, -0.5, -1.0)
-	# Topo da quina: laje em L pintada (UV 0..1, espelhada em u para a borda pintada cair em -X).
+	_quoin_face_z(m, -0.5, 0.5, 0.0, yb, -0.5)
+	_quoin_face_x(m, -0.5, 0.5, 0.0, yb, -0.5)
+	# Topo da quina: u = 0,5 - z e v = x + 0,5 (outer em -X e -Z; a crista encosta em +X e +Z).
 	m.quad("wall_crest_corner", Vector3(-0.5, WALL_H, -0.5), Vector3(0.5, WALL_H, -0.5), Vector3(0.5, WALL_H, 0.5), Vector3(-0.5, WALL_H, 0.5),
-			Vector3.UP, Vector2(1.0, 0.0), Vector2(0.0, 0.0), Vector2(0.0, 1.0), Vector2(1.0, 1.0))
-	# Blocos de amarração: alturas dos cursos em texels (de baixo para cima) e comprimento longo/curto.
-	var courses: Array[int] = [10, 12, 10, 12]
-	var long_len: float = 24.0 * T
-	var short_len: float = 12.0 * T
+			Vector3.UP, Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0), Vector2(0.0, 0.0))
+	# Blocos de amarração: fiadas de baixo para cima [altura em texels, comprimento em texels, longo?].
 	var p: float = 2.0 * T
 	var y: float = 0.0
-	for c in courses.size():
-		var ch: float = float(courses[c]) * T
-		var a_long: bool = c % 2 == 0
-		var len_a: float = long_len if a_long else short_len
-		var len_b: float = short_len if a_long else long_len
-		# Face -Z (bloco corre em +X a partir da quina); o longo invade o canto em p.
-		var ax0: float = -0.5 - (p if a_long else 0.0)
-		_quoin_block(m, Vector3(ax0, y, -0.5 - p), Vector3(-0.5 + len_a, y + ch, -0.5), a_long)
-		# Face -X (bloco corre em +Z); o longo invade o canto em p.
-		var bz0: float = -0.5 - (0.0 if a_long else p)
-		_quoin_block(m, Vector3(-0.5 - p, y, bz0), Vector3(-0.5, y + ch, -0.5 + len_b), not a_long)
+	for course: Array in KitTables.QUOIN_COURSES:
+		var ch: float = float(course[0]) * T
+		var length: float = float(course[1]) * T
+		var is_long: bool = bool(course[2])
+		# Fiada longa: o bloco da face -Z invade o canto; fiada curta: o da face -X.
+		_quoin_block_z(m, -0.5 - (p if is_long else 0.0), -0.5 + length, y, y + ch, -0.5 - p, is_long)
+		_quoin_block_x(m, -0.5 - (0.0 if is_long else p), -0.5 + length, y, y + ch, -0.5 - p, not is_long)
 		y += ch
-	# Lajes de capeamento: bloco de canto + uma laje em cada fila.
+	# Lajes de capeamento: bloco de canto (wall_cap_corner girada igual à quina do degrau) + uma laje em cada fila.
 	var cb: Array = KitTables.SLABS_CORNER_BLOCK
 	var cw: float = float(cb[0]) * T
 	var co: float = float(cb[2]) * T
-	var ch_up: float = float(cb[3]) * T
-	var cyt: float = WALL_H + ch_up
+	var cyt: float = WALL_H + float(cb[3]) * T
 	var cx0: float = -0.5 - co
 	var cx1: float = -0.5 + cw
+	# Janela de (cw + co) texels do canto da textura 16x16 (beiradas = linha 0 e coluna 15).
+	var k: float = 1.0 / (16.0 * T)
 	m.quad("wall_cap_corner", Vector3(cx0, cyt, cx0), Vector3(cx1, cyt, cx0), Vector3(cx1, cyt, cx1), Vector3(cx0, cyt, cx1), Vector3.UP,
-			Vector2(0.0, 0.0), Vector2((cw + co) * 2.0, 0.0), Vector2((cw + co) * 2.0, (cw + co) * 2.0), Vector2(0.0, (cw + co) * 2.0))
-	m.quad(FACE_HIGH, Vector3(cx0, yb, cx0), Vector3(cx1, yb, cx0), Vector3(cx1, cyt, cx0), Vector3(cx0, cyt, cx0), Vector3(0.0, 0.0, -1.0))
-	m.quad(FACE_HIGH, Vector3(cx0, yb, cx0), Vector3(cx0, yb, cx1), Vector3(cx0, cyt, cx1), Vector3(cx0, cyt, cx0), Vector3(-1.0, 0.0, 0.0))
-	m.quad(FACE_HIGH, Vector3(cx1, yb, cx0), Vector3(cx1, yb, cx1), Vector3(cx1, cyt, cx1), Vector3(cx1, cyt, cx0), Vector3(1.0, 0.0, 0.0))
-	m.quad(FACE_HIGH, Vector3(cx0, yb, cx1), Vector3(cx1, yb, cx1), Vector3(cx1, cyt, cx1), Vector3(cx0, cyt, cx1), Vector3(0.0, 0.0, 1.0))
-	slab_row(m, 0, cx1 + 0.0, -0.5, -1.0, KitTables.SLABS_CORNER_Z, WALL_H, "wall_cap", FACE_HIGH, false)
-	slab_row(m, 1, cx1 + 0.0, -0.5, -1.0, KitTables.SLABS_CORNER_X, WALL_H, "wall_cap_z", FACE_HIGH, false)
+			Vector2(1.0, 0.0), Vector2(1.0, (cx1 - cx0) * k), Vector2(1.0 - (cx1 - cx0) * k, (cx1 - cx0) * k), Vector2(1.0 - (cx1 - cx0) * k, 0.0))
+	var side: Vector2 = Vector2(0.0, SLAB_SIDE_V)
+	m.quad("wall_cap", Vector3(cx0, yb, cx0), Vector3(cx1, yb, cx0), Vector3(cx1, cyt, cx0), Vector3(cx0, cyt, cx0), Vector3(0.0, 0.0, -1.0), side, side, side, side)
+	m.quad("wall_cap_z", Vector3(cx0, yb, cx0), Vector3(cx0, yb, cx1), Vector3(cx0, cyt, cx1), Vector3(cx0, cyt, cx0), Vector3(-1.0, 0.0, 0.0), side, side, side, side)
+	m.quad("wall_cap_z", Vector3(cx1, yb, cx0), Vector3(cx1, yb, cx1), Vector3(cx1, cyt, cx1), Vector3(cx1, cyt, cx0), Vector3(1.0, 0.0, 0.0), side, side, side, side)
+	m.quad("wall_cap", Vector3(cx0, yb, cx1), Vector3(cx1, yb, cx1), Vector3(cx1, cyt, cx1), Vector3(cx0, cyt, cx1), Vector3(0.0, 0.0, 1.0), side, side, side, side)
+	slab_row(m, 0, cx1, -0.5, -1.0, KitTables.SLABS_CORNER_Z, WALL_H, "wall_cap", FACE_HIGH, false)
+	slab_row(m, 1, cx1, -0.5, -1.0, KitTables.SLABS_CORNER_X, WALL_H, "wall_cap_z", FACE_HIGH, false)
 	# Musgo pendente: um cartão por face, sem se cruzarem na quina.
 	drape(m, 0, -0.5, 0.5, -0.5, -1.0, WALL_H, "moss_drape_0")
 	drape(m, 1, -0.5, 0.5, -0.5, -1.0, WALL_H, "moss_drape_1_z")
 
 
-## Bloco de amarração (caixa saliente de 2 texels). `extends_corner` liga a lateral que invade a quina.
-static func _quoin_block(m: KitMesher, lo: Vector3, hi: Vector3, extends_corner: bool) -> void:
-	m.quad(FACE_HIGH, Vector3(lo.x, hi.y, lo.z), Vector3(hi.x, hi.y, lo.z), Vector3(hi.x, hi.y, hi.z), Vector3(lo.x, hi.y, hi.z), Vector3.UP)
-	# A face de fora é a que fica em -Z (se o bloco é fino em Z) ou em -X (se é fino em X).
-	var thin_z: bool = (hi.z - lo.z) < (hi.x - lo.x)
-	if thin_z:
-		m.quad(FACE_HIGH, Vector3(lo.x, lo.y, lo.z), Vector3(hi.x, lo.y, lo.z), Vector3(hi.x, hi.y, lo.z), Vector3(lo.x, hi.y, lo.z), Vector3(0.0, 0.0, -1.0))
-		m.quad(FACE_HIGH, Vector3(hi.x, lo.y, lo.z), Vector3(hi.x, lo.y, hi.z), Vector3(hi.x, hi.y, hi.z), Vector3(hi.x, hi.y, lo.z), Vector3(1.0, 0.0, 0.0))
-		if extends_corner:
-			m.quad(FACE_HIGH, Vector3(lo.x, lo.y, lo.z), Vector3(lo.x, lo.y, hi.z), Vector3(lo.x, hi.y, hi.z), Vector3(lo.x, hi.y, lo.z), Vector3(-1.0, 0.0, 0.0))
-	else:
-		m.quad(FACE_HIGH, Vector3(lo.x, lo.y, lo.z), Vector3(lo.x, lo.y, hi.z), Vector3(lo.x, hi.y, hi.z), Vector3(lo.x, hi.y, lo.z), Vector3(-1.0, 0.0, 0.0))
-		m.quad(FACE_HIGH, Vector3(lo.x, lo.y, hi.z), Vector3(hi.x, lo.y, hi.z), Vector3(hi.x, hi.y, hi.z), Vector3(lo.x, hi.y, hi.z), Vector3(0.0, 0.0, 1.0))
-		if extends_corner:
-			m.quad(FACE_HIGH, Vector3(lo.x, lo.y, lo.z), Vector3(hi.x, lo.y, lo.z), Vector3(hi.x, hi.y, lo.z), Vector3(lo.x, hi.y, lo.z), Vector3(0.0, 0.0, -1.0))
+## UV de wall_quoin (32x48 = 1 x 1,5): coluna 31 na aresta (u = 1 em -0,5), linha 0 no topo do muro;
+## com o muro de 1,0 aparecem só as 32 linhas de cima. Clamp no material.
+static func _quoin_uv(along: float, y: float) -> Vector2:
+	return Vector2(0.5 - along, (WALL_H - y) / QUOIN_TEX_H)
+
+
+## Face -Z (normal -Z) em z, de x0 a x1.
+static func _quoin_face_z(m: KitMesher, x0: float, x1: float, y0: float, y1: float, z: float) -> void:
+	m.quad("wall_quoin", Vector3(x0, y0, z), Vector3(x1, y0, z), Vector3(x1, y1, z), Vector3(x0, y1, z), Vector3(0.0, 0.0, -1.0),
+			_quoin_uv(x0, y0), _quoin_uv(x1, y0), _quoin_uv(x1, y1), _quoin_uv(x0, y1))
+
+
+## Face -X (normal -X) em x, de z0 a z1.
+static func _quoin_face_x(m: KitMesher, z0: float, z1: float, y0: float, y1: float, x: float) -> void:
+	m.quad("wall_quoin", Vector3(x, y0, z0), Vector3(x, y0, z1), Vector3(x, y1, z1), Vector3(x, y1, z0), Vector3(-1.0, 0.0, 0.0),
+			_quoin_uv(z0, y0), _quoin_uv(z1, y0), _quoin_uv(z1, y1), _quoin_uv(z0, y1))
+
+
+## Bloco saliente na face -Z: de x0 a x1, de y0 a y1, com a frente em z_out. `closes_corner` fecha o
+## lado -X (o bloco invade o canto); o lado +X (fim do bloco) sempre aparece. A frente leva wall_quoin;
+## o topo e os lados (2 texels) levam o material do capeamento (pedra clara, sem UV degenerado).
+static func _quoin_block_z(m: KitMesher, x0: float, x1: float, y0: float, y1: float, z_out: float, closes_corner: bool) -> void:
+	var z_in: float = -0.5
+	var side: Vector2 = Vector2(0.0, SLAB_SIDE_V)
+	m.quad("wall_quoin", Vector3(x0, y0, z_out), Vector3(x1, y0, z_out), Vector3(x1, y1, z_out), Vector3(x0, y1, z_out), Vector3(0.0, 0.0, -1.0),
+			_quoin_uv(x0, y0), _quoin_uv(x1, y0), _quoin_uv(x1, y1), _quoin_uv(x0, y1))
+	m.quad("wall_cap", Vector3(x0, y1, z_out), Vector3(x1, y1, z_out), Vector3(x1, y1, z_in), Vector3(x0, y1, z_in), Vector3.UP, side, side, side, side)
+	m.quad("wall_cap", Vector3(x1, y0, z_out), Vector3(x1, y0, z_in), Vector3(x1, y1, z_in), Vector3(x1, y1, z_out), Vector3(1.0, 0.0, 0.0), side, side, side, side)
+	if closes_corner:
+		m.quad("wall_cap", Vector3(x0, y0, z_out), Vector3(x0, y0, z_in), Vector3(x0, y1, z_in), Vector3(x0, y1, z_out), Vector3(-1.0, 0.0, 0.0), side, side, side, side)
+
+
+## Bloco saliente na face -X: de z0 a z1, com a frente em x_out. `closes_corner` fecha o lado -Z.
+static func _quoin_block_x(m: KitMesher, z0: float, z1: float, y0: float, y1: float, x_out: float, closes_corner: bool) -> void:
+	var x_in: float = -0.5
+	var side: Vector2 = Vector2(0.0, SLAB_SIDE_V)
+	m.quad("wall_quoin", Vector3(x_out, y0, z0), Vector3(x_out, y0, z1), Vector3(x_out, y1, z1), Vector3(x_out, y1, z0), Vector3(-1.0, 0.0, 0.0),
+			_quoin_uv(z0, y0), _quoin_uv(z1, y0), _quoin_uv(z1, y1), _quoin_uv(z0, y1))
+	m.quad("wall_cap_z", Vector3(x_out, y1, z0), Vector3(x_out, y1, z1), Vector3(x_in, y1, z1), Vector3(x_in, y1, z0), Vector3.UP, side, side, side, side)
+	m.quad("wall_cap_z", Vector3(x_out, y0, z1), Vector3(x_in, y0, z1), Vector3(x_in, y1, z1), Vector3(x_out, y1, z1), Vector3(0.0, 0.0, 1.0), side, side, side, side)
+	if closes_corner:
+		m.quad("wall_cap_z", Vector3(x_out, y0, z0), Vector3(x_in, y0, z0), Vector3(x_in, y1, z0), Vector3(x_out, y1, z0), Vector3(0.0, 0.0, -1.0), side, side, side, side)
 
 
 # ================================================================ escadas
@@ -275,7 +312,7 @@ static func stair(m: KitMesher, s: Vector3, steps: int, base: float, walk: float
 	if not cheeks:
 		return
 	var yb: float = WALL_H - KitTables.SLAB_THICKNESS * T
-	var slabs: Array = KitTables.SLABS_CHEEK_3 if s.z > 2.5 else KitTables.SLABS_CHEEK_2
+	var cheek_depth: int = roundi(s.z)
 	for side in [-1.0, 1.0]:
 		var sg: float = side
 		var outer_x: float = sg * (hw + 0.5)
@@ -284,7 +321,19 @@ static func stair(m: KitMesher, s: Vector3, steps: int, base: float, walk: float
 		m.wall_x(FACE_HIGH, -hz, hz, base, yb, outer_x, sg)
 		m.wall_x(FACE_HIGH, -hz, hz, base, yb, inner_x, -sg)
 		m.wall_z(FACE_HIGH, minf(inner_x, outer_x), maxf(inner_x, outer_x), base, yb, hz, 1.0)
-		slab_row(m, 1, -hz, outer_x, sg, slabs, WALL_H, "wall_cap_z", FACE_HIGH, true)
+		# Topo: faixa de crista (musgo) com uma fiada de lajes em cada borda, como o muro alto.
+		_crest_strip_z(m, -hz, hz, inner_x, outer_x, WALL_H)
+		slab_row(m, 1, -hz, outer_x, sg, KitTables.SLABS_CHEEK_2_OUT if cheek_depth == 2 else KitTables.SLABS_CHEEK_1_OUT,
+				WALL_H, "wall_cap_z", FACE_HIGH, false)
+		slab_row(m, 1, -hz, inner_x, -sg, KitTables.SLABS_CHEEK_2_IN if cheek_depth == 2 else KitTables.SLABS_CHEEK_1_IN,
+				WALL_H, "wall_cap_z", FACE_HIGH, false)
+
+
+## Faixa de crista ao longo de Z entre x_in e x_out (v = 0 no lado de fora, em x_out).
+static func _crest_strip_z(m: KitMesher, z0: float, z1: float, x_in: float, x_out: float, y: float) -> void:
+	var span: float = absf(x_out - x_in)
+	m.quad("wall_crest_z", Vector3(x_out, y, z0), Vector3(x_out, y, z1), Vector3(x_in, y, z1), Vector3(x_in, y, z0), Vector3.UP,
+			Vector2(z0, 0.0), Vector2(z1, 0.0), Vector2(z1, span), Vector2(z0, span))
 
 
 # ================================================================ chão e decalques
@@ -526,14 +575,20 @@ static func crate_stack(m: KitMesher, s: Vector3) -> void:
 	crate(m, Vector3(0.0, 0.55, 0.0), 0.45)
 
 
-## Pilha de lenha: troncos deitados ao longo de Z (tabela) com pontas de anéis e um miolo de casca.
+## Pilha de lenha: bloco de casca de 1 x 0,9 x 1 com as pontas (+Z e -Z) em wood_pile_end
+## (a pilha vista de ponta, 32x32 = 1 unidade), janela de 29 texels de altura.
 static func wood_pile(m: KitMesher) -> void:
-	uv_box(m, "bark_0", "bark_0", Vector3(-0.6, 0.0, -0.4), Vector3(0.55, 0.7, 0.4))
-	for log_row: Array in KitTables.WOOD_PILE_LOGS:
-		var x: float = float(log_row[0])
-		var y: float = float(log_row[1])
-		var r: float = float(log_row[2])
-		m.tube("bark_0", "wood_end", Vector3(x, y, -0.5), Vector3(x, y, 0.5), r, r, 7, true, true)
+	var h: float = 0.9
+	var v0: float = 1.0 - h
+	m.top("bark_0", -0.5, -0.5, 0.5, 0.5, h)
+	m.quad("bark_0", Vector3(-0.5, 0.0, -0.5), Vector3(-0.5, 0.0, 0.5), Vector3(-0.5, h, 0.5), Vector3(-0.5, h, -0.5), Vector3(-1.0, 0.0, 0.0),
+			Vector2(0.0, h), Vector2(1.0, h), Vector2(1.0, 0.0), Vector2(0.0, 0.0))
+	m.quad("bark_0", Vector3(0.5, 0.0, -0.5), Vector3(0.5, 0.0, 0.5), Vector3(0.5, h, 0.5), Vector3(0.5, h, -0.5), Vector3(1.0, 0.0, 0.0),
+			Vector2(0.0, h), Vector2(1.0, h), Vector2(1.0, 0.0), Vector2(0.0, 0.0))
+	m.quad("wood_pile_end", Vector3(-0.5, 0.0, 0.5), Vector3(0.5, 0.0, 0.5), Vector3(0.5, h, 0.5), Vector3(-0.5, h, 0.5), Vector3(0.0, 0.0, 1.0),
+			Vector2(0.0, 1.0), Vector2(1.0, 1.0), Vector2(1.0, v0), Vector2(0.0, v0))
+	m.quad("wood_pile_end", Vector3(-0.5, 0.0, -0.5), Vector3(0.5, 0.0, -0.5), Vector3(0.5, h, -0.5), Vector3(-0.5, h, -0.5), Vector3(0.0, 0.0, -1.0),
+			Vector2(1.0, 1.0), Vector2(0.0, 1.0), Vector2(0.0, v0), Vector2(1.0, v0))
 
 
 ## Cartões cruzados fixos: 3 cartões girados de 60° a partir do ângulo da peça, visíveis dos dois lados.

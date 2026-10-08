@@ -60,13 +60,13 @@ func _test_rects() -> void:
 			"arena_rect = Rect2(-10, -9, 20, 18) e arena_center = (0, 0)", str(_map.arena_rect))
 	var south: MapBench = _map.get_bench(0)
 	var north: MapBench = _map.get_bench(1)
-	_check(south != null and _rect_eq(south.rect, Rect2(-9.5, 9.5, 19, 2.5)) and is_equal_approx(south.height, 0.5),
-			"reserva do time 0: rect Rect2(-9.5, 9.5, 19, 2.5) e height 0,5", str(south.rect) if south else "sem reserva")
-	_check(north != null and _rect_eq(north.rect, Rect2(-9.5, -12, 19, 2.5)) and is_equal_approx(north.height, 0.5),
-			"reserva do time 1: rect Rect2(-9.5, -12, 19, 2.5) e height 0,5", str(north.rect) if north else "sem reserva")
-	_check(south != null and north != null and _rect_eq(south.terrace_rect, Rect2(-10, 9, 20, 4))
-			and _rect_eq(north.terrace_rect, Rect2(-10, -13, 20, 4)),
-			"terrace_rect das reservas: Rect2(-10, 9, 20, 4) e Rect2(-10, -13, 20, 4)")
+	_check(south != null and _rect_eq(south.rect, Rect2(-9.5, 9.5, 19, 2.25)) and is_equal_approx(south.height, 0.5),
+			"reserva do time 0: rect Rect2(-9.5, 9.5, 19, 2.25) e height 0,5", str(south.rect) if south else "sem reserva")
+	_check(north != null and _rect_eq(north.rect, Rect2(-9.5, -11.75, 19, 2.25)) and is_equal_approx(north.height, 0.5),
+			"reserva do time 1: rect Rect2(-9.5, -11.75, 19, 2.25) e height 0,5", str(north.rect) if north else "sem reserva")
+	_check(south != null and north != null and _rect_eq(south.terrace_rect, Rect2(-10, 9, 20, 3))
+			and _rect_eq(north.terrace_rect, Rect2(-10, -12, 20, 3)),
+			"terrace_rect das reservas: Rect2(-10, 9, 20, 3) e Rect2(-10, -12, 20, 3)")
 	_check(_map.benches.size() == 2, "exatamente 2 reservas")
 
 
@@ -88,13 +88,13 @@ func _test_heights() -> void:
 				detail += "reserva %d %s = %.3f; " % [bench.team, q, _map.get_height_at(q)]
 	_check(arena_ok, "get_height_at = 0,0 em %d pontos da arena" % SAMPLES, detail)
 	_check(bench_ok, "get_height_at = 0,5 em %d pontos de cada reserva" % SAMPLES, detail)
-	var crest: Array[Vector2] = [Vector2(0, 13.5), Vector2(-14.5, 0), Vector2(0, -13.5), Vector2(14.5, 0)]
+	var crest: Array[Vector2] = [Vector2(0, 12.5), Vector2(-13.5, 0), Vector2(0, -12.5), Vector2(13.5, 0)]
 	var crest_ok := true
 	for p: Vector2 in crest:
-		if not is_equal_approx(_map.get_height_at(p), 1.5):
+		if not is_equal_approx(_map.get_height_at(p), 1.0):
 			crest_ok = false
 			detail = "%s = %.3f" % [p, _map.get_height_at(p)]
-	_check(crest_ok, "crista do muro em 1,5 (0, 13.5), (-14.5, 0), (0, -13.5), (14.5, 0)", detail)
+	_check(crest_ok, "crista do muro em 1,0 (0, 12.5), (-13.5, 0), (0, -12.5), (13.5, 0)", detail)
 	# Exterior a pelo menos 0,5 do muro e das escadas: 0,0.
 	var outside_ok := true
 	var outside_detail := ""
@@ -103,7 +103,7 @@ func _test_heights() -> void:
 		stair_zone.append(stair.rect.grow(0.75))
 	for _i in SAMPLES:
 		var p := Vector2(rng.randf_range(-24.0, 24.0), rng.randf_range(-24.0, 24.0))
-		if Rect2(-15.5, -14.5, 31, 29).has_point(p):
+		if Rect2(-14.5, -13.5, 29, 27).has_point(p):
 			continue
 		var near_stair := false
 		for zone: Rect2 in stair_zone:
@@ -115,16 +115,16 @@ func _test_heights() -> void:
 			outside_ok = false
 			outside_detail += "%s = %.3f; " % [p, _map.get_height_at(p)]
 	_check(outside_ok, "exterior a >= 0,5 do muro e das escadas = 0,0", outside_detail)
-	_check(is_equal_approx(_map.get_max_height(), 1.5), "altura máxima do mapa = 1,5", str(_map.get_max_height()))
+	_check(is_equal_approx(_map.get_max_height(), 1.0), "altura máxima do mapa = 1,0", str(_map.get_max_height()))
 	var step_ok := true
 	var step_detail := ""
 	for _i in SAMPLES * 4:
 		var p := Vector2(rng.randf_range(-24.0, 24.0), rng.randf_range(-24.0, 24.0))
 		var h: float = _map.get_height_at(p)
-		if h > 1.5 + TOLERANCE or h < 0.0:
+		if h > 1.0 + TOLERANCE or h < 0.0:
 			step_ok = false
 			step_detail += "%s = %.3f; " % [p, h]
-	_check(step_ok, "toda altura fica entre 0,0 e 1,5", step_detail)
+	_check(step_ok, "toda altura fica entre 0,0 e 1,0", step_detail)
 
 
 ## Anda pelo eixo dos lances: só saltos de 0,25.
@@ -139,12 +139,12 @@ func _test_stairs() -> void:
 			if terrace.intersects(stair.rect):
 				outside_terrace = false
 	_check(outside_terrace, "nenhuma célula de escada dentro de bench.terrace_rect")
-	# Lance oeste: ao longo de z = 4.5, de x = -19 até x = -9.75.
-	var heights: Array[float] = _walk(Vector2(-19.0, 4.5), Vector2(1, 0), 9.25)
+	# Lance oeste: ao longo de z = 4.5, de x = -17 até x = -9.75.
+	var heights: Array[float] = _walk(Vector2(-17.0, 4.5), Vector2(1, 0), 7.25)
 	_check(_steps_ok(heights, 0.25), "lance oeste: alturas mudam só em saltos de 0,25", str(_unique(heights)))
-	_check(_expected_profile(heights), "lance oeste: 0 -> 1,5 por fora, 1,5 -> 0,5 por dentro, 0,5 -> 0 até a arena",
+	_check(_expected_profile(heights), "lance oeste: 0 -> 1,0 por fora, 1,0 -> 0,5 por dentro, 0,5 -> 0 até a arena",
 			str(_unique(heights)))
-	var east: Array[float] = _walk(Vector2(19.0, -4.5), Vector2(-1, 0), 9.25)
+	var east: Array[float] = _walk(Vector2(17.0, -4.5), Vector2(-1, 0), 7.25)
 	_check(_steps_ok(east, 0.25) and _expected_profile(east), "lance leste: mesmo perfil (rotação de 180°)", str(_unique(east)))
 	var west_flights: int = 0
 	var east_flights: int = 0
@@ -173,7 +173,7 @@ func _steps_ok(values: Array[float], rise: float) -> bool:
 	return true
 
 
-## Sobe de 0 a 1,5, desce a 0,5 e termina em 0 (sem sair da faixa 0..1,5).
+## Sobe de 0 a 1,0, desce a 0,5 e termina em 0 (sem sair da faixa 0..1,0).
 func _expected_profile(values: Array[float]) -> bool:
 	if not is_zero_approx(values[0]) or not is_zero_approx(values[values.size() - 1]):
 		return false
@@ -183,7 +183,7 @@ func _expected_profile(values: Array[float]) -> bool:
 		if values[i] > peak:
 			peak = values[i]
 			peak_index = i
-	if not is_equal_approx(peak, 1.5):
+	if not is_equal_approx(peak, 1.0):
 		return false
 	# Depois do pico passa pelo terraço (0,5) antes de chegar na arena.
 	var seen_terrace := false

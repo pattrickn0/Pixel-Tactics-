@@ -6,7 +6,7 @@ extends RefCounted
 ## então a ordem dos cantos nas chamadas não importa. Sem sorteio: só aritmética sobre tabelas.
 
 ## Texel em unidades do mundo (32 texels por unidade).
-const TEXEL: float = 1.0 / 32.0
+const TEXEL: float = WorldScale.PIXEL_SIZE
 
 var batches: Dictionary = {}
 ## Transformação aplicada a tudo que for emitido (posição, giro e escala uniforme da peça).

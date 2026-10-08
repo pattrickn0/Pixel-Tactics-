@@ -1,15 +1,17 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/kit_surface.gdshader" id="1_hm34u"]
-[ext_resource type="Texture2D" path="res://assets/textures/rock.png" id="2_3f8e7"]
+[ext_resource type="Shader" path="res://assets/materials/kit_surface.gdshader" id="1_3f8e7"]
+[ext_resource type="Texture2D" path="res://assets/textures/rock.png" id="2_tj5t3"]
+[ext_resource type="Texture2D" path="res://assets/textures/rock_n.png" id="3_8fyc8"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_hm34u")
-shader_parameter/albedo_tex = ExtResource("2_3f8e7")
-shader_parameter/use_normal = null
-shader_parameter/normal_scale = null
-shader_parameter/tint = null
+shader = ExtResource("1_3f8e7")
+shader_parameter/albedo_tex = ExtResource("2_tj5t3")
+shader_parameter/normal_tex = ExtResource("3_8fyc8")
+shader_parameter/use_normal = true
+shader_parameter/normal_scale = 0.5
+shader_parameter/tint = Color(0.7, 0.66, 0.62, 1)
 shader_parameter/uv_mode = 1
 shader_parameter/world_space = false
 shader_parameter/strip_axis = null

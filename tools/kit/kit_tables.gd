@@ -6,22 +6,30 @@ extends RefCounted
 
 # ---------------------------------------------------------------- capeamento (lajes)
 ## Cada laje: [largura em texels, profundidade em texels, beiral em texels (1 a 2), subida do topo em texels (1 a 2)].
-## A soma das larguras de cada fila é o comprimento da peça em texels.
-const SLABS_WALL_2_INNER: Array = [[14, 13, 1, 1], [11, 12, 2, 2], [19, 14, 1, 1], [10, 11, 2, 1], [10, 13, 1, 2]]
-const SLABS_WALL_2_OUTER: Array = [[17, 12, 2, 1], [12, 14, 1, 2], [10, 13, 2, 1], [13, 11, 1, 2], [12, 13, 2, 1]]
-const SLABS_WALL_1_INNER: Array = [[12, 13, 1, 1], [10, 12, 2, 2], [10, 14, 1, 1]]
-const SLABS_WALL_1_OUTER: Array = [[10, 12, 2, 1], [12, 13, 1, 2], [10, 11, 2, 1]]
-## Quina do muro alto: a primeira laje é o bloco de canto (14 x 14, beiral nas duas faces);
-## a fila da face -Z segue com 18 e a da face -X com 18.
-const SLABS_CORNER_BLOCK: Array = [14, 14, 2, 2]
-const SLABS_CORNER_Z: Array = [[18, 12, 1, 1]]
-const SLABS_CORNER_X: Array = [[18, 13, 2, 2]]
+## A soma das larguras de cada fila é o comprimento da peça em texels. No muro alto a profundidade é de
+## 6 a 9 texels: o musgo da crista (32 texels de fundo) fica visível entre as duas fiadas.
+const SLABS_WALL_2_INNER: Array = [[14, 7, 1, 1], [11, 6, 2, 2], [19, 9, 1, 1], [10, 7, 2, 1], [10, 8, 1, 2]]
+const SLABS_WALL_2_OUTER: Array = [[17, 8, 2, 1], [12, 7, 1, 2], [10, 9, 2, 1], [13, 6, 1, 2], [12, 8, 2, 1]]
+const SLABS_WALL_1_INNER: Array = [[12, 7, 1, 1], [10, 6, 2, 2], [10, 8, 1, 1]]
+const SLABS_WALL_1_OUTER: Array = [[10, 8, 2, 1], [12, 7, 1, 2], [10, 6, 2, 1]]
+## Quina do muro alto: a primeira laje é o bloco de canto (8 x 8, beiral nas duas faces);
+## a fila da face -Z segue com 24 texels (duas lajes) e a da face -X também.
+const SLABS_CORNER_BLOCK: Array = [8, 8, 2, 2]
+const SLABS_CORNER_Z: Array = [[11, 7, 1, 1], [13, 8, 2, 2]]
+const SLABS_CORNER_X: Array = [[12, 8, 2, 2], [12, 6, 1, 1]]
+## Fiadas de amarração da quina (de baixo para cima): [altura em texels, comprimento do bloco em texels,
+## longo?]. Seguem as juntas pintadas em wall_quoin (curtas de 11 a 13 texels, longa de 22); com o muro
+## de 1,0 (28 texels de face sob o capeamento) cabem 3 fiadas: linhas 22-32, 12-22 e 4-12 da textura.
+const QUOIN_COURSES: Array = [[10, 13, false], [10, 22, true], [8, 11, false]]
 ## Degrau baixo: lajes de 0,5 de fundo na frente (+Z local).
 const SLABS_STEP_2: Array = [[14, 15, 1, 1], [10, 13, 2, 2], [17, 16, 1, 1], [11, 14, 2, 1], [12, 15, 1, 2]]
 const SLABS_STEP_1: Array = [[12, 15, 1, 1], [10, 13, 2, 2], [10, 16, 1, 1]]
-## Bochechas de escada: lajes de 16 de fundo (a bochecha toda), beiral só para fora.
-const SLABS_CHEEK_3: Array = [[14, 16, 2, 1], [10, 16, 1, 2], [18, 16, 2, 1], [12, 16, 1, 2], [10, 16, 2, 1], [16, 16, 1, 2], [16, 16, 2, 1]]
-const SLABS_CHEEK_2: Array = [[14, 16, 2, 1], [10, 16, 1, 2], [18, 16, 2, 1], [12, 16, 1, 2], [10, 16, 2, 1]]
+## Bochechas de escada (0,5 de largura = 16 texels; lance de 2 de fundo = 64 texels, de 1 = 32): uma fiada em cada borda, de 6 a 7 de fundo, e a
+## crista de musgo no meio. Fora e dentro com larguras diferentes, para as juntas não se alinharem.
+const SLABS_CHEEK_2_OUT: Array = [[14, 7, 2, 1], [10, 6, 1, 2], [18, 7, 2, 1], [12, 6, 1, 2], [10, 7, 2, 1]]
+const SLABS_CHEEK_2_IN: Array = [[12, 6, 2, 1], [16, 7, 1, 2], [10, 6, 2, 1], [14, 7, 1, 2], [12, 6, 2, 1]]
+const SLABS_CHEEK_1_OUT: Array = [[16, 7, 2, 1], [16, 6, 1, 2]]
+const SLABS_CHEEK_1_IN: Array = [[10, 6, 2, 1], [12, 7, 1, 2], [10, 6, 2, 1]]
 
 ## Espessura das lajes (texels) e musgo pendente.
 const SLAB_THICKNESS: int = 4
@@ -169,11 +177,7 @@ const ROCKS: Array = [
 	{"rings": [[0.9, 0.95, 1.0, 0.85, 0.9, 1.0], [1.0, 0.85, 0.9, 1.0, 0.95, 0.8], [0.8, 1.0, 0.9, 0.85, 1.0, 0.95]], "apex": Vector3(-0.1, 1.0, -0.1)},
 ]
 
-# ---------------------------------------------------------------- plateia e fundo de mata
-## Pilha de lenha: troncos [x, y, raio] ao longo de Z (comprimento 1,0).
-const WOOD_PILE_LOGS: Array = [
-	[-0.45, 0.2, 0.2], [-0.05, 0.19, 0.19], [0.36, 0.2, 0.2], [-0.25, 0.55, 0.19], [0.17, 0.55, 0.2], [-0.02, 0.86, 0.16],
-]
+# ---------------------------------------------------------------- fundo de mata
 ## Fundo de mata: por aglomerado, itens [tipo (b = folhosa, c = conífera), variante, x, z, giro em graus, escala].
 const BACKDROPS: Array = [
 	[["c", 3, -3.0, -2.5, 0.0, 1.0], ["b", 2, -0.5, -3.0, 40.0, 1.0], ["c", 4, 2.5, -2.0, 90.0, 0.95], ["b", 5, -2.0, 0.5, 130.0, 0.9],
@@ -184,6 +188,14 @@ const BACKDROPS: Array = [
 	[["c", 4, -3.0, -3.0, 0.0, 1.0], ["c", 5, 0.0, -3.5, 120.0, 1.0], ["b", 4, 3.0, -3.0, 20.0, 0.95], ["b", 6, -3.5, 0.0, 215.0, 1.0],
 		["c", 2, -1.0, -0.5, 60.0, 1.0], ["b", 1, 1.5, 0.0, 300.0, 0.95], ["c", 3, 3.5, 1.5, 15.0, 1.0], ["c", 1, -2.0, 3.0, 90.0, 0.95],
 		["b", 7, 1.0, 3.2, 170.0, 1.0], ["c", 5, 3.5, 3.8, 240.0, 1.0]],
+	# d: só coníferas altas (mata do fundo, some na névoa).
+	[["c", 3, -3.2, -3.0, 0.0, 1.0], ["c", 5, -0.6, -3.4, 40.0, 1.0], ["c", 2, 2.8, -2.8, 80.0, 0.95], ["c", 4, -2.2, -0.2, 20.0, 1.0],
+		["c", 1, 0.8, 0.0, 60.0, 1.0], ["c", 5, 3.4, 0.4, 100.0, 1.0], ["c", 3, -3.4, 2.6, 10.0, 0.95], ["c", 0, -0.8, 2.9, 30.0, 1.0],
+		["c", 4, 2.4, 3.3, 70.0, 1.0]],
+	# e: coníferas com folhosas pequenas no meio.
+	[["c", 5, -3.0, -3.2, 15.0, 1.0], ["c", 3, 0.2, -3.0, 55.0, 1.0], ["b", 6, 3.0, -2.6, 95.0, 1.0], ["c", 4, -2.6, 0.2, 135.0, 1.0],
+		["b", 5, 0.4, 0.4, 25.0, 1.0], ["c", 2, 3.2, 1.0, 65.0, 1.0], ["c", 4, -3.0, 3.2, 105.0, 0.95], ["c", 5, 0.0, 3.3, 145.0, 1.0],
+		["b", 7, 3.0, 3.4, 35.0, 0.95]],
 ]
 
 
@@ -195,16 +207,16 @@ static func catalog() -> Array[Dictionary]:
 	out.append(_e("step_low_2", "step_low", Vector3(2, 0.5, 1), {"structural": true, "areas": [[0, 0, 0, 2, 1, 0.5]]}))
 	out.append(_e("step_low_1", "step_low", Vector3(1, 0.5, 1), {"structural": true, "areas": [[0, 0, 0, 1, 1, 0.5]]}))
 	out.append(_e("step_low_corner", "step_low_corner", Vector3(1, 0.5, 1), {"structural": true, "areas": [[0, 0, 0, 1, 1, 0.5]]}))
-	for fill: Vector2i in [Vector2i(4, 3), Vector2i(2, 3), Vector2i(1, 3), Vector2i(3, 3)]:
+	for fill: Vector2i in [Vector2i(4, 3), Vector2i(2, 3), Vector2i(1, 3), Vector2i(3, 3), Vector2i(4, 2), Vector2i(3, 2)]:
 		out.append(_e("terrace_fill_%dx%d" % [fill.x, fill.y], "terrace", Vector3(fill.x, 0.5, fill.y),
 				{"structural": true, "areas": [[0, 0, 0, fill.x, fill.y, 0.5]]}))
-	out.append(_e("wall_high_2", "wall", Vector3(2, 1.5, 1), {"structural": true, "areas": [[0, 0, 0, 2, 1, 1.5]]}))
-	out.append(_e("wall_high_1", "wall", Vector3(1, 1.5, 1), {"structural": true, "areas": [[0, 0, 0, 1, 1, 1.5]]}))
-	out.append(_e("wall_high_corner", "wall_corner", Vector3(1, 1.5, 1), {"structural": true, "areas": [[0, 0, 0, 1, 1, 1.5]]}))
-	out.append(_e("stair_outer_3", "stair_outer", Vector3(3, 1.5, 3), {"structural": true,
-			"stair": [0.0, 2.0, 3.0, 6], "areas": [[-1.25, 0, 0, 0.5, 3, 1.5], [1.25, 0, 0, 0.5, 3, 1.5]]}))
-	out.append(_e("stair_inner_3", "stair_inner", Vector3(3, 1.5, 2), {"structural": true,
-			"stair": [0.5, 2.0, 2.0, 4], "areas": [[-1.25, 0, 0, 0.5, 2, 1.5], [1.25, 0, 0, 0.5, 2, 1.5]]}))
+	out.append(_e("wall_high_2", "wall", Vector3(2, 1.0, 1), {"structural": true, "areas": [[0, 0, 0, 2, 1, 1.0]]}))
+	out.append(_e("wall_high_1", "wall", Vector3(1, 1.0, 1), {"structural": true, "areas": [[0, 0, 0, 1, 1, 1.0]]}))
+	out.append(_e("wall_high_corner", "wall_corner", Vector3(1, 1.0, 1), {"structural": true, "areas": [[0, 0, 0, 1, 1, 1.0]]}))
+	out.append(_e("stair_outer_3", "stair_outer", Vector3(3, 1.0, 2), {"structural": true,
+			"stair": [0.0, 2.0, 2.0, 4], "areas": [[-1.25, 0, 0, 0.5, 2, 1.0], [1.25, 0, 0, 0.5, 2, 1.0]]}))
+	out.append(_e("stair_inner_3", "stair_inner", Vector3(3, 1.0, 1), {"structural": true,
+			"stair": [0.5, 2.0, 1.0, 2], "areas": [[-1.25, 0, 0, 0.5, 1, 1.0], [1.25, 0, 0, 0.5, 1, 1.0]]}))
 	out.append(_e("stair_low_3", "stair_low", Vector3(3, 0.5, 1), {"structural": true, "stair": [0.0, 3.0, 1.0, 2]}))
 	out.append(_e("ground_inner", "ground", Vector3(20, 0, 18), {"material": "ground_grass_arena"}))
 	out.append(_e("ground_outer", "ground", Vector3(48, 0, 48), {"material": "ground_grass_forest"}))
@@ -225,7 +237,7 @@ static func catalog() -> Array[Dictionary]:
 	var bush_h: Array[float] = [0.6, 0.8, 1.0, 1.2]
 	for i in bush_h.size():
 		out.append(_e("bush_%s" % "abcd"[i], "bush", Vector3(1.0 + 0.1 * i, bush_h[i], 1.0 + 0.1 * i), {"variant": i, "obstacle": true}))
-	var logs: Array[Vector3] = [Vector3(2.4, 0.55, 0.6), Vector3(1.8, 0.5, 0.55), Vector3(3.0, 0.6, 0.65)]
+	var logs: Array[Vector3] = [Vector3(2.4, 0.65, 0.7), Vector3(1.8, 0.55, 0.6), Vector3(3.0, 0.7, 0.7)]
 	for i in logs.size():
 		out.append(_e("log_%s" % "abc"[i], "log", logs[i], {"variant": i, "obstacle": true}))
 	out.append(_e("stump_a", "stump", Vector3(0.7, 0.45, 0.7), {"variant": 0, "obstacle": true}))
@@ -236,7 +248,7 @@ static func catalog() -> Array[Dictionary]:
 	out.append(_e("bench_wood", "bench", Vector3(2.0, 0.5, 0.6), {"obstacle": true}))
 	out.append(_e("crate", "crate", Vector3(0.75, 0.75, 0.75), {"obstacle": true}))
 	out.append(_e("crate_stack", "crate_stack", Vector3(1.0, 0.75, 1.0), {"obstacle": true}))
-	out.append(_e("wood_pile", "wood_pile", Vector3(1.4, 0.8, 1.0), {"obstacle": true}))
+	out.append(_e("wood_pile", "wood_pile", Vector3(1.0, 0.9, 1.0), {"obstacle": true}))
 	var cross_angles: Array[float] = [0.0, 20.0, 40.0, 10.0]
 	for i in 4:
 		out.append(_e("mushrooms_%s" % "abcd"[i], "cross", Vector3(0.5, 0.4, 0.5),
@@ -247,8 +259,8 @@ static func catalog() -> Array[Dictionary]:
 	var grass_sizes: Array[Vector3] = [Vector3(0.8, 0.9, 0.8), Vector3(0.8, 0.9, 0.8), Vector3(0.8, 0.7, 0.8)]
 	for i in grass_cards.size():
 		out.append(_e("tall_grass_%s" % "abc"[i], "cross", grass_sizes[i], {"material": grass_cards[i], "variant": 15 * i}))
-	for i in 3:
-		out.append(_e("forest_backdrop_%s" % "abc"[i], "backdrop", Vector3(8, 7.5, 8), {"variant": i, "obstacle": true}))
+	for i in BACKDROPS.size():
+		out.append(_e("forest_backdrop_%s" % "abcde"[i], "backdrop", Vector3(8, 7.5, 8), {"variant": i, "obstacle": true}))
 	return out
 
 

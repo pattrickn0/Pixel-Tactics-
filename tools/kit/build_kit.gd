@@ -60,47 +60,93 @@ func _write_materials(defs: Dictionary) -> Dictionary:
 	return out
 
 
+## Reaproveita a cena que já existe (mantém os unique_id dos nós e o diff do repositório limpo):
+## só troca a malha e as propriedades. Cria uma nova quando não há cena ou a estrutura mudou.
 func _write_scene(entry: Dictionary, mesh: ArrayMesh) -> bool:
-	var root := KitPiece.new()
+	var path: String = SCENE_DIR + str(entry["name"]) + ".tscn"
+	var root: KitPiece = _load_existing(path, entry)
+	if root == null:
+		root = _fresh_root(entry)
 	root.name = str(entry["name"])
 	root.size = entry["size"]
 	root.structural = bool(entry.get("structural", false))
 	root.obstacle = bool(entry.get("obstacle", false))
-	var mesh_node := MeshInstance3D.new()
-	mesh_node.name = "Mesh"
-	mesh_node.mesh = mesh
-	if NO_SHADOW_BUILDS.has(str(entry["build"])):
-		mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	root.add_child(mesh_node)
-	mesh_node.owner = root
+	(root.get_node("Mesh") as MeshInstance3D).mesh = mesh
 	if entry.has("stair"):
 		var spec: Array = entry["stair"]
-		var stair := StairArea.new()
-		stair.name = "Stair"
+		var stair: StairArea = root.get_node("Stair")
 		stair.size = Vector2(float(spec[1]), float(spec[2]))
 		stair.step_count = int(spec[3])
 		stair.position = Vector3(0.0, float(spec[0]), 0.0)
-		root.add_child(stair)
-		stair.owner = root
 	var index: int = 0
 	for area_spec: Array in entry.get("areas", []):
-		var area := HeightArea.new()
-		area.name = "Height" if index == 0 else "Height%d" % (index + 1)
+		var area: HeightArea = root.get_node("Height" if index == 0 else "Height%d" % (index + 1))
 		area.size = Vector2(float(area_spec[3]), float(area_spec[4]))
 		area.top = float(area_spec[5])
 		area.position = Vector3(float(area_spec[0]), float(area_spec[1]), float(area_spec[2]))
-		root.add_child(area)
-		area.owner = root
 		index += 1
 	var packed := PackedScene.new()
 	if packed.pack(root) != OK:
 		push_error("Falha ao empacotar " + str(entry["name"]))
 		root.free()
 		return false
-	var path: String = SCENE_DIR + str(entry["name"]) + ".tscn"
 	var err: Error = ResourceSaver.save(packed, path)
 	root.free()
 	if err != OK:
 		push_error("Falha ao gravar %s (erro %d)" % [path, err])
 		return false
 	return true
+
+
+## Nomes dos filhos que a cena da tabela deve ter.
+func _expected_children(entry: Dictionary) -> PackedStringArray:
+	var names: PackedStringArray = ["Mesh"]
+	if entry.has("stair"):
+		names.append("Stair")
+	var index: int = 0
+	for _area_spec: Array in entry.get("areas", []):
+		names.append("Height" if index == 0 else "Height%d" % (index + 1))
+		index += 1
+	return names
+
+
+func _load_existing(path: String, entry: Dictionary) -> KitPiece:
+	if not ResourceLoader.exists(path):
+		return null
+	var packed := ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_REPLACE) as PackedScene
+	var root := packed.instantiate() as KitPiece if packed != null else null
+	if root == null:
+		return null
+	var expected: PackedStringArray = _expected_children(entry)
+	var found: PackedStringArray = PackedStringArray()
+	for child: Node in root.get_children():
+		found.append(str(child.name))
+	found.sort()
+	expected.sort()
+	if found != expected:
+		root.free()
+		return null
+	return root
+
+
+func _fresh_root(entry: Dictionary) -> KitPiece:
+	var root := KitPiece.new()
+	var mesh_node := MeshInstance3D.new()
+	mesh_node.name = "Mesh"
+	if NO_SHADOW_BUILDS.has(str(entry["build"])):
+		mesh_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(mesh_node)
+	mesh_node.owner = root
+	if entry.has("stair"):
+		var stair := StairArea.new()
+		stair.name = "Stair"
+		root.add_child(stair)
+		stair.owner = root
+	var index: int = 0
+	for _area_spec: Array in entry.get("areas", []):
+		var area := HeightArea.new()
+		area.name = "Height" if index == 0 else "Height%d" % (index + 1)
+		root.add_child(area)
+		area.owner = root
+		index += 1
+	return root

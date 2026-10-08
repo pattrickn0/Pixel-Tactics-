@@ -14,7 +14,7 @@ signal yaw_changed(yaw_degrees: float)
 @export_range(15.0, 70.0, 0.5) var fov_degrees: float = 32.0
 @export var min_distance: float = 8.0
 @export var max_distance: float = 64.0
-@export var start_distance: float = 46.0
+@export var start_distance: float = 43.0
 ## Quanto cada clique da roda muda a distância.
 @export var zoom_step: float = 3.0
 ## Suavização do zoom (0 = instantâneo).

@@ -1,14 +1,16 @@
 [gd_resource type="ShaderMaterial" format=3]
 
-[ext_resource type="Shader" path="res://assets/materials/kit_surface.gdshader" id="1_m5twk"]
-[ext_resource type="Texture2D" path="res://assets/textures/wall/wall_cap.png" id="2_6y612"]
+[ext_resource type="Shader" path="res://assets/materials/kit_surface.gdshader" id="1_6y612"]
+[ext_resource type="Texture2D" path="res://assets/textures/wall/wall_cap.png" id="2_4jvov"]
+[ext_resource type="Texture2D" path="res://assets/textures/wall/wall_cap_n.png" id="3_3ajc8"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_m5twk")
-shader_parameter/albedo_tex = ExtResource("2_6y612")
-shader_parameter/use_normal = null
-shader_parameter/normal_scale = null
+shader = ExtResource("1_6y612")
+shader_parameter/albedo_tex = ExtResource("2_4jvov")
+shader_parameter/normal_tex = ExtResource("3_3ajc8")
+shader_parameter/use_normal = true
+shader_parameter/normal_scale = 0.5
 shader_parameter/tint = null
 shader_parameter/uv_mode = 2
 shader_parameter/world_space = null

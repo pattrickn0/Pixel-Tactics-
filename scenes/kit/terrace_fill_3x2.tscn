@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_rury0"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/terrace_fill_3x2.res" id="2_055qs"]
+[ext_resource type="Script" path="res://scripts/map/height_area.gd" id="3_168il"]
+
+[node name="terrace_fill_3x2" type="Node3D" unique_id=1422893769]
+script = ExtResource("1_rury0")
+size = Vector3(3, 0.5, 2)
+structural = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=67639248]
+mesh = ExtResource("2_055qs")
+
+[node name="Height" type="Node3D" parent="." unique_id=1534092607]
+script = ExtResource("3_168il")
+size = Vector2(3, 2)
