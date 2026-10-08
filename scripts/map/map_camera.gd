@@ -9,12 +9,14 @@ extends Camera3D
 signal yaw_changed(yaw_degrees: float)
 
 ## Inclinação para baixo, em graus (fixa).
-@export_range(15.0, 70.0, 0.5) var pitch_degrees: float = 40.0
+@export_range(15.0, 70.0, 0.5) var pitch_degrees: float = 27.0
 ## Campo de visão vertical, em graus.
-@export_range(15.0, 70.0, 0.5) var fov_degrees: float = 32.0
-@export var min_distance: float = 8.0
-@export var max_distance: float = 64.0
-@export var start_distance: float = 43.0
+@export_range(15.0, 70.0, 0.5) var fov_degrees: float = 37.0
+## Limites do zoom. max_distance × cos(pitch) − focus_forward_offset fica ≤ 50 (spec 012):
+## a órbita nunca chega na ilha alta nem nas ilhotas de fundo.
+@export var min_distance: float = 14.0
+@export var max_distance: float = 60.0
+@export var start_distance: float = 54.0
 ## Quanto cada clique da roda muda a distância.
 @export var zoom_step: float = 3.0
 ## Suavização do zoom (0 = instantâneo).
@@ -23,8 +25,9 @@ signal yaw_changed(yaw_degrees: float)
 @export var rotation_smoothing: float = 12.0
 ## Ângulo de giro em graus por passo (teclas A/D ou botões do HUD).
 @export var rotation_step: float = 45.0
-## No zoom máximo, o alvo desce esta fração da profundidade da arena para o sul.
-@export_range(0.0, 0.4, 0.01) var focus_south_ratio: float = 0.0
+## O ponto mirado fica esta distância à frente do centro da arena, no sentido da vista
+## (gira junto com o yaw). Só enquadramento: a órbita continua em volta do centro.
+@export var focus_forward_offset: float = 4.3
 ## Altura acima do chão mais alto do mapa que precisa ficar nítida (copas).
 @export var sharp_height: float = 6.0
 ## O desfoque de longe começa pelo menos esta distância depois do ponto mais longe do anfiteatro.
@@ -205,17 +208,45 @@ func _process(delta: float) -> void:
 		_apply_position()
 
 
-## Ponto mirado: centro da arena.
+## Ponto mirado: o centro da arena deslocado focus_forward_offset no sentido da vista.
 func get_focus_point() -> Vector3:
-	var t: float = 0.0
-	if max_distance > min_distance:
-		t = clampf((distance - min_distance) / (max_distance - min_distance), 0.0, 1.0)
-	var south_offset: float = _arena_size.y * focus_south_ratio * t
-	var center3 := Vector3(_arena_center.x, _base_height, _arena_center.y)
-	if south_offset > 0.0:
-		var forward := -Vector3(basis.z.x, 0.0, basis.z.z).normalized()
-		center3 -= forward * south_offset
-	return center3
+	return focus_for(yaw_degrees)
+
+
+## Centro da órbita (centro da arena, no chão).
+func get_orbit_center() -> Vector3:
+	return Vector3(_arena_center.x, _base_height, _arena_center.y)
+
+
+## Ponto mirado para um yaw qualquer (sem mexer na câmera).
+func focus_for(yaw: float) -> Vector3:
+	var yaw_rad: float = deg_to_rad(yaw)
+	# Em yaw 0 a câmera olha para -Z (norte).
+	var forward := Vector3(-sin(yaw_rad), 0.0, -cos(yaw_rad))
+	return get_orbit_center() + forward * focus_forward_offset
+
+
+## Transformação da câmera para um yaw e uma distância (mesma conta de _apply_basis/_apply_position).
+## Usada pelos testes de composição e de visibilidade.
+func transform_for(yaw: float, dist: float) -> Transform3D:
+	var b := Basis(Vector3.UP, deg_to_rad(yaw)) * Basis(Vector3.RIGHT, -deg_to_rad(pitch_degrees))
+	return Transform3D(b, focus_for(yaw) + b.z * dist)
+
+
+## Raio horizontal da órbita (do centro da arena até a câmera) numa distância.
+func orbit_radius(dist: float) -> float:
+	return dist * cos(deg_to_rad(pitch_degrees)) - focus_forward_offset
+
+
+## Câmera só para captura (--overview): mais alta e mais longe, mostra a ilha inteira.
+## Fora dos limites do zoom de jogo; não é usada no jogo.
+func set_capture_view(pitch: float, dist: float) -> void:
+	pitch_degrees = pitch
+	min_distance = minf(min_distance, dist)
+	max_distance = maxf(max_distance, dist)
+	set_target_distance(dist, true)
+	_apply_basis()
+	_apply_position()
 
 
 func _apply_position() -> void:

@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_esx4c"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/stair_crest_3.res" id="2_6tm3p"]
+[ext_resource type="Script" path="res://scripts/map/height_area.gd" id="3_o0n6v"]
+
+[node name="stair_crest_3" type="Node3D" unique_id=110013616]
+script = ExtResource("1_esx4c")
+size = Vector3(3, 1, 1)
+structural = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1475121528]
+mesh = ExtResource("2_6tm3p")
+
+[node name="Height" type="Node3D" parent="." unique_id=1697479807]
+script = ExtResource("3_o0n6v")
+top = 1.0
+size = Vector2(3, 1)

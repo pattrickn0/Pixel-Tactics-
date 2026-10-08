@@ -6,22 +6,26 @@
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="4_hud"]
 [ext_resource type="Script" path="res://scripts/core/atmosphere.gd" id="5_atmosphere"]
 [ext_resource type="Script" path="res://scripts/map/kit/occlusion_dither.gd" id="6_dither"]
+[ext_resource type="Shader" path="res://assets/materials/sky_day.gdshader" id="7_sky"]
+[ext_resource type="Script" path="res://scripts/map/kit/mesh_merger.gd" id="8_merger"]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_main"]
-sky_top_color = Color(0.471, 0.682, 0.859, 1)
-sky_horizon_color = Color(0.749, 0.847, 0.878, 1)
-ground_bottom_color = Color(0.651, 0.769, 0.808, 1)
-ground_horizon_color = Color(0.651, 0.769, 0.808, 1)
+[sub_resource type="ShaderMaterial" id="SkyMaterial_main"]
+shader = ExtResource("7_sky")
+shader_parameter/zenith = Color(0.561, 0.69, 0.847, 1)
+shader_parameter/middle = Color(0.788, 0.827, 0.918, 1)
+shader_parameter/horizon = Color(0.918, 0.851, 0.863, 1)
+shader_parameter/below = Color(0.773, 0.792, 0.886, 1)
+shader_parameter/sun_glow = Color(1, 0.941, 0.847, 1)
 
 [sub_resource type="Sky" id="Sky_main"]
-sky_material = SubResource("ProceduralSkyMaterial_main")
+sky_material = SubResource("SkyMaterial_main")
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 2
 sky = SubResource("Sky_main")
 ambient_light_source = 2
-ambient_light_color = Color(0.498, 0.659, 0.596, 1)
-ambient_light_energy = 1.1
+ambient_light_color = Color(0.722, 0.769, 0.863, 1)
+ambient_light_energy = 0.45
 reflected_light_source = 1
 tonemap_mode = 0
 tonemap_exposure = 1.0
@@ -43,11 +47,11 @@ glow_blend_mode = 0
 glow_hdr_threshold = 1.0
 fog_enabled = true
 fog_mode = 1
-fog_light_color = Color(0.651, 0.769, 0.808, 1)
+fog_light_color = Color(0.863, 0.839, 0.902, 1)
 fog_light_energy = 1.0
 fog_sun_scatter = 0.0
-fog_density = 1.0
-fog_sky_affect = 0.5
+fog_density = 0.1
+fog_sky_affect = 0.0
 fog_depth_curve = 0.6
 fog_depth_begin = 70.0
 fog_depth_end = 100.0
@@ -70,9 +74,9 @@ environment = SubResource("Environment_main")
 camera_attributes = SubResource("CameraAttributes_main")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
-rotation_degrees = Vector3(-55, -45, 0)
-light_color = Color(1, 0.953, 0.863, 1)
-light_energy = 0.9
+rotation_degrees = Vector3(-44, -112.5, 0)
+light_color = Color(1, 0.914, 0.784, 1)
+light_energy = 1.1
 shadow_enabled = true
 shadow_bias = 0.02
 shadow_normal_bias = 1.0
@@ -82,7 +86,7 @@ directional_shadow_split_1 = 0.2
 directional_shadow_split_2 = 0.4
 directional_shadow_split_3 = 0.7
 directional_shadow_blend_splits = true
-directional_shadow_max_distance = 110.0
+directional_shadow_max_distance = 90.0
 
 [node name="Atmosphere" type="Node" parent="." node_paths=PackedStringArray("sun", "world_environment")]
 script = ExtResource("5_atmosphere")
@@ -91,6 +95,9 @@ world_environment = NodePath("../WorldEnvironment")
 
 [node name="OcclusionDither" type="Node" parent="."]
 script = ExtResource("6_dither")
+
+[node name="MeshMerger" type="Node" parent="."]
+script = ExtResource("8_merger")
 
 [node name="MapCamera" type="Camera3D" parent="."]
 script = ExtResource("3_camera")

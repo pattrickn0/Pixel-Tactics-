@@ -1,0 +1,27 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/scenery_solid.gdshader" id="1_k8u8m"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_k8u8m")
+shader_parameter/color_low = Color(0.5568628, 0.4627451, 0.3764706, 1)
+shader_parameter/color_high = Color(0.8784314, 0.8, 0.6666667, 1)
+shader_parameter/color_patch = Color(0.7411765, 0.627451, 0.5137255, 1)
+shader_parameter/patch_scale = 0.9
+shader_parameter/patch_amount = 0.35
+shader_parameter/stroke_scale = null
+shader_parameter/stroke_amount = 0.06
+shader_parameter/top_color = Color(0.5294118, 0.63529414, 0.22745098, 1)
+shader_parameter/top_amount = 0.7
+shader_parameter/top_sharpness = 4.0
+shader_parameter/world_gradient = null
+shader_parameter/world_gradient_range = null
+shader_parameter/vertex_ao = null
+shader_parameter/emission_color = null
+shader_parameter/emission_energy = null
+shader_parameter/dither_on = true
+shader_parameter/cam_pos = null
+shader_parameter/arena_rect = null
+shader_parameter/dither_density = null
+shader_parameter/dither_margin = 3.0

@@ -5,7 +5,7 @@
 
 [node name="tree_small_b" type="Node3D" unique_id=769514703]
 script = ExtResource("1_a8ga4")
-size = Vector3(2.4, 2.9, 2.4)
+size = Vector3(3.2, 2.8, 3.2)
 obstacle = true
 
 [node name="Mesh" type="MeshInstance3D" parent="." unique_id=1359174757]

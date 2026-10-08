@@ -11,6 +11,11 @@ const TEXEL: float = WorldScale.PIXEL_SIZE
 var batches: Dictionary = {}
 ## Transformação aplicada a tudo que for emitido (posição, giro e escala uniforme da peça).
 var xf: Transform3D = Transform3D.IDENTITY
+## Cor por vértice dos próximos triângulos (shaders do cenário). r: gradiente (0 embaixo, 1 em cima);
+## g: luz (1 = sem escurecer); b: tipo de máscara do cartão; a: variação da peça.
+var color: Color = Color.WHITE
+## Se y1 > y0, o canal r da cor vira o gradiente pela altura (y já transformado) entre y0 e y1.
+var gradient: Vector2 = Vector2.ZERO
 
 
 func batch(key: String) -> MeshBatch:
@@ -49,6 +54,16 @@ func tri(key: String, a: Vector3, b: Vector3, c: Vector3, na: Vector3, nb: Vecto
 	mb.uvs.append(uva)
 	mb.uvs.append(uvb)
 	mb.uvs.append(uvc)
+	for p: Vector3 in [pa, pb, pc]:
+		mb.colors.append(_vertex_color(p))
+
+
+func _vertex_color(p: Vector3) -> Color:
+	if gradient.y <= gradient.x:
+		return color
+	var c: Color = color
+	c.r = clampf((p.y - gradient.x) / (gradient.y - gradient.x), 0.0, 1.0)
+	return c
 
 
 ## Triângulo de normal única (a normal pedida decide o lado visível).

@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_j60i8"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/ruin_lintel.res" id="2_qatdi"]
+
+[node name="ruin_lintel" type="Node3D" unique_id=97612523]
+script = ExtResource("1_j60i8")
+size = Vector3(4.4, 0.55, 0.8)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=2134489236]
+mesh = ExtResource("2_qatdi")

@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_l3p4f"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/platform_w.res" id="2_ikf0a"]
+
+[node name="platform_w" type="Node3D" unique_id=1998213737]
+script = ExtResource("1_l3p4f")
+size = Vector3(4, 0.06, 5.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=275469771]
+mesh = ExtResource("2_ikf0a")

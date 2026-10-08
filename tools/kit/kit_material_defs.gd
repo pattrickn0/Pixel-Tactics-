@@ -10,6 +10,7 @@ extends RefCounted
 const TEX_ROOT: String = "res://assets/textures/"
 const SHADER_PATH: String = "res://assets/materials/kit_surface.gdshader"
 const OUT_DIR: String = "res://assets/materials/"
+const SHADER_DIR: String = "res://assets/materials/"
 
 
 static func all() -> Dictionary:
@@ -105,4 +106,75 @@ static func make(entry: Dictionary) -> ShaderMaterial:
 	if bool(entry.get("dither", false)):
 		mat.set_shader_parameter("dither_on", true)
 		mat.set_shader_parameter("dither_margin", float(entry.get("margin", 0.0)))
+	return mat
+
+
+# ================================================================ cenário pintado (provisório, spec 012 Fase 1)
+
+## Materiais PROVISÓRIOS do cenário pintado (até a A08): sem textura, cor por gradiente e ruído com seed
+## fixa no shader, com a paleta-alvo de docs/direcao-de-arte.md. Cada linha: shader (arquivo em
+## assets/materials/, sem extensão) e params (uniforms). Trocar pela arte da A08 = mudar o shader/params.
+static func scenery() -> Dictionary:
+	var d: Dictionary = {}
+	d["grass_painted"] = _s("scenery_grass", {"grass_dark": Color("#3a4818"), "grass_mid": Color("#56661f"),
+			"grass_light": Color("#748228"), "grass_sun": Color("#929e36")})
+	d["grass_painted_inner"] = _s("scenery_grass", {"offset": Vector2(37.0, 11.0), "grass_dark": Color("#4e5a1e"),
+			"grass_mid": Color("#6e7c26"), "grass_light": Color("#8a9430"), "grass_sun": Color("#a8ac44")})
+	d["cliff_painted"] = _s("scenery_solid", {"color_low": Color("#3e3640"), "color_high": Color("#7a5a3e"),
+			"color_patch": Color("#6e5038"), "patch_scale": 0.22, "patch_amount": 0.45, "stroke_scale": 1.2, "stroke_amount": 0.1,
+			"top_color": Color("#56661f"), "top_amount": 0.95, "top_sharpness": 6.0,
+			"world_gradient": true, "world_gradient_range": Vector2(-9.0, 0.5)})
+	d["under_painted"] = _s("scenery_solid", {"color_low": Color("#3a3440"), "color_high": Color("#6e5038"),
+			"color_patch": Color("#4a3628"), "patch_scale": 0.12, "patch_amount": 0.4, "stroke_scale": 0.8, "stroke_amount": 0.1,
+			"world_gradient": true, "world_gradient_range": Vector2(-22.0, -3.0)})
+	d["rock_painted"] = _s("scenery_solid", {"color_low": Color("#4a3e3a"), "color_high": Color("#9a7656"),
+			"color_patch": Color("#6e5038"), "patch_scale": 0.5, "patch_amount": 0.35, "stroke_amount": 0.08,
+			"top_color": Color("#6f9a30"), "top_amount": 0.9, "top_sharpness": 5.0, "dither_on": true, "dither_margin": 1.0})
+	d["slab_painted"] = _s("scenery_solid", {"color_low": Color("#a8925e"), "color_high": Color("#d6bb8d"),
+			"color_patch": Color("#8e7c56"), "patch_scale": 1.1, "patch_amount": 0.4, "stroke_scale": 3.0, "stroke_amount": 0.07})
+	d["stone_painted"] = _s("scenery_solid", {"color_low": Color("#8e7660"), "color_high": Color("#e0ccaa"),
+			"color_patch": Color("#bda083"), "patch_scale": 0.9, "patch_amount": 0.35, "stroke_amount": 0.06,
+			"top_color": Color("#87a23a"), "top_amount": 0.7, "top_sharpness": 4.0, "dither_on": true, "dither_margin": 3.0})
+	d["wood_painted"] = _s("scenery_solid", {"color_low": Color("#4a3426"), "color_high": Color("#a88058"),
+			"color_patch": Color("#7a5638"), "patch_scale": 1.4, "patch_amount": 0.4, "stroke_scale": 4.0, "stroke_amount": 0.1})
+	d["bark_painted"] = _s("scenery_solid", {"color_low": Color("#3e2c20"), "color_high": Color("#7a5638"),
+			"color_patch": Color("#5a4030"), "patch_scale": 1.2, "patch_amount": 0.4, "stroke_scale": 3.0, "stroke_amount": 0.12,
+			"top_color": Color("#56702a"), "top_amount": 0.5, "dither_on": true, "dither_margin": 3.0})
+	d["root_painted"] = _s("scenery_solid", {"color_low": Color("#3a2a22"), "color_high": Color("#6e5038"),
+			"color_patch": Color("#4a3426"), "patch_scale": 0.8, "patch_amount": 0.4, "stroke_amount": 0.1})
+	d["rope_painted"] = _s("scenery_solid", {"color_low": Color("#8a6a48"), "color_high": Color("#c8aa7a"),
+			"color_patch": Color("#a88058"), "patch_amount": 0.2})
+	d["iron_painted"] = _s("scenery_solid", {"color_low": Color("#2a2624"), "color_high": Color("#4e4640"),
+			"color_patch": Color("#3a3430"), "patch_amount": 0.2, "dither_on": true, "dither_margin": 3.0})
+	d["foliage_warm"] = _s("scenery_foliage", {"color_low": Color("#3a4a22"), "color_mid": Color("#6f8a34"),
+			"color_high": Color("#c0c864"), "dither_on": true, "dither_margin": 3.0})
+	d["foliage_mid"] = _s("scenery_foliage", {"color_low": Color("#2e4422"), "color_mid": Color("#587a2e"),
+			"color_high": Color("#a0b450"), "dither_on": true, "dither_margin": 3.0})
+	d["foliage_cool"] = _s("scenery_foliage", {"color_low": Color("#24402a"), "color_mid": Color("#4a6e3a"),
+			"color_high": Color("#8aa660"), "dither_on": true, "dither_margin": 3.0})
+	d["foliage_conifer"] = _s("scenery_foliage", {"color_low": Color("#1e3418"), "color_mid": Color("#3a5a24"),
+			"color_high": Color("#8aa648"), "dither_on": true, "dither_margin": 3.0})
+	d["cloud_puff"] = _s("cloud_puff", {})
+	d["water_fall"] = _s("water_fall", {})
+	d["rainbow"] = _s("rainbow", {})
+	d["flame"] = _s("flame", {})
+	d["arena_ground"] = _s("arena_ground", {})
+	d["tuft_grass"] = _s("scenery_tuft", {})
+	d["tuft_flower"] = _s("scenery_tuft", {"flower_mode": true})
+	return d
+
+
+static func _s(shader_name: String, params: Dictionary) -> Dictionary:
+	return {"shader": shader_name, "params": params}
+
+
+## Material provisório do cenário: ShaderMaterial com o shader e os uniforms da linha.
+static func make_scenery(entry: Dictionary) -> ShaderMaterial:
+	var mat := ShaderMaterial.new()
+	mat.shader = load(SHADER_DIR + str(entry["shader"]) + ".gdshader") as Shader
+	var params: Dictionary = entry["params"]
+	var keys: Array = params.keys()
+	keys.sort()
+	for key: String in keys:
+		mat.set_shader_parameter(key, params[key])
 	return mat

@@ -84,9 +84,9 @@ func _test_map_scene(main: Node) -> void:
 	_check(match_state.has_map() and match_state.map_data.arena_rect == Rect2(-10, -9, 20, 18),
 			"MatchState recebeu o mapa (arena 20 x 18) pelo sinal map_ready")
 	var camera := main.get_node("MapCamera") as MapCamera
-	_check(camera.pitch_degrees == 40.0, "câmera padrão com 40° de inclinação", str(camera.pitch_degrees))
+	_check(camera.pitch_degrees == 27.0, "câmera padrão com 27° de inclinação (spec 012)", str(camera.pitch_degrees))
 	var focus: Vector3 = camera.get_focus_point()
-	_check(Vector2(focus.x, focus.z) == Vector2.ZERO and is_zero_approx(focus.y), "a câmera mira o centro da arena (0, 0, 0)", str(focus))
+	_check(focus.is_equal_approx(Vector3(0.0, 0.0, -4.3)), "em yaw 0 a câmera mira 4,3 à frente do centro da arena (0, 0, -4,3)", str(focus))
 	var orphans: int = int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
 	_check(orphans == 0, "nenhum nó órfão", "%d órfãos" % orphans)
 
@@ -232,7 +232,8 @@ func _test_camera_rotation(main: Node) -> void:
 			"botões do mouse não giram a câmera", "yaw %.2f" % camera.yaw_degrees)
 
 
-## (d) Em yaw 0, 90, 180 e 270, a câmera mira o centro da arena, dentro dos limites de distância.
+## (d) Em yaw 0, 90, 180 e 270, a câmera mira o ponto 4,3 à frente do centro da arena (gira com o yaw), orbita
+## o centro (raio horizontal = distância x cos(pitch) - 4,3) e fica dentro dos limites de distância.
 func _test_camera_aim(main: Node) -> void:
 	var camera := main.get_node("MapCamera") as MapCamera
 	var match_state: MatchState = main.get("match_state")
@@ -243,14 +244,18 @@ func _test_camera_aim(main: Node) -> void:
 	for yaw: float in [0.0, 90.0, 180.0, 270.0]:
 		camera.set_target_yaw(yaw, true)
 		var xf: Transform3D = camera.global_transform
-		var to_center: Vector3 = (center - xf.origin).normalized()
 		var forward: Vector3 = -xf.basis.z.normalized()
-		var dist: float = xf.origin.distance_to(center)
+		var flat := Vector3(forward.x, 0.0, forward.z).normalized()
+		var aim: Vector3 = center + flat * camera.focus_forward_offset
+		var to_aim: Vector3 = (aim - xf.origin).normalized()
+		var dist: float = xf.origin.distance_to(aim)
+		var radius: float = Vector2(xf.origin.x - center.x, xf.origin.z - center.z).length()
 		var in_limits: bool = dist >= camera.min_distance - 0.001 and dist <= camera.max_distance + 0.001
-		if (to_center - forward).length() > 0.001 or not in_limits or not is_equal_approx(_angle_diff(camera.yaw_degrees, yaw), 0.0):
+		if (to_aim - forward).length() > 0.001 or not in_limits or not is_equal_approx(_angle_diff(camera.yaw_degrees, yaw), 0.0) \
+				or absf(radius - camera.orbit_radius(camera.distance)) > 0.01:
 			ok = false
-			detail += "yaw %.0f: desvio %.4f, distância %.2f; " % [yaw, (to_center - forward).length(), dist]
-	_check(ok, "em yaw 0, 90, 180 e 270 a câmera mira o centro da arena, com distância entre os limites", detail)
+			detail += "yaw %.0f: desvio %.4f, distância %.2f, raio %.2f; " % [yaw, (to_aim - forward).length(), dist, radius]
+	_check(ok, "em yaw 0, 90, 180 e 270 a câmera mira 4,3 à frente do centro da arena e orbita o centro, com distância entre os limites", detail)
 	camera.reset_to_default(true)
 	await _frames(2)
 

@@ -55,6 +55,10 @@ void vertex() {
 	}
 	vec3 axis_local = strip_axis == 0 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 0.0, 1.0);
 	vec2 axis_world = (MODEL_MATRIX * vec4(axis_local, 0.0)).xz;
+	// Malha juntada (MeshMerger, spec 012): o eixo da faixa da peça original vem no UV2.
+	if (dot(UV2, UV2) > 0.25) {
+		axis_world = UV2;
+	}
 	v_strip_u = dot(v_world.xz, axis_world);
 }
 

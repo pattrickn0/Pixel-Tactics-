@@ -6,6 +6,8 @@ extends RefCounted
 var vertices: PackedVector3Array = PackedVector3Array()
 var normals: PackedVector3Array = PackedVector3Array()
 var uvs: PackedVector2Array = PackedVector2Array()
+## Cor por vértice (dados para os shaders do cenário: gradiente, AO, tipo de máscara). Branca por padrão.
+var colors: PackedColorArray = PackedColorArray()
 
 
 func is_empty() -> bool:
@@ -98,6 +100,8 @@ func commit(mesh: ArrayMesh, material: Material, with_tangents: bool = true) -> 
 	arrays[Mesh.ARRAY_VERTEX] = vertices
 	arrays[Mesh.ARRAY_NORMAL] = normals
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
+	if colors.size() == vertices.size():
+		arrays[Mesh.ARRAY_COLOR] = colors
 	var st := SurfaceTool.new()
 	st.create_from_arrays(arrays)
 	# Tangentes só para material com normal map no UV da malha (o shader projeta os outros).

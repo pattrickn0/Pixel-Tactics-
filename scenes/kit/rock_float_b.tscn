@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_05emk"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/rock_float_b.res" id="2_ser36"]
+
+[node name="rock_float_b" type="Node3D" unique_id=1365338469]
+script = ExtResource("1_05emk")
+size = Vector3(1, 1.6, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=790793227]
+cast_shadow = 0
+mesh = ExtResource("2_ser36")

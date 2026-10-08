@@ -1,7 +1,7 @@
 extends SceneTree
-## Testes do kit (spec 011, fases 1 e 2): toda cena de scenes/kit/ abre, tem malha visível, o
-## tamanho/pivô da tabela e os marcadores certos; materiais em assets/materials/; capeamento,
-## quinas, árvores (lóbulos e andares) e decalques conforme as tabelas.
+## Testes do kit (spec 011, fases 1 e 2, e spec 012 Fase 1): toda cena de scenes/kit/ abre, tem malha visível,
+## o tamanho/pivô da tabela e os marcadores certos; materiais em assets/materials/; capeamento, quinas,
+## árvores pintadas (lóbulos de cartões e andares de cartões), peças da ilha e decalques da arena.
 ## Rodar depois do comando de validação 1:
 ##   "$G" --headless --path . --script tools/tests/test_kit.gd
 
@@ -11,7 +11,6 @@ const TOLERANCE: float = 0.001
 const OVERHANG: float = 0.16
 const MESH_DIR: String = "res://assets/models/kit/"
 const MATERIAL_DIR: String = "res://assets/materials/"
-const TEXEL: float = WorldScale.PIXEL_SIZE
 ## Cenas obrigatórias da tabela do Kit (nome -> pegada largura, fundo e altura).
 const REQUIRED: Dictionary = {
 	"step_low_2": Vector3(2, 0.5, 1), "step_low_1": Vector3(1, 0.5, 1), "step_low_corner": Vector3(1, 0.5, 1),
@@ -20,9 +19,21 @@ const REQUIRED: Dictionary = {
 	"wall_high_2": Vector3(2, 1.0, 1), "wall_high_1": Vector3(1, 1.0, 1), "wall_high_corner": Vector3(1, 1.0, 1),
 	"stair_outer_3": Vector3(3, 1.0, 2), "stair_inner_3": Vector3(3, 1.0, 1), "stair_low_3": Vector3(3, 0.5, 1),
 	"terrace_fill_4x2": Vector3(4, 0.5, 2), "terrace_fill_3x2": Vector3(3, 0.5, 2),
+	"stair_crest_in_3": Vector3(4, 1.0, 1), "stair_pass_out_3": Vector3(3, 0.75, 2), "stair_crest_3": Vector3(3, 1.0, 1),
+	"stair_landing_3": Vector3(1, 0.5, 3),
+}
+## Marcadores esperados nas peças de escada e passagem: [StairArea, HeightArea]. As outras estruturais: [0, 1].
+const STAIR_MARKERS: Dictionary = {
+	"stair_outer_3": [1, 2], "stair_inner_3": [1, 2], "stair_low_3": [1, 0], "stair_crest_in_3": [1, 2],
+	"stair_pass_out_3": [1, 0], "stair_crest_3": [0, 1], "stair_landing_3": [0, 1],
 }
 const REQUIRED_NAMES: PackedStringArray = [
-	"ground_inner", "ground_outer", "ground_far", "decal_arena_dirt", "decal_grass_light_0", "decal_grass_light_1",
+	"island_top", "island_cliff", "island_under", "root_hang_a", "root_hang_b", "root_hang_c", "vine_hang_a", "vine_hang_b",
+	"island_high", "high_spur", "high_block", "waterfall", "rainbow", "islet_ruins", "islet_ne", "islet_w", "islet_e",
+	"rock_float_a", "rock_float_b", "rock_float_c", "rock_big", "ruin_column_a", "ruin_column_b", "ruin_column_c", "ruin_lintel",
+	"cloud_a", "cloud_b", "cloud_c", "cloud_d", "cloud_e", "brazier_a", "bridge_rope_w", "bridge_rope_e", "landing_south",
+	"landing_north", "platform_w", "path_ne", "pillar_stone", "arena_ground", "arena_slabs",
+	"ground_inner", "ground_outer", "decal_arena_dirt", "decal_grass_light_0", "decal_grass_light_1",
 	"decal_grass_light_2", "decal_grass_dark_0", "decal_grass_dark_1", "decal_forest_soil_0", "decal_forest_soil_1",
 	"decal_trail_0", "decal_trail_1", "decal_trail_2", "decal_trail_3", "decal_trail_bend",
 	"tree_broad_a", "tree_broad_b", "tree_broad_c", "tree_broad_d", "tree_broad_e",
@@ -31,7 +42,7 @@ const REQUIRED_NAMES: PackedStringArray = [
 	"bush_a", "bush_b", "bush_c", "bush_d", "log_a", "log_b", "log_c", "stump_a", "stump_b",
 	"rock_a", "rock_b", "rock_c", "rock_d", "bench_wood", "crate", "crate_stack", "wood_pile",
 	"mushrooms_a", "mushrooms_b", "mushrooms_c", "mushrooms_d", "flowers_a", "flowers_b", "flowers_c", "flowers_d",
-	"tall_grass_a", "tall_grass_b", "tall_grass_c", "forest_backdrop_a", "forest_backdrop_b", "forest_backdrop_c",
+	"tall_grass_a", "tall_grass_b", "tall_grass_c",
 ]
 
 var _failures: int = 0
@@ -101,13 +112,9 @@ func _run() -> void:
 					heights += 1
 				elif child is StairArea:
 					stairs += 1
-			if kit_name.begins_with("stair_"):
-				if stairs != 1:
-					marker_bad.append(kit_name + " sem StairArea")
-				if kit_name != "stair_low_3" and heights != 2:
-					marker_bad.append(kit_name + " sem as 2 bochechas")
-			elif heights != 1:
-				marker_bad.append(kit_name + " sem HeightArea")
+			var want_markers: Array = STAIR_MARKERS.get(kit_name, [0, 1])
+			if stairs != int(want_markers[0]) or heights != int(want_markers[1]):
+				marker_bad.append("%s: %d StairArea e %d HeightArea (esperado %s)" % [kit_name, stairs, heights, str(want_markers)])
 			# A pegada da malha cabe na tabela (tolerância para o beiral).
 			if mesh_node != null and mesh_node.mesh != null:
 				var box: AABB = mesh_node.get_aabb()
@@ -253,46 +260,40 @@ func _check_slabs() -> void:
 	_check(cap_tris >= 10, "wall_high_2 modela as lajes de capeamento na geometria (%d triângulos)" % cap_tris)
 
 
-## Folhosas: 8 a 20 lóbulos com miolo + casca; coníferas: 5 a 9 andares com pontas; nenhuma árvore em cartão.
+## Árvores pintadas (spec 012): folhosas com 6 a 14 lóbulos, coníferas com 5 a 9 andares; copa feita de muitos
+## cartões de folhagem (material scenery_foliage) mais o tronco (scenery_solid). Nenhuma árvore em cartão único.
 func _check_trees() -> void:
 	var bad: Array[String] = []
 	for i in KitTables.BROAD.size():
 		var lobes: int = (KitTables.BROAD[i]["lobes"] as Array).size()
-		if lobes < 8 or lobes > 20:
+		if lobes < 6 or lobes > 14:
 			bad.append("folhosa %d: %d lóbulos" % [i, lobes])
-	_check(bad.is_empty(), "cada folhosa tem de 8 a 20 lóbulos", str(bad))
+	_check(bad.is_empty(), "cada folhosa tem de 6 a 14 lóbulos", str(bad))
 	bad.clear()
 	for i in KitTables.CONIFERS.size():
 		var tiers: Array = KitTables.CONIFERS[i]["tiers"]
 		if tiers.size() < 5 or tiers.size() > 9:
 			bad.append("conífera %d: %d andares" % [i, tiers.size()])
-		for tier: Array in tiers:
-			if (KitTables.CONIFER_PATTERNS[int(tier[5])] as Array).size() < 9:
-				bad.append("conífera %d: andar com menos de 9 pontas" % i)
-	_check(bad.is_empty(), "cada conífera tem de 5 a 9 andares com borda serrilhada de pontas explícitas", str(bad))
+	_check(bad.is_empty(), "cada conífera tem de 5 a 9 andares", str(bad))
 	bad.clear()
-	for tree_name: String in ["tree_broad_a", "tree_broad_e", "tree_small_a", "conifer_a", "conifer_f"]:
+	for tree_name: String in ["tree_broad_a", "tree_broad_e", "tree_small_a", "conifer_a", "conifer_f", "bush_a"]:
 		var mesh := load(MESH_DIR + tree_name + ".res") as ArrayMesh
-		var tris: int = 0
-		var has_shell: bool = false
-		var has_mass: bool = false
-		var has_fringe: bool = false
+		var foliage_tris: int = 0
+		var has_bark: bool = tree_name.begins_with("bush")
 		for i in mesh.get_surface_count():
-			tris += (mesh.surface_get_arrays(i)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() / 3
-			var res_name: String = (mesh.surface_get_material(i) as ShaderMaterial).resource_path.get_file()
-			has_shell = has_shell or res_name.begins_with("leaf_shell")
-			has_mass = has_mass or res_name.begins_with("leaf_mass")
-			has_fringe = has_fringe or res_name.begins_with("conifer_fringe")
-		if tris < 400:
-			bad.append("%s: só %d triângulos (parece cartão)" % [tree_name, tris])
-		if tree_name.begins_with("tree") and not (has_shell and has_mass):
-			bad.append(tree_name + ": falta miolo ou casca")
-		if tree_name.begins_with("conifer") and not has_fringe:
-			bad.append(tree_name + ": falta a faixa conifer_fringe")
-	_check(bad.is_empty(), "árvores são volume 3D (lóbulos com miolo + casca; andares com franja)", str(bad))
+			var mat := mesh.surface_get_material(i) as ShaderMaterial
+			var tris: int = (mesh.surface_get_arrays(i)[Mesh.ARRAY_VERTEX] as PackedVector3Array).size() / 3
+			if mat.shader.resource_path.ends_with("scenery_foliage.gdshader"):
+				foliage_tris += tris
+			elif mat.shader.resource_path.ends_with("scenery_solid.gdshader"):
+				has_bark = true
+		if foliage_tris < 150 or not has_bark:
+			bad.append("%s: %d triângulos de folhagem, tronco %s" % [tree_name, foliage_tris, str(has_bark)])
+	_check(bad.is_empty(), "árvores são volume de cartões de folhagem (scenery_foliage) com tronco", str(bad))
 
 
-## Decalques: tamanho = PNG / 32 e, no mapa, posição em múltiplos de 1/32 e giro em múltiplos de 90°.
+## Decalques: tamanho = PNG / 32 (decalques da A06, guardados no kit); no mapa, os decalques provisórios da
+## arena (spec 012) são planos (sem relevo) e ficam no grupo Decals.
 func _check_decals() -> void:
 	var bad: Array[String] = []
 	for decal_name: String in KitTables.DECAL_SIZES.keys():
@@ -305,19 +306,19 @@ func _check_decals() -> void:
 	root.add_child(map_scene)
 	await process_frame
 	bad.clear()
-	var count: int = 0
-	for node: Node in _descendants(map_scene):
-		if node is Node3D and str(node.name).begins_with("decal_"):
-			count += 1
-			var n3 := node as Node3D
-			var snapped_x: float = snappedf(n3.position.x, TEXEL)
-			var snapped_z: float = snappedf(n3.position.z, TEXEL)
-			if absf(snapped_x - n3.position.x) > 0.0001 or absf(snapped_z - n3.position.z) > 0.0001:
-				bad.append("%s fora de 1/32" % node.name)
-			var yaw: float = fposmod(rad_to_deg(n3.rotation.y), 90.0)
-			if minf(yaw, 90.0 - yaw) > 0.01 or absf(n3.rotation.x) > 0.001 or absf(n3.rotation.z) > 0.001:
-				bad.append("%s com giro fora de múltiplos de 90°" % node.name)
-	_check(count >= 10 and bad.is_empty(), "%d decalques do mapa: posição em múltiplos de 1/32 e giro em múltiplos de 90°" % count, str(bad))
+	var found: Array[String] = []
+	var decals: Node = map_scene.get_node_or_null("Decals")
+	if decals != null:
+		for child: Node in decals.get_children():
+			var piece := child as KitPiece
+			if piece == null:
+				continue
+			found.append(str(piece.scene_file_path.get_file().get_basename()))
+			var mesh_node := piece.get_node("Mesh") as MeshInstance3D
+			if mesh_node.get_aabb().size.y > 0.1:
+				bad.append("%s com %.2f de altura" % [piece.name, mesh_node.get_aabb().size.y])
+	_check(found.has("arena_ground") and found.has("arena_slabs") and bad.is_empty(),
+			"decalques da arena (terra, círculo e lajes soltas) presentes e planos", str(found) + " " + str(bad))
 	map_scene.queue_free()
 
 

@@ -3,7 +3,9 @@ extends SceneTree
 ## todo ponto de uma grade de 0,5 na arena (recuada 0,25) e nas reservas tem linha de visão
 ## até a câmera sem cruzar o terreno (get_height_at ao longo do raio); em yaw 45, 135, 225 e
 ## 315 pelo menos 97%. A câmera sai dos @export padrão de MapCamera (inclinação, start_distance,
-## FOV), mirando o centro da arena. Vê só o terreno (as árvores têm dither, spec 011 Fase 2).
+## FOV, mira 4,3 à frente do centro; spec 012) e é testada na distância padrão e na máxima. Oclusores: o
+## terreno e as peças com volume dos grupos Structures e Props (braseiros, pilares, pontes, bancos, troncos).
+## As árvores, rochas e ilhotas têm dither (spec 011 Fase 2 e spec 012), então não contam.
 ## O raio do ponto até a câmera é percorrido célula a célula numa grade de 0,5 (o tamanho do
 ## piso de degrau: dentro de cada quadrado a altura de get_height_at é constante).
 ## Rodar depois do comando de validação 1:
@@ -26,6 +28,9 @@ var _pitch: float = 0.0
 var _distance: float = 0.0
 var _fov: float = 0.0
 var _near: float = 0.3
+var _cam: MapCamera = null
+## Caixas (AABB no mundo) das peças com volume que podem tapar a arena.
+var _boxes: Array[AABB] = []
 
 
 func _initialize() -> void:
@@ -34,20 +39,25 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	var cam := MapCamera.new()
-	_pitch = cam.pitch_degrees
-	_distance = cam.start_distance
-	_fov = cam.fov_degrees
-	cam.free()
-	print("INFO: câmera padrão: inclinação %.1f°, distância %.1f, FOV %.1f°, tela %.2f" % [_pitch, _distance, _fov, ASPECT])
+	_cam = MapCamera.new()
+	_pitch = _cam.pitch_degrees
+	_distance = _cam.start_distance
+	_fov = _cam.fov_degrees
+	print("INFO: câmera padrão: inclinação %.1f°, distância %.1f (máxima %.1f), FOV %.1f°, mira %.1f à frente, tela %.2f" % [
+			_pitch, _distance, _cam.max_distance, _fov, _cam.focus_forward_offset, ASPECT])
 	var layout := (load(MAP_PATH) as PackedScene).instantiate() as MapLayout
 	root.add_child(layout)
 	await process_frame
 	var map: MapData = layout.build_map_data()
+	_collect_boxes(layout)
+	print("INFO: %d peças com volume como oclusores" % _boxes.size())
 	var grid := HeightGrid.new(map)
 	_test_frustum(map)
-	_test_orthogonal(map, grid)
-	_test_diagonal(map, grid)
+	for dist: float in [_cam.start_distance, _cam.max_distance]:
+		_distance = dist
+		_test_orthogonal(map, grid)
+		_test_diagonal(map, grid)
+	_cam.free()
 	print("")
 	if _failures == 0:
 		print("RESULTADO: PASS (%d verificações)" % _passes)
@@ -65,11 +75,49 @@ func _check(ok: bool, what: String, detail: String = "") -> void:
 		print("FAIL: ", what, (" -> " + detail.left(600)) if detail != "" else "")
 
 
-## Mesma conta de MapCamera._apply_basis e _apply_position.
-func _camera(map: MapData, yaw: float) -> Transform3D:
-	var basis := Basis(Vector3.UP, deg_to_rad(yaw)) * Basis(Vector3.RIGHT, -deg_to_rad(_pitch))
-	var focus := Vector3(map.arena_center.x, 0.0, map.arena_center.y)
-	return Transform3D(basis, focus + basis.z * _distance)
+## Mesma conta de MapCamera (transform_for: órbita em volta do centro da arena, mira à frente).
+func _camera(_map: MapData, yaw: float) -> Transform3D:
+	return _cam.transform_for(yaw, _distance)
+
+
+## Peças com volume dos grupos Structures e Props viram caixas oclusoras (as que têm dither de oclusão em
+## todos os materiais, como os braseiros, ficam pontilhadas e não tapam a arena nem as reservas).
+func _collect_boxes(layout: Node3D) -> void:
+	for group_name: String in ["Structures", "Props"]:
+		var group: Node = layout.get_node_or_null(group_name)
+		if group == null:
+			continue
+		for child: Node in group.get_children():
+			var piece := child as KitPiece
+			if piece == null or piece.size.y * piece.scale.y < 0.2:
+				continue
+			var mesh_node := piece.get_node_or_null("Mesh") as MeshInstance3D
+			if mesh_node == null or mesh_node.mesh == null or _all_dithered(mesh_node.mesh):
+				continue
+			_boxes.append(mesh_node.global_transform * mesh_node.get_aabb())
+
+
+## Todos os materiais opacos da malha têm dither de oclusão (a chama, emissiva e recortada, não conta).
+static func _all_dithered(mesh: Mesh) -> bool:
+	for i in mesh.get_surface_count():
+		var mat := mesh.surface_get_material(i) as ShaderMaterial
+		if mat == null:
+			return false
+		if mat.shader != null and mat.shader.resource_path.ends_with("flame.gdshader"):
+			continue
+		if mat.get_shader_parameter("dither_on") != true:
+			return false
+	return true
+
+
+## O segmento de p até a câmera cruza alguma caixa oclusora?
+func _blocked_by_box(p: Vector3, cam: Vector3) -> bool:
+	for box: AABB in _boxes:
+		if box.has_point(p):
+			continue
+		if box.intersects_segment(p, cam) != null:
+			return true
+	return false
 
 
 func _in_frustum(cam: Transform3D, p: Vector3) -> bool:
@@ -177,7 +225,7 @@ func _visible_share(map: MapData, grid: HeightGrid, rect: Rect2, inset: float, c
 			var q: Vector2 = inner.position + Vector2(ix * GRID_STEP, iz * GRID_STEP)
 			var p := Vector3(q.x, map.get_height_at(q) + PIECE_HEIGHT, q.y)
 			total += 1
-			if _visible(grid, p, cam):
+			if _visible(grid, p, cam) and not _blocked_by_box(p, cam):
 				seen += 1
 	return float(seen) / float(maxi(total, 1))
 
@@ -196,7 +244,7 @@ func _test_orthogonal(map: MapData, grid: HeightGrid) -> void:
 			if share < 1.0:
 				ok = false
 				detail += "yaw %.0f reserva %d %.2f%%; " % [yaw, bench.team, share * 100.0]
-	_check(ok, "yaw 0, 90, 180 e 270: 100% da arena (recuada 0,25) e das reservas com linha de visão livre", detail)
+	_check(ok, "distância %.0f, yaw 0, 90, 180 e 270: 100%% da arena (recuada 0,25) e das reservas com linha de visão livre" % _distance, detail)
 
 
 func _test_diagonal(map: MapData, grid: HeightGrid) -> void:
@@ -205,14 +253,14 @@ func _test_diagonal(map: MapData, grid: HeightGrid) -> void:
 	for yaw: float in [45.0, 135.0, 225.0, 315.0]:
 		var cam: Vector3 = _camera(map, yaw).origin
 		var arena_share: float = _visible_share(map, grid, map.arena_rect, 0.25, cam)
-		print("INFO: yaw %3.0f: arena visível %.2f%%" % [yaw, arena_share * 100.0])
+		print("INFO: distância %.0f, yaw %3.0f: arena visível %.2f%%" % [_distance, yaw, arena_share * 100.0])
 		if arena_share < DIAGONAL_MIN:
 			ok = false
 			detail += "yaw %.0f arena %.2f%%; " % [yaw, arena_share * 100.0]
 		for bench: MapBench in map.benches:
 			var share: float = _visible_share(map, grid, bench.rect, 0.0, cam)
-			print("INFO: yaw %3.0f: reserva %d visível %.2f%%" % [yaw, bench.team, share * 100.0])
+			print("INFO: distância %.0f, yaw %3.0f: reserva %d visível %.2f%%" % [_distance, yaw, bench.team, share * 100.0])
 			if share < DIAGONAL_MIN:
 				ok = false
 				detail += "yaw %.0f reserva %d %.2f%%; " % [yaw, bench.team, share * 100.0]
-	_check(ok, "yaw 45, 135, 225 e 315: pelo menos 97% da arena e das reservas com linha de visão livre", detail)
+	_check(ok, "distância %.0f, yaw 45, 135, 225 e 315: pelo menos 97%% da arena e das reservas com linha de visão livre" % _distance, detail)

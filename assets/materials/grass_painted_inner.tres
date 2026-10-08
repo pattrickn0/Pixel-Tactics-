@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/scenery_grass.gdshader" id="1_0eabl"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_0eabl")
+shader_parameter/grass_dark = Color(0.30588236, 0.3529412, 0.11764706, 1)
+shader_parameter/grass_mid = Color(0.43137255, 0.4862745, 0.14901961, 1)
+shader_parameter/grass_light = Color(0.5411765, 0.5803922, 0.1882353, 1)
+shader_parameter/grass_sun = Color(0.65882355, 0.6745098, 0.26666668, 1)
+shader_parameter/patch_scale = null
+shader_parameter/stroke_scale = null
+shader_parameter/stroke_amount = null
+shader_parameter/vertex_ao = null
+shader_parameter/offset = Vector2(37, 11)

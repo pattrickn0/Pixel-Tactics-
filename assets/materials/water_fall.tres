@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/water_fall.gdshader" id="1_0dj5b"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_0dj5b")
+shader_parameter/color_deep = null
+shader_parameter/color_mid = null
+shader_parameter/color_light = null
+shader_parameter/color_foam = null
+shader_parameter/fall_speed = null
+shader_parameter/sheet_width = null
+shader_parameter/fall_height = null

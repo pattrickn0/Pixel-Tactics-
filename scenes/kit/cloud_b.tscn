@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_tgix4"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/cloud_b.res" id="2_xp5qu"]
+
+[node name="cloud_b" type="Node3D" unique_id=1941190726]
+script = ExtResource("1_tgix4")
+size = Vector3(14, 4, 6)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1049057126]
+cast_shadow = 0
+mesh = ExtResource("2_xp5qu")

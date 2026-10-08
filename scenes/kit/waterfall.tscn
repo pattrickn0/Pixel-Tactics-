@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_1xgee"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/waterfall.res" id="2_1sk21"]
+
+[node name="waterfall" type="Node3D" unique_id=2017893335]
+script = ExtResource("1_1xgee")
+size = Vector3(24, 21, 10)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=501284354]
+cast_shadow = 0
+mesh = ExtResource("2_1sk21")

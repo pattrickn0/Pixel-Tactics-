@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_q870h"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/pillar_stone.res" id="2_1v0ac"]
+
+[node name="pillar_stone" type="Node3D" unique_id=1512972006]
+script = ExtResource("1_q870h")
+size = Vector3(0.6, 1.1, 0.6)
+obstacle = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1966085876]
+mesh = ExtResource("2_1v0ac")

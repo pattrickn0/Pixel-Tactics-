@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_scwjl"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/islet_e.res" id="2_rmvou"]
+
+[node name="islet_e" type="Node3D" unique_id=1127589011]
+script = ExtResource("1_scwjl")
+size = Vector3(6, 7, 6)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1954622209]
+mesh = ExtResource("2_rmvou")

@@ -1,0 +1,12 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/flame.gdshader" id="1_17b13"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_17b13")
+shader_parameter/color_edge = null
+shader_parameter/color_mid = null
+shader_parameter/color_core = null
+shader_parameter/energy = null
+shader_parameter/flicker_fps = null

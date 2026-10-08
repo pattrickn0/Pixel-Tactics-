@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_8glt0"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/high_spur.res" id="2_bf6n5"]
+
+[node name="high_spur" type="Node3D" unique_id=888286735]
+script = ExtResource("1_8glt0")
+size = Vector3(6, 16, 4)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=319987308]
+cast_shadow = 0
+mesh = ExtResource("2_bf6n5")

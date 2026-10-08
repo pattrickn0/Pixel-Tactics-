@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_xchhy"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/vine_hang_a.res" id="2_g5dkn"]
+
+[node name="vine_hang_a" type="Node3D" unique_id=40407702]
+script = ExtResource("1_xchhy")
+size = Vector3(0.8, 3.5, 0.8)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1594982280]
+cast_shadow = 0
+mesh = ExtResource("2_g5dkn")

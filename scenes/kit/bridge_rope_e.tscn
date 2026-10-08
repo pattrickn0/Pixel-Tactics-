@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_wscad"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/bridge_rope_e.res" id="2_cfgth"]
+
+[node name="bridge_rope_e" type="Node3D" unique_id=996346327]
+script = ExtResource("1_wscad")
+size = Vector3(3.6, 2.5, 1.7)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=883943427]
+mesh = ExtResource("2_cfgth")

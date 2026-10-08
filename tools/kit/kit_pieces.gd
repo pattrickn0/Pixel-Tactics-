@@ -5,7 +5,8 @@ extends RefCounted
 ## Nada aqui sorteia: a única "variação" é a escolha explícita de linhas das tabelas.
 
 const T: float = KitMesher.TEXEL
-const GRASS: String = "ground_grass_arena"
+## Grama do topo do terraço e do degrau (material provisório pintado, spec 012).
+const GRASS: String = "grass_painted_inner"
 const FACE_HIGH: String = "wall_high_face"
 const FACE_LOW: String = "wall_low_face"
 ## Altura do degrau baixo e do muro alto (topo).
@@ -39,16 +40,18 @@ static func build(entry: Dictionary) -> KitMesher:
 			stair(m, s, 2, 0.5, 2.0, true)
 		"stair_low":
 			stair(m, s, 2, 0.0, 3.0, false)
+		"stair_crest_in":
+			stair_crest_in(m, s)
+		"stair_pass_out":
+			stair_pass_out(m, s)
+		"stair_crest":
+			stair_crest(m, s)
+		"stair_landing":
+			stair_landing(m, s)
 		"ground":
 			m.top(mat, -s.x * 0.5, -s.z * 0.5, s.x * 0.5, s.z * 0.5, 0.0)
 		"decal":
 			decal(m, s, mat)
-		"broad":
-			tree_broad(m, v, 1, Transform3D.IDENTITY)
-		"conifer":
-			conifer(m, v, 1, Transform3D.IDENTITY)
-		"bush":
-			bush(m, v)
 		"log":
 			log_piece(m, s)
 		"stump":
@@ -65,10 +68,9 @@ static func build(entry: Dictionary) -> KitMesher:
 			wood_pile(m)
 		"cross":
 			cross(m, s, mat, float(v))
-		"backdrop":
-			backdrop(m, v)
 		_:
-			push_error("Construtor desconhecido: " + str(entry["build"]))
+			if not SceneryPieces.build(m, entry):
+				push_error("Construtor desconhecido: " + str(entry["build"]))
 	return m
 
 
@@ -329,6 +331,65 @@ static func stair(m: KitMesher, s: Vector3, steps: int, base: float, walk: float
 				WALL_H, "wall_cap_z", FACE_HIGH, false)
 
 
+## Passagem sul/norte, parte de dentro (spec 012, decisão 2): dentro da espessura do muro, do terraço (0,5)
+## sobe a 0,75 e chega à crista (1,0), com bochechas de 0,5 que fecham as pontas do muro. Sobe para -Z local;
+## a face de trás (-Z) dá para o lance de fora (0,75), então leva o espelho do último degrau e a face das bochechas.
+static func stair_crest_in(m: KitMesher, s: Vector3) -> void:
+	stair(m, s, 2, 0.5, 3.0, true)
+	var hz: float = s.z * 0.5
+	var hw: float = 1.5
+	var yb: float = WALL_H - KitTables.SLAB_THICKNESS * T
+	m.quad("stair_riser_1", Vector3(-hw, 0.75, -hz), Vector3(hw, 0.75, -hz), Vector3(hw, WALL_H, -hz), Vector3(-hw, WALL_H, -hz),
+			Vector3(0.0, 0.0, -1.0), Vector2(0.0, 1.0), Vector2(1.0, 1.0), Vector2(1.0, 0.0), Vector2(0.0, 0.0))
+	for side in [-1.0, 1.0]:
+		var sg: float = side
+		m.wall_z(FACE_HIGH, minf(sg * hw, sg * (hw + 0.5)), maxf(sg * hw, sg * (hw + 0.5)), 0.0, yb, -hz, -1.0)
+
+
+## Passagem sul/norte, lance de fora: 3 degraus de 0,25 (0 -> 0,75) de z local +0,5 a -1,0, largura 3,
+## com laterais de pedra baixa. A faixa de z +0,5 a +1,0 fica livre (o patamar de lajes cobre).
+static func stair_pass_out(m: KitMesher, _s: Vector3) -> void:
+	var hw: float = 1.5
+	for i in 3:
+		var zf: float = 0.5 - 0.5 * float(i)
+		var top_y: float = 0.25 * float(i + 1)
+		var low_y: float = 0.25 * float(i)
+		var kind: String = str(i % 2)
+		m.quad("stair_tread_" + kind, Vector3(-hw, top_y, zf), Vector3(hw, top_y, zf), Vector3(hw, top_y, zf - 0.5), Vector3(-hw, top_y, zf - 0.5),
+				Vector3.UP, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
+		m.quad("stair_riser_" + kind, Vector3(-hw, low_y, zf), Vector3(hw, low_y, zf), Vector3(hw, top_y, zf), Vector3(-hw, top_y, zf),
+				Vector3(0.0, 0.0, 1.0), Vector2(0.0, 1.0), Vector2(1.0, 1.0), Vector2(1.0, 0.0), Vector2(0.0, 0.0))
+		m.wall_x(FACE_LOW, zf - 0.5, zf, 0.0, top_y, -hw, -1.0)
+		m.wall_x(FACE_LOW, zf - 0.5, zf, 0.0, top_y, hw, 1.0)
+
+
+## Portão oeste/leste, na crista (spec 012, item 3): o lance passa por cima do muro num piso de lajes em 1,0
+## (2 de andável) com as bochechas de 0,5 no mesmo nível e o mesmo capeamento do lance de fora. Nenhuma
+## crista de muro atravessa o lance. Largura 3 em X local, fundo 1 em Z.
+static func stair_crest(m: KitMesher, s: Vector3) -> void:
+	var hz: float = s.z * 0.5
+	var hw: float = 1.0
+	m.quad("stair_tread_0", Vector3(-hw, WALL_H, hz), Vector3(hw, WALL_H, hz), Vector3(hw, WALL_H, -hz), Vector3(-hw, WALL_H, -hz),
+			Vector3.UP, Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
+	for side in [-1.0, 1.0]:
+		var sg: float = side
+		var outer_x: float = sg * (hw + 0.5)
+		var inner_x: float = sg * hw
+		_crest_strip_z(m, -hz, hz, inner_x, outer_x, WALL_H)
+		slab_row(m, 1, -hz, outer_x, sg, KitTables.SLABS_CHEEK_1_OUT, WALL_H, "wall_cap_z", FACE_HIGH, false)
+		slab_row(m, 1, -hz, inner_x, -sg, KitTables.SLABS_CHEEK_1_IN, WALL_H, "wall_cap_z", FACE_HIGH, false)
+
+
+## Patamar do portão no terraço: piso de lajes em 0,5 (1 x 3) com as faces de pedra baixa.
+static func stair_landing(m: KitMesher, s: Vector3) -> void:
+	var hx: float = s.x * 0.5
+	var hz: float = s.z * 0.5
+	m.quad("stair_tread_1", Vector3(-hx, s.y, -hz), Vector3(hx, s.y, -hz), Vector3(hx, s.y, hz), Vector3(-hx, s.y, hz),
+			Vector3.UP, Vector2(0.0, 0.0), Vector2(s.x / 2.0, 0.0), Vector2(s.x / 2.0, s.z / 2.0), Vector2(0.0, s.z / 2.0))
+	m.wall_z(FACE_LOW, -hx, hx, 0.0, s.y, hz, 1.0)
+	m.wall_z(FACE_LOW, -hx, hx, 0.0, s.y, -hz, -1.0)
+
+
 ## Faixa de crista ao longo de Z entre x_in e x_out (v = 0 no lado de fora, em x_out).
 static func _crest_strip_z(m: KitMesher, z0: float, z1: float, x_in: float, x_out: float, y: float) -> void:
 	var span: float = absf(x_out - x_in)
@@ -343,147 +404,6 @@ static func decal(m: KitMesher, s: Vector3, mat: String) -> void:
 	var hz: float = s.z * 0.5
 	m.quad(mat, Vector3(-hx, 0.0, -hz), Vector3(hx, 0.0, -hz), Vector3(hx, 0.0, hz), Vector3(-hx, 0.0, hz), Vector3.UP,
 			Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
-
-
-# ================================================================ árvores
-
-## Folhosa: tronco que afina, raízes, galhos e a copa de lóbulos 3D. `lod` 1 = completa
-## (miolo + casca recortada); 0 = só o miolo, menos facetas (fundo de mata).
-static func tree_broad(m: KitMesher, variant: int, lod: int, xf: Transform3D) -> void:
-	m.xf = xf
-	var t: Dictionary = KitTables.BROAD[variant]
-	var family: String = str(t["family"])
-	var trunk: Array = t["trunk"]
-	var sides: int = int(t["sides"])
-	var r0: float = float(trunk[1])
-	var r1: float = float(trunk[2])
-	m.tube("bark_0", "wood_end", Vector3.ZERO, Vector3(0.0, float(trunk[0]), 0.0), r0, r1, sides, false, true)
-	for root: Array in t["roots"]:
-		var ang: float = deg_to_rad(float(root[0]))
-		var dir := Vector3(cos(ang), 0.0, sin(ang))
-		m.tube("bark_0", "wood_end", dir * r0 * 0.6 + Vector3(0.0, 0.45, 0.0), dir * (r0 + float(root[1])) + Vector3(0.0, -0.05, 0.0),
-				r0 * 0.5, r0 * 0.18, 4, false, false)
-	for branch: Array in t["branches"]:
-		var tip: Vector3 = branch[1]
-		var br: float = float(branch[2])
-		m.tube("bark_0", "wood_end", Vector3(0.0, float(branch[0]), 0.0), tip, br, br * 0.55, 5, false, false)
-	var crown: Vector3 = t["crown"]
-	var lobe_sides: int = 10 if lod > 0 else 7
-	var lobe_rings: int = 6 if lod > 0 else 4
-	var turn: float = 0.0
-	for lobe: Vector4 in t["lobes"]:
-		var c := Vector3(lobe.x, lobe.y, lobe.z)
-		var r: float = lobe.w
-		m.blob("leaf_mass_" + family, c, Vector3(r, r * 0.85, r), lobe_sides, lobe_rings, crown, 0.55, turn)
-		if lod > 0:
-			m.blob("leaf_shell_" + family, c, Vector3(r * 1.14, r * 0.97, r * 1.14), lobe_sides, lobe_rings, crown, 0.75, turn + 0.3)
-		turn += 0.37
-	m.xf = Transform3D.IDENTITY
-
-
-## Conífera: tronco e andares de cone com a borda de baixo serrilhada na própria geometria
-## (pontas e reentrâncias da tabela) mais a faixa conifer_fringe pendurada em volta.
-static func conifer(m: KitMesher, variant: int, lod: int, xf: Transform3D) -> void:
-	m.xf = xf
-	var c: Dictionary = KitTables.CONIFERS[variant]
-	var tiers: Array = c["tiers"]
-	var last: Array = tiers[tiers.size() - 1]
-	var trunk_top: float = float(last[0]) + float(last[1]) * 0.55
-	m.tube("bark_1", "wood_end", Vector3.ZERO, Vector3(0.0, trunk_top, 0.0), 0.15, 0.05, 5, false, false)
-	for tier: Array in tiers:
-		_conifer_tier(m, tier, lod)
-	m.xf = Transform3D.IDENTITY
-
-
-static func _tier_normal(phi: float) -> Vector3:
-	return Vector3(cos(phi) * 0.9, 0.55, sin(phi) * 0.9).normalized()
-
-
-static func _conifer_tier(m: KitMesher, tier: Array, _lod: int) -> void:
-	var y0: float = float(tier[0])
-	var h: float = float(tier[1])
-	var rb: float = float(tier[2])
-	var rt: float = float(tier[3])
-	var rot: float = deg_to_rad(float(tier[4]))
-	var pattern: Array = KitTables.CONIFER_PATTERNS[int(tier[5])]
-	var n: int = pattern.size()
-	var y_top: float = y0 + h
-	var key: String = "conifer_needles"
-	for i in n:
-		var th: float = rot + TAU * float(i) / float(n)
-		var th_next: float = rot + TAU * float(i + 1) / float(n)
-		var th_prev: float = rot + TAU * float(i - 1) / float(n)
-		var pi_mod: Vector2 = pattern[i]
-		var p_prev: Vector2 = pattern[posmod(i - 1, n)]
-		var p_next: Vector2 = pattern[posmod(i + 1, n)]
-		var top_i: Vector3 = Vector3(cos(th) * rt, y_top, sin(th) * rt)
-		var top_next: Vector3 = Vector3(cos(th_next) * rt, y_top, sin(th_next) * rt)
-		var tip: Vector3 = Vector3(cos(th) * rb * pi_mod.x, y0 - pi_mod.y * h, sin(th) * rb * pi_mod.x)
-		var notch_i: Vector3 = _notch(th, TAU / float(n), rb, pi_mod.x, p_next.x, y0, h)
-		var notch_prev: Vector3 = _notch(th_prev, TAU / float(n), rb, p_prev.x, pi_mod.x, y0, h)
-		var arc_r: float = rb
-		var u_tip: float = th * arc_r
-		var u_next: float = (th + TAU / float(n) * 0.5) * arc_r
-		var u_prev: float = (th - TAU / float(n) * 0.5) * arc_r
-		var half: float = TAU / float(n) * 0.5
-		var uv_top: Vector2 = Vector2(u_tip, 0.0)
-		var uv_tip: Vector2 = Vector2(u_tip, y_top - tip.y)
-		var uv_n: Vector2 = Vector2(u_next, y_top - notch_i.y)
-		var uv_p: Vector2 = Vector2(u_prev, y_top - notch_prev.y)
-		var n_top: Vector3 = _tier_normal(th)
-		var n_tip: Vector3 = _tier_normal(th)
-		var n_notch: Vector3 = _tier_normal(th + half)
-		var n_notch_prev: Vector3 = _tier_normal(th - half)
-		m.tri(key, top_i, tip, notch_i, n_top, n_tip, n_notch, uv_top, uv_tip, uv_n)
-		m.tri(key, top_i, notch_prev, tip, n_top, n_notch_prev, n_tip, uv_top, uv_p, uv_tip)
-		if rt > 0.01:
-			var uv_top_next: Vector2 = Vector2((th + 2.0 * half) * arc_r, 0.0)
-			m.tri(key, top_i, notch_i, top_next, n_top, n_notch, _tier_normal(th_next), uv_top, uv_n, uv_top_next)
-	# Tampa de cima e fundo (fecham a malha para a sombra e para as vistas de cima).
-	var ring: Array[Vector2] = []
-	var under: Array[Vector2] = []
-	for i in n:
-		var th2: float = rot + TAU * float(i) / float(n)
-		if rt > 0.01:
-			ring.append(Vector2(cos(th2) * rt, sin(th2) * rt))
-		var nr: float = rb * 0.7 * float(KitTables.CONIFER_PATTERNS[int(tier[5])][i].x)
-		under.append(Vector2(cos(th2 + PI / float(n)) * nr, sin(th2 + PI / float(n)) * nr))
-	if rt > 0.01:
-		m.disc(key, ring, y_top, true, Vector2(0.5, 0.5), 1.0)
-	m.disc(key, under, y0 + 0.1 * h, false)
-	# Faixa de franja pendurada abaixo da borda serrilhada (alfa recortado).
-	var band_sides: int = n * 2
-	var slope: float = (rb - rt) / h
-	var y_a: float = y0 + 0.1 * h
-	var y_b: float = y_a - 0.5
-	var r_a: float = (rb - (rb - rt) * 0.1) * 1.02
-	var r_b: float = r_a + slope * 0.5
-	for k in band_sides:
-		var a0: float = rot + TAU * float(k) / float(band_sides)
-		var a1: float = rot + TAU * float(k + 1) / float(band_sides)
-		var nrm: Vector3 = _tier_normal((a0 + a1) * 0.5)
-		m.quad("conifer_fringe", Vector3(cos(a0) * r_a, y_a, sin(a0) * r_a), Vector3(cos(a1) * r_a, y_a, sin(a1) * r_a),
-				Vector3(cos(a1) * r_b, y_b, sin(a1) * r_b), Vector3(cos(a0) * r_b, y_b, sin(a0) * r_b), nrm,
-				Vector2(a0 * r_a, 0.0), Vector2(a1 * r_a, 0.0), Vector2(a1 * r_a, 0.5), Vector2(a0 * r_a, 0.5))
-
-
-static func _notch(th: float, step: float, rb: float, m0: float, m1: float, y0: float, h: float) -> Vector3:
-	var a: float = th + step * 0.5
-	var r: float = rb * 0.7 * (m0 + m1) * 0.5
-	return Vector3(cos(a) * r, y0 + 0.1 * h, sin(a) * r)
-
-
-static func bush(m: KitMesher, variant: int) -> void:
-	var lobes: Array = KitTables.BUSHES[variant]
-	var flower: bool = variant == 3
-	var crown := Vector3(0.0, 0.3, 0.0)
-	var turn: float = 0.0
-	for lobe: Vector4 in lobes:
-		var c := Vector3(lobe.x, lobe.y, lobe.z)
-		var r: float = lobe.w
-		m.blob("leaf_mass_cool", c, Vector3(r, r * 0.85, r), 9, 5, crown, 0.4, turn)
-		m.blob("leaf_shell_cool_flower" if flower else "leaf_shell_cool", c, Vector3(r * 1.14, r * 0.97, r * 1.14), 9, 5, crown, 0.6, turn + 0.3)
-		turn += 0.41
 
 
 # ================================================================ props
@@ -600,15 +520,3 @@ static func cross(m: KitMesher, s: Vector3, mat: String, angle_deg: float) -> vo
 		var up := Vector3(0.0, s.y, 0.0)
 		for side in [1.0, -1.0]:
 			m.quad(mat, -d + up, d + up, d, -d, n * float(side), Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0))
-
-
-## Aglomerado de fundo: árvores da tabela, menos detalhadas (só miolo nas folhosas).
-static func backdrop(m: KitMesher, variant: int) -> void:
-	for item: Array in KitTables.BACKDROPS[variant]:
-		var scale: float = float(item[5])
-		var basis := Basis(Vector3.UP, deg_to_rad(float(item[4]))).scaled(Vector3(scale, scale, scale))
-		var xf := Transform3D(basis, Vector3(float(item[2]), 0.0, float(item[3])))
-		if str(item[0]) == "c":
-			conifer(m, int(item[1]), 0, xf)
-		else:
-			tree_broad(m, int(item[1]), 0, xf)

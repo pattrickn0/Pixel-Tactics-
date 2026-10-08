@@ -1,0 +1,18 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/arena_ground.gdshader" id="1_gt2ep"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_gt2ep")
+shader_parameter/dirt_dark = null
+shader_parameter/dirt_rim = null
+shader_parameter/dirt = null
+shader_parameter/dirt_light = null
+shader_parameter/stone = null
+shader_parameter/stone_light = null
+shader_parameter/dirt_center = null
+shader_parameter/dirt_half = null
+shader_parameter/ring_center = null
+shader_parameter/ring_inner = null
+shader_parameter/ring_outer = null

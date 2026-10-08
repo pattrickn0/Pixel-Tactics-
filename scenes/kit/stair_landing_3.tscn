@@ -1,0 +1,17 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_8phjk"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/stair_landing_3.res" id="2_h0u72"]
+[ext_resource type="Script" path="res://scripts/map/height_area.gd" id="3_nh6di"]
+
+[node name="stair_landing_3" type="Node3D" unique_id=949964591]
+script = ExtResource("1_8phjk")
+size = Vector3(1, 0.5, 3)
+structural = true
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=731978492]
+mesh = ExtResource("2_h0u72")
+
+[node name="Height" type="Node3D" parent="." unique_id=1445403829]
+script = ExtResource("3_nh6di")
+size = Vector2(1, 3)

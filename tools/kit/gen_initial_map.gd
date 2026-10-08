@@ -1,6 +1,7 @@
 extends SceneTree
 ## Monta a ESTRUTURA de scenes/map.tscn (chão, marcadores, degrau baixo, terraço, muro alto e escadas) a partir
-## das coordenadas da spec 011 (seção 2, com a decisão de 2026-10-08: muro com crista em 1,0 e terraço de 3).
+## das coordenadas da spec 011 (seção 2, com a decisão de 2026-10-08: muro com crista em 1,0 e terraço de 3) e
+## da spec 012 (passagens no meio dos lados sul e norte; piso de crista e patamar de lajes nos portões).
 ## Os grupos decorativos (decalques, trilhas, plateia, props, mata, fundo) NÃO são feitos aqui: vêm da tabela
 ## tools/kit/map_decor_table.gd, aplicada por tools/kit/place_decor.gd.
 ## ATENÇÃO: sobrescreve scenes/map.tscn e apaga a montagem manual. Depois do primeiro passe o mapa
@@ -78,9 +79,8 @@ func _place_pair(group_name: String, piece: String, x: float, y: float, z: float
 	_place(group_name, piece, -x, y, -z, yaw + 180.0)
 
 
+## Só o chão da arena: o de fora é o topo da ilha (grupo Island, spec 012); o ground_far saiu.
 func _build_ground() -> void:
-	_place("Ground", "ground_far", 0.0, -0.02, 0.0)
-	_place("Ground", "ground_outer", 0.0, -0.01, 0.0)
 	_place("Ground", "ground_inner", 0.0, 0.0, 0.0)
 
 
@@ -128,26 +128,36 @@ func _build_terrace() -> void:
 		_place_pair("Terrace", "terrace_fill_4x2", -12.0, 0.0, z, 90.0)
 	for z in [1.5, 7.5, 10.5]:
 		_place_pair("Terrace", "terrace_fill_3x2", -12.0, 0.0, z, 90.0)
-	_place_pair("Terrace", "terrace_fill_1x3", -11.5, 0.0, 4.5, 0.0)
+	# Patamar do portão (x -12 a -11): piso de lajes em 0,5.
+	_place_pair("Terrace", "stair_landing_3", -11.5, 0.0, 4.5, 0.0)
 
 
+## Muro alto. No meio dos lados sul e norte fica a passagem (x -2 a 2, spec 012): wall_high_1 em x +-2,5
+## fecha cada ponta. No portão oeste (z 3 a 6) a crista é a peça de passagem, não muro.
 func _build_walls() -> void:
-	for x in range(-12, 13, 2):
+	for x in [-12, -10, -8, -6, -4, 4, 6, 8, 10, 12]:
 		_place("Walls", "wall_high_2", float(x), 0.0, -12.5, 0.0)
 		_place("Walls", "wall_high_2", float(-x), 0.0, 12.5, 180.0)
+	for x in [-2.5, 2.5]:
+		_place("Walls", "wall_high_1", x, 0.0, -12.5, 0.0)
+		_place("Walls", "wall_high_1", -x, 0.0, 12.5, 180.0)
 	for z in [-11, -9, -7, -5, -3, -1, 1, 7, 9, 11]:
 		_place_pair("Walls", "wall_high_2", -13.5, 0.0, float(z), 90.0)
-	for z in [2.5, 3.5, 4.5, 5.5]:
-		_place_pair("Walls", "wall_high_1", -13.5, 0.0, z, 90.0)
+	_place_pair("Walls", "wall_high_1", -13.5, 0.0, 2.5, 90.0)
 	_place("Walls", "wall_high_corner", -13.5, 0.0, -12.5, 0.0)
 	_place("Walls", "wall_high_corner", 13.5, 0.0, -12.5, 270.0)
 	_place("Walls", "wall_high_corner", 13.5, 0.0, 12.5, 180.0)
 	_place("Walls", "wall_high_corner", -13.5, 0.0, 12.5, 90.0)
 
 
-## Escada oeste, de fora para dentro: externa x -16 a -14 (0 a 1,0), crista x -14 a -13 (as wall_high_1),
+## Escada oeste, de fora para dentro: externa x -16 a -14 (0 a 1,0), crista x -14 a -13 (stair_crest_3),
 ## interna x -13 a -12 (1,0 a 0,5), patamar x -12 a -11, baixa x -11 a -10 (0,5 a 0). A leste é a rotação de 180°.
+## Passagem sul (spec 012): do terraço sobe a 0,75 e 1,0 dentro do muro (z 12 a 13, stair_crest_in_3) e desce
+## por fora 0,75 -> 0,25 (z 13 a 14,5, stair_pass_out_3). A norte é a rotação de 180°.
 func _build_stairs() -> void:
 	_place_pair("Stairs", "stair_outer_3", -15.0, 0.0, 4.5, 270.0)
+	_place_pair("Stairs", "stair_crest_3", -13.5, 0.0, 4.5, 90.0)
 	_place_pair("Stairs", "stair_inner_3", -12.5, 0.0, 4.5, 90.0)
 	_place_pair("Stairs", "stair_low_3", -10.5, 0.0, 4.5, 90.0)
+	_place_pair("Stairs", "stair_crest_in_3", 0.0, 0.0, 12.5, 180.0)
+	_place_pair("Stairs", "stair_pass_out_3", 0.0, 0.0, 14.0, 0.0)

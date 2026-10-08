@@ -1,12 +1,17 @@
 extends SceneTree
 ## Aplica a tabela de montagem (tools/kit/map_decor_table.gd) em scenes/map.tscn: troca só os grupos
-## decorativos (decalques, trilhas, plateia, props do terraço, pequenos, mata e fundo) e mantém o
-## anel, as escadas, o chão e os marcadores como estão. Sem sorteio: cada peça vem de uma linha da tabela.
-## Rodar da raiz do projeto, depois do build_kit.gd:
-##   "$G" --headless --path . --script tools/kit/place_decor.gd
+## decorativos (MapDecorTable.GROUPS: ilha, estruturas, decalques, mata, props, tufos, céu e névoa) e mantém
+## o anel, as escadas, o chão e os marcadores como estão. Sem sorteio: cada peça vem de uma linha da tabela.
+## ATENÇÃO (spec 012): scenes/map.tscn é a fonte de verdade. Este script APAGA o que foi ajustado à mão nesses
+## grupos, por isso só roda com a flag explícita --force (e avisa quantos nós vai trocar):
+##   "$G" --headless --path . --script tools/kit/place_decor.gd -- --force
+## (rodar depois de tools/kit/build_kit.gd e, se o anel mudou, de tools/kit/gen_initial_map.gd -- --force)
 
 const MAP_PATH: String = "res://scenes/map.tscn"
 const KIT_DIR: String = "res://scenes/kit/"
+const SCATTER_DIR: String = "res://assets/models/scatter/"
+## Tufos e flores (MultiMesh) que entram no grupo Small: [nome do nó, arquivo].
+const SCATTER_NODES: Array = [["TuftsArena", "tufts_arena"], ["TuftsOuter", "tufts_outer"], ["Flowers", "flowers"]]
 
 
 func _initialize() -> void:
@@ -16,6 +21,18 @@ func _initialize() -> void:
 		push_error("Não abriu " + MAP_PATH)
 		quit(1)
 		return
+	var replaced: int = 0
+	for group_name: String in MapDecorTable.GROUPS:
+		var old: Node = map_root.get_node_or_null(group_name)
+		if old != null:
+			replaced += old.get_child_count()
+	if not OS.get_cmdline_user_args().has("--force"):
+		push_error("place_decor.gd trocaria %d nós dos grupos %s em %s (a montagem manual se perde). Rode com `-- --force` se for isso mesmo." % [
+				replaced, ", ".join(MapDecorTable.GROUPS), MAP_PATH])
+		map_root.free()
+		quit(1)
+		return
+	print("Trocando %d nós dos grupos decorativos" % replaced)
 	for group_name: String in MapDecorTable.GROUPS:
 		var old: Node = map_root.get_node_or_null(group_name)
 		if old != null:
@@ -43,9 +60,20 @@ func _initialize() -> void:
 		node.name = "%s_%d" % [piece, counter]
 		node.position = Vector3(float(item[2]), float(item[3]), float(item[4]))
 		node.rotation_degrees = Vector3(0.0, float(item[5]), 0.0)
+		if item.size() > 6:
+			var s: float = float(item[6])
+			node.scale = Vector3(s, s, s)
 		var parent: Node = groups[str(item[0])]
 		parent.add_child(node)
 		node.owner = map_root
+	for spec: Array in SCATTER_NODES:
+		var mmi := MultiMeshInstance3D.new()
+		mmi.name = str(spec[0])
+		mmi.multimesh = load(SCATTER_DIR + str(spec[1]) + ".res") as MultiMesh
+		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		(groups["Small"] as Node3D).add_child(mmi)
+		mmi.owner = map_root
+		counter += 1
 	var packed_map := PackedScene.new()
 	if packed_map.pack(map_root) != OK:
 		push_error("Falha ao empacotar o mapa")

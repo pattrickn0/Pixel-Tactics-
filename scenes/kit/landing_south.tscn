@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_vcns1"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/landing_south.res" id="2_snpg0"]
+
+[node name="landing_south" type="Node3D" unique_id=1531912056]
+script = ExtResource("1_vcns1")
+size = Vector3(5, 0.06, 3.5)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1098035244]
+mesh = ExtResource("2_snpg0")

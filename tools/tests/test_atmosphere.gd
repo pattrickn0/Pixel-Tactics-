@@ -1,12 +1,14 @@
 extends SceneTree
-## Testes da atmosfera de dia claro (spec 004). Rodar depois do comando de validação 1:
+## Testes da atmosfera de dia claro (spec 004, com os valores provisórios da spec 012 Fase 1: sol #FFE9C8 do
+## oeste-noroeste a 40-48°, céu próprio, ambiente lavanda e névoa lavanda; a Fase 2 completa o resto).
+## Rodar depois do comando de validação 1:
 ##   "$G" --headless --path . --script tools/tests/test_atmosphere.gd
 ## Imprime PASS/FAIL por verificação e sai com 0 (tudo passou) ou 1.
 
 const SETTLE_FRAMES: int = 6
-const SUN_COLOR: Color = Color8(0xFF, 0xF3, 0xDC)
-const AMBIENT_COLOR: Color = Color8(0x7F, 0xA8, 0x98)
-const FOG_COLOR: Color = Color8(0xA6, 0xC4, 0xCE)
+const SUN_COLOR: Color = Color8(0xFF, 0xE9, 0xC8)
+const AMBIENT_COLOR: Color = Color8(0xB8, 0xC4, 0xDC)
+const FOG_COLOR: Color = Color8(0xDC, 0xD6, 0xE6)
 const COLOR_TOLERANCE: float = 0.01
 const MAX_DOF_AMOUNT: float = 0.05
 const DOF_AMPHITHEATER_MARGIN: float = 4.0
@@ -79,11 +81,11 @@ func _test_sun(main: Node) -> void:
 	var atmosphere := main.get_node("Atmosphere") as Atmosphere
 	var from: Vector3 = _sun_from(sun)
 	var elevation: float = rad_to_deg(asin(from.y))
-	_check(_color_near(sun.light_color, SUN_COLOR), "sol com cor #FFF3DC", str(sun.light_color))
-	_check(elevation >= 50.0 and elevation <= 60.0, "sol com elevação entre 50° e 60°", "%.1f°" % elevation)
-	# Sudoeste: vem de x negativo (oeste) e z positivo (sul).
-	_check(from.x < 0.0 and from.z > 0.0 and absf(absf(from.x) - absf(from.z)) < 0.1,
-			"sol vindo do sudoeste", "direção de origem %s" % str(from))
+	_check(_color_near(sun.light_color, SUN_COLOR), "sol com cor #FFE9C8", str(sun.light_color))
+	_check(elevation >= 40.0 and elevation <= 48.0, "sol com elevação entre 40° e 48°", "%.1f°" % elevation)
+	# Oeste-noroeste: vem de x negativo (oeste), um pouco de z negativo (norte), mais oeste que norte.
+	_check(from.x < 0.0 and from.z < 0.0 and absf(from.x) > 2.0 * absf(from.z),
+			"sol vindo do oeste-noroeste", "direção de origem %s" % str(from))
 	_check(sun.shadow_enabled and sun.directional_shadow_mode == DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS,
 			"sol com sombras ligadas e 4 splits")
 	_check(sun.shadow_blur > 0.0, "sombra direcional com borda suave (shadow_blur %.2f)" % sun.shadow_blur)
@@ -93,17 +95,18 @@ func _test_sun(main: Node) -> void:
 func _test_config(main: Node) -> void:
 	var env: Environment = _env(main)
 	var attrs: CameraAttributesPractical = _attrs(main)
-	_check(env.background_mode == Environment.BG_SKY and env.sky != null and env.sky.sky_material is ProceduralSkyMaterial,
-			"fundo de céu (ProceduralSkyMaterial)")
-	var sky_mat := env.sky.sky_material as ProceduralSkyMaterial
-	_check(_color_near(sky_mat.sky_top_color, Color8(0x78, 0xAE, 0xDB)) and _color_near(sky_mat.sky_horizon_color, Color8(0xBF, 0xD8, 0xE0))
-			and _color_near(sky_mat.ground_horizon_color, FOG_COLOR) and _color_near(sky_mat.ground_bottom_color, FOG_COLOR),
-			"céu com zênite #78AEDB, horizonte #BFD8E0 e chão no tom da névoa")
+	var sky_mat := env.sky.sky_material as ShaderMaterial if env.sky != null else null
+	_check(env.background_mode == Environment.BG_SKY and sky_mat != null and sky_mat.shader != null
+			and sky_mat.shader.resource_path.ends_with("sky_day.gdshader"),
+			"fundo de céu com o shader próprio (sky_day.gdshader)")
+	var below: Variant = sky_mat.get_shader_parameter("below") if sky_mat != null else null
+	var below_color: Color = below if below is Color else Color.BLACK
+	_check(below_color.get_luminance() > 0.6, "o céu abaixo do horizonte é claro (lavanda), sem chão escuro", str(below_color))
 	_check(env.ambient_light_source == Environment.AMBIENT_SOURCE_COLOR and _color_near(env.ambient_light_color, AMBIENT_COLOR),
-			"luz ambiente #7FA898")
+			"luz ambiente lavanda-azulada #B8C4DC")
 	_check(env.fog_enabled and env.fog_mode == Environment.FOG_MODE_DEPTH and _color_near(env.fog_light_color, FOG_COLOR)
 			and env.fog_sun_scatter <= 0.05 and not env.volumetric_fog_enabled,
-			"névoa de profundidade #A6C4CE, sem espalhamento do sol e sem névoa volumétrica")
+			"névoa de profundidade lavanda #DCD6E6, sem espalhamento do sol e sem névoa volumétrica")
 	_check(env.glow_enabled and env.glow_hdr_threshold >= 1.0, "glow com limiar HDR >= 1,0 (%.2f)" % env.glow_hdr_threshold)
 	_check(not attrs.dof_blur_near_enabled, "DOF de perto desligado")
 	_check(attrs.dof_blur_far_enabled and attrs.dof_blur_amount <= MAX_DOF_AMOUNT,
@@ -113,7 +116,7 @@ func _test_config(main: Node) -> void:
 	_check(not env.adjustment_enabled or (env.adjustment_contrast >= 1.0 - eps and env.adjustment_contrast <= 1.05 + eps
 			and env.adjustment_saturation >= 1.05 - eps and env.adjustment_saturation <= 1.10 + eps),
 			"ajuste de cor leve (contraste %.2f, saturação %.2f)" % [env.adjustment_contrast, env.adjustment_saturation])
-	_check(_has_far_ground(main), "chão de fundo montado além da borda do mapa (ground_far)")
+	_check(_has_island(main), "topo da ilha montado (grupo Island) e sem o chão de fundo antigo (ground_far)")
 
 
 ## Em vários yaws e zooms, a névoa começa depois do ponto mais longe do mapa e o DOF de
@@ -156,11 +159,18 @@ func _test_depth(main: Node) -> void:
 	camera.reset_to_default(true)
 
 
-func _has_far_ground(main: Node) -> bool:
-	for node: Node in main.get_node("Map").get_children():
-		if node.name == "Ground" and node.get_child_count() >= 1:
-			return true
-	return false
+func _has_island(main: Node) -> bool:
+	var map: Node = main.get_node("Map")
+	var island: Node = map.get_node_or_null("Island")
+	if island == null:
+		return false
+	var has_top := false
+	for child: Node in island.get_children():
+		has_top = has_top or str(child.scene_file_path).ends_with("/island_top.tscn")
+	for child: Node in map.get_node("Ground").get_children():
+		if str(child.scene_file_path).ends_with("/ground_far.tscn"):
+			return false
+	return has_top
 
 
 func _test_fx_off(main: Node) -> void:
@@ -172,8 +182,8 @@ func _test_fx_off(main: Node) -> void:
 	_check(not attrs.dof_blur_far_enabled and not attrs.dof_blur_near_enabled and not env.glow_enabled
 			and not env.fog_enabled and not env.ssao_enabled,
 			"--fx=off desliga DOF, bloom, névoa e SSAO")
-	_check(sun.shadow_enabled and env.background_mode == Environment.BG_SKY and _has_far_ground(main),
-			"--fx=off mantém sol, sombras, céu e chão de fundo")
+	_check(sun.shadow_enabled and env.background_mode == Environment.BG_SKY and _has_island(main),
+			"--fx=off mantém sol, sombras, céu e a ilha")
 	atmosphere.set_effects_enabled(true)
 	_check(attrs.dof_blur_far_enabled and env.glow_enabled and env.fog_enabled and env.ssao_enabled
 			and not attrs.dof_blur_near_enabled,

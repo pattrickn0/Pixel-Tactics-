@@ -95,8 +95,7 @@ const BROAD: Array = [
 			Vector4(0.5, 3.55, -1.1, 0.8), Vector4(-0.85, 3.9, -1.0, 0.74), Vector4(1.4, 4.05, -0.6, 0.64),
 			Vector4(0.65, 5.0, 0.35, 0.8), Vector4(-0.65, 4.9, -0.1, 0.76), Vector4(0.0, 4.5, 1.05, 0.7),
 			Vector4(-1.5, 4.15, -0.3, 0.62), Vector4(0.25, 5.35, -0.3, 0.62), Vector4(1.05, 3.4, -0.75, 0.6),
-			Vector4(-0.4, 3.35, 1.05, 0.58), Vector4(0.15, 3.4, -0.2, 0.65), Vector4(1.5, 3.5, 0.6, 0.5),
-			Vector4(-1.2, 4.7, 0.9, 0.5)],
+			Vector4(-0.4, 3.35, 1.05, 0.58), Vector4(0.15, 3.4, -0.2, 0.65)],
 		"branches": [[2.0, Vector3(0.9, 3.3, 0.3), 0.08], [2.1, Vector3(-0.9, 3.4, 0.3), 0.075],
 			[2.2, Vector3(0.3, 3.6, -0.9), 0.07], [2.15, Vector3(-0.4, 3.2, 0.8), 0.065]],
 		"roots": [[15.0, 0.44], [135.0, 0.38], [250.0, 0.42]],
@@ -128,6 +127,10 @@ const BROAD: Array = [
 	},
 ]
 
+## Escala de cada folhosa (a, b, c, d, e, pequenas a, b, c) para as medidas da direção de arte de 2026-10-08
+## (folhosa grande de 4,5 a 7 de altura, copa de 3,5 a 5,5; pequena de 2,5 a 4).
+const BROAD_SCALE: Array = [1.25, 1.2, 1.2, 1.18, 1.15, 1.15, 1.15, 1.12]
+
 # ---------------------------------------------------------------- coníferas
 ## Padrões da borda de baixo de cada andar: pontas Vector2(multiplicador do raio, descida em fração da altura do andar).
 const CONIFER_PATTERNS: Array = [
@@ -157,6 +160,9 @@ const CONIFERS: Array = [
 		[5.2, 1.05, 0.62, 0.28, 24.0, 2], [5.75, 1.0, 0.46, 0.2, 50.0, 0], [6.3, 1.2, 0.3, 0.0, 6.0, 1]]},
 ]
 
+## Escala de cada conífera (altura de 5 a 9).
+const CONIFER_SCALE: Array = [1.15, 1.15, 1.15, 1.15, 1.18, 1.2]
+
 # ---------------------------------------------------------------- arbustos
 ## Lóbulos Vector4(x, y, z, raio) por arbusto; o último (d) é o florido.
 const BUSHES: Array = [
@@ -177,28 +183,6 @@ const ROCKS: Array = [
 	{"rings": [[0.9, 0.95, 1.0, 0.85, 0.9, 1.0], [1.0, 0.85, 0.9, 1.0, 0.95, 0.8], [0.8, 1.0, 0.9, 0.85, 1.0, 0.95]], "apex": Vector3(-0.1, 1.0, -0.1)},
 ]
 
-# ---------------------------------------------------------------- fundo de mata
-## Fundo de mata: por aglomerado, itens [tipo (b = folhosa, c = conífera), variante, x, z, giro em graus, escala].
-const BACKDROPS: Array = [
-	[["c", 3, -3.0, -2.5, 0.0, 1.0], ["b", 2, -0.5, -3.0, 40.0, 1.0], ["c", 4, 2.5, -2.0, 90.0, 0.95], ["b", 5, -2.0, 0.5, 130.0, 0.9],
-		["c", 2, 1.0, 0.5, 20.0, 1.0], ["b", 1, 3.0, 2.5, 200.0, 0.9], ["c", 1, -3.0, 3.0, 60.0, 0.95], ["b", 6, 0.0, 3.5, 310.0, 1.0]],
-	[["b", 0, -3.5, -3.0, 10.0, 1.0], ["c", 5, -1.0, -2.5, 0.0, 0.95], ["b", 7, 2.0, -3.2, 75.0, 1.0], ["c", 3, 3.5, -0.5, 150.0, 1.0],
-		["c", 2, -2.5, 0.0, 30.0, 1.0], ["b", 3, 0.5, 0.8, 250.0, 0.9], ["b", 5, -3.0, 3.2, 100.0, 1.0], ["c", 4, 2.0, 3.0, 45.0, 0.95],
-		["c", 5, 0.0, -0.2, 180.0, 1.0]],
-	[["c", 4, -3.0, -3.0, 0.0, 1.0], ["c", 5, 0.0, -3.5, 120.0, 1.0], ["b", 4, 3.0, -3.0, 20.0, 0.95], ["b", 6, -3.5, 0.0, 215.0, 1.0],
-		["c", 2, -1.0, -0.5, 60.0, 1.0], ["b", 1, 1.5, 0.0, 300.0, 0.95], ["c", 3, 3.5, 1.5, 15.0, 1.0], ["c", 1, -2.0, 3.0, 90.0, 0.95],
-		["b", 7, 1.0, 3.2, 170.0, 1.0], ["c", 5, 3.5, 3.8, 240.0, 1.0]],
-	# d: só coníferas altas (mata do fundo, some na névoa).
-	[["c", 3, -3.2, -3.0, 0.0, 1.0], ["c", 5, -0.6, -3.4, 40.0, 1.0], ["c", 2, 2.8, -2.8, 80.0, 0.95], ["c", 4, -2.2, -0.2, 20.0, 1.0],
-		["c", 1, 0.8, 0.0, 60.0, 1.0], ["c", 5, 3.4, 0.4, 100.0, 1.0], ["c", 3, -3.4, 2.6, 10.0, 0.95], ["c", 0, -0.8, 2.9, 30.0, 1.0],
-		["c", 4, 2.4, 3.3, 70.0, 1.0]],
-	# e: coníferas com folhosas pequenas no meio.
-	[["c", 5, -3.0, -3.2, 15.0, 1.0], ["c", 3, 0.2, -3.0, 55.0, 1.0], ["b", 6, 3.0, -2.6, 95.0, 1.0], ["c", 4, -2.6, 0.2, 135.0, 1.0],
-		["b", 5, 0.4, 0.4, 25.0, 1.0], ["c", 2, 3.2, 1.0, 65.0, 1.0], ["c", 4, -3.0, 3.2, 105.0, 0.95], ["c", 5, 0.0, 3.3, 145.0, 1.0],
-		["b", 7, 3.0, 3.4, 35.0, 0.95]],
-]
-
-
 # ---------------------------------------------------------------- catálogo
 ## Entrada: name, build (nome do construtor), size (largura, altura, fundo) e opcionais variant,
 ## material, structural, obstacle, areas (HeightArea: [x, y, z, largura, fundo, topo]), stair ([y, largura, fundo, degraus]).
@@ -218,22 +202,28 @@ static func catalog() -> Array[Dictionary]:
 	out.append(_e("stair_inner_3", "stair_inner", Vector3(3, 1.0, 1), {"structural": true,
 			"stair": [0.5, 2.0, 1.0, 2], "areas": [[-1.25, 0, 0, 0.5, 1, 1.0], [1.25, 0, 0, 0.5, 1, 1.0]]}))
 	out.append(_e("stair_low_3", "stair_low", Vector3(3, 0.5, 1), {"structural": true, "stair": [0.0, 3.0, 1.0, 2]}))
-	out.append(_e("ground_inner", "ground", Vector3(20, 0, 18), {"material": "ground_grass_arena"}))
-	out.append(_e("ground_outer", "ground", Vector3(48, 0, 48), {"material": "ground_grass_forest"}))
-	out.append(_e("ground_far", "ground", Vector3(240, 0, 240), {"material": "ground_grass_forest"}))
+	# Passagens sul/norte (spec 012, decisão 2) e piso dos portões oeste/leste (item 3).
+	out.append(_e("stair_crest_in_3", "stair_crest_in", Vector3(4, 1.0, 1), {"structural": true,
+			"stair": [0.5, 3.0, 1.0, 2], "areas": [[-1.75, 0, 0, 0.5, 1, 1.0], [1.75, 0, 0, 0.5, 1, 1.0]]}))
+	out.append(_e("stair_pass_out_3", "stair_pass_out", Vector3(3, 0.75, 2), {"structural": true, "stair": [0.0, 3.0, 1.5, 3, -0.25]}))
+	out.append(_e("stair_crest_3", "stair_crest", Vector3(3, 1.0, 1), {"structural": true, "areas": [[0, 0, 0, 3, 1, 1.0]]}))
+	out.append(_e("stair_landing_3", "stair_landing", Vector3(1, 0.5, 3), {"structural": true, "areas": [[0, 0, 0, 1, 3, 0.5]]}))
+	out.append(_e("ground_inner", "ground", Vector3(20, 0, 18), {"material": "grass_painted_inner"}))
+	out.append(_e("ground_outer", "ground", Vector3(48, 0, 48), {"material": "grass_painted"}))
 	for decal_name: String in DECAL_SIZES.keys():
 		var dsize: Vector2 = DECAL_SIZES[decal_name]
 		out.append(_e(decal_name, "decal", Vector3(dsize.x, 0, dsize.y), {"material": decal_name}))
+	# Árvores pintadas (spec 012): a largura da peça é a da copa (2 x raio) e a altura é a do topo.
 	var broad_names: PackedStringArray = ["tree_broad_a", "tree_broad_b", "tree_broad_c", "tree_broad_d", "tree_broad_e",
 			"tree_small_a", "tree_small_b", "tree_small_c"]
-	var broad_sizes: Array[Vector3] = [Vector3(3.2, 4.0, 3.2), Vector3(3.6, 4.6, 3.6), Vector3(3.8, 5.0, 3.8), Vector3(4.2, 5.5, 4.2),
-			Vector3(4.4, 6.0, 4.4), Vector3(2.0, 2.4, 2.0), Vector3(2.4, 2.9, 2.4), Vector3(2.8, 3.5, 2.8)]
 	for i in broad_names.size():
-		out.append(_e(broad_names[i], "broad", broad_sizes[i], {"variant": i, "obstacle": true}))
-	var conifer_sizes: Array[Vector3] = [Vector3(2.2, 4.5, 2.2), Vector3(2.4, 5.2, 2.4), Vector3(2.6, 5.8, 2.6),
-			Vector3(2.8, 6.5, 2.8), Vector3(3.0, 7.0, 3.0), Vector3(3.4, 7.5, 3.4)]
-	for i in conifer_sizes.size():
-		out.append(_e("conifer_%s" % "abcdef"[i], "conifer", conifer_sizes[i], {"variant": i, "obstacle": true}))
+		var rb: float = snappedf(SceneryPieces.broad_crown_radius(i), 0.01)
+		out.append(_e(broad_names[i], "broad", Vector3(2.0 * rb, snappedf(SceneryPieces.broad_height(i), 0.01), 2.0 * rb),
+				{"variant": i, "obstacle": true}))
+	for i in CONIFERS.size():
+		var rc: float = snappedf(SceneryPieces.conifer_radius(i), 0.01)
+		out.append(_e("conifer_%s" % "abcdef"[i], "conifer", Vector3(2.0 * rc, snappedf(SceneryPieces.conifer_height(i), 0.01), 2.0 * rc),
+				{"variant": i, "obstacle": true}))
 	var bush_h: Array[float] = [0.6, 0.8, 1.0, 1.2]
 	for i in bush_h.size():
 		out.append(_e("bush_%s" % "abcd"[i], "bush", Vector3(1.0 + 0.1 * i, bush_h[i], 1.0 + 0.1 * i), {"variant": i, "obstacle": true}))
@@ -259,8 +249,7 @@ static func catalog() -> Array[Dictionary]:
 	var grass_sizes: Array[Vector3] = [Vector3(0.8, 0.9, 0.8), Vector3(0.8, 0.9, 0.8), Vector3(0.8, 0.7, 0.8)]
 	for i in grass_cards.size():
 		out.append(_e("tall_grass_%s" % "abc"[i], "cross", grass_sizes[i], {"material": grass_cards[i], "variant": 15 * i}))
-	for i in BACKDROPS.size():
-		out.append(_e("forest_backdrop_%s" % "abcde"[i], "backdrop", Vector3(8, 7.5, 8), {"variant": i, "obstacle": true}))
+	out.append_array(SceneryPieces.catalog())
 	return out
 
 

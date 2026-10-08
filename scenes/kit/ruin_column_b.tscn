@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_73p4c"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/ruin_column_b.res" id="2_iawh3"]
+
+[node name="ruin_column_b" type="Node3D" unique_id=721038382]
+script = ExtResource("1_73p4c")
+size = Vector3(1, 2.1, 1)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1422029880]
+mesh = ExtResource("2_iawh3")

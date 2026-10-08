@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://assets/materials/cloud_puff.gdshader" id="1_pryxf"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_pryxf")
+shader_parameter/color_top = null
+shader_parameter/color_side = null
+shader_parameter/color_base = null
+shader_parameter/color_deep = null
+shader_parameter/sun_from = null
+shader_parameter/sun_boost = null
+shader_parameter/depth_range = null

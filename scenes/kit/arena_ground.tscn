@@ -1,0 +1,12 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/map/kit/kit_piece.gd" id="1_njcva"]
+[ext_resource type="ArrayMesh" path="res://assets/models/kit/arena_ground.res" id="2_tt88b"]
+
+[node name="arena_ground" type="Node3D" unique_id=699570426]
+script = ExtResource("1_njcva")
+size = Vector3(20, 0, 18)
+
+[node name="Mesh" type="MeshInstance3D" parent="." unique_id=1856785567]
+cast_shadow = 0
+mesh = ExtResource("2_tt88b")

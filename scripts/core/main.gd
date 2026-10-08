@@ -1,12 +1,18 @@
 extends Node3D
 ## Liga os sistemas da cena principal: cria o MatchState (host local), conecta os
 ## sinais e lê os argumentos de linha de comando (depois de "--"):
-## --zoom=min|max|default, --yaw=graus, --capture=arquivo.png, --fx=off (desliga DOF, bloom, névoa e SSAO), --ssao=off.
+## --zoom=min|max|default, --yaw=graus, --distance=N, --overview, --capture=arquivo.png,
+## --fx=off (desliga DOF, bloom, névoa e SSAO), --ssao=off, --merge=off (não junta as malhas do mapa),
+## --hud=off (esconde o HUD; só para as capturas de comparação com a referência).
+## --distance e --overview são só para captura (fogem dos limites do zoom de jogo).
 
 ## Quadros de espera antes de medir (sombras, glow e DOF estabilizarem).
 const CAPTURE_DELAY_FRAMES: int = 60
 ## Quadros medidos (média de FPS) antes de salvar a captura.
 const CAPTURE_MEASURE_FRAMES: int = 60
+## Vista de cima da ilha inteira (--overview): inclinação e distância.
+const OVERVIEW_PITCH: float = 50.0
+const OVERVIEW_DISTANCE: float = 105.0
 
 var match_state: MatchState = null
 
@@ -16,6 +22,7 @@ var match_state: MatchState = null
 @onready var _world_env: WorldEnvironment = $WorldEnvironment
 @onready var _atmosphere: Atmosphere = $Atmosphere
 @onready var _dither: OcclusionDither = $OcclusionDither
+@onready var _merger: MeshMerger = $MeshMerger
 
 
 func _ready() -> void:
@@ -35,12 +42,21 @@ func _ready() -> void:
 		_atmosphere.set_effects_enabled(false)
 	if str(args.get("ssao", "")) == "off":
 		_atmosphere.ssao_enabled = false
+	if str(args.get("hud", "")) == "off":
+		_hud.visible = false
 
 	if args.has("zoom"):
 		_camera.set_zoom_preset(str(args["zoom"]))
+	if args.has("overview"):
+		_camera.set_capture_view(OVERVIEW_PITCH, OVERVIEW_DISTANCE)
+	if args.has("distance"):
+		_camera.set_capture_view(_camera.pitch_degrees, float(args["distance"]))
 	if args.has("yaw"):
 		_camera.set_target_yaw(float(args["yaw"]), true)
 	_map.build_map_data()
+	# Só visual: junta as malhas do mapa por material (menos draw calls). --merge=off desliga.
+	if str(args.get("merge", "")) != "off":
+		_merger.merge(_map)
 	if args.has("capture"):
 		# Captura não é interativa: tecla perdida (janela nova pega o foco) não gira a câmera.
 		_camera.set_process_unhandled_input(false)

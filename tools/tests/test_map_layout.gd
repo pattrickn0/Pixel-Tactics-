@@ -1,5 +1,6 @@
 extends SceneTree
-## Testes do mapa feito à mão (spec 011, Fase 1): dados lidos de scenes/map.tscn.
+## Testes do mapa feito à mão (spec 011, Fase 1, e spec 012: passagens sul/norte e portões): dados lidos de
+## scenes/map.tscn.
 ## Rodar depois do comando de validação 1:
 ##   "$G" --headless --path . --script tools/tests/test_map_layout.gd
 ## Imprime PASS/FAIL por verificação e sai com 0 (tudo passou) ou 1.
@@ -7,6 +8,10 @@ extends SceneTree
 const MAP_PATH: String = "res://scenes/map.tscn"
 const SAMPLES: int = 1000
 const TOLERANCE: float = 0.0001
+## Fingerprint do MapData de scenes/map.tscn (spec 012, Fase 1). Mudou o anel/escadas de propósito? Atualize.
+const EXPECTED_FINGERPRINT: String = "4129e69d2d501d361d16b80e461737cc3b80aeb616b979fe6baa8a4700ff30a7"
+## Pegadas que nenhum wall_high_* pode cruzar (os 4 lances da spec 012).
+const PASSAGES: Array[Rect2] = [Rect2(-14, 3, 1, 3), Rect2(13, -6, 1, 3), Rect2(-1.5, 12, 3, 1), Rect2(-1.5, -13, 3, 1)]
 
 var _failures: int = 0
 var _passes: int = 0
@@ -28,6 +33,7 @@ func _run() -> void:
 	_test_rects()
 	_test_heights()
 	_test_stairs()
+	_test_passages()
 	_test_fairness()
 	await _test_determinism()
 	await _test_snap()
@@ -88,13 +94,13 @@ func _test_heights() -> void:
 				detail += "reserva %d %s = %.3f; " % [bench.team, q, _map.get_height_at(q)]
 	_check(arena_ok, "get_height_at = 0,0 em %d pontos da arena" % SAMPLES, detail)
 	_check(bench_ok, "get_height_at = 0,5 em %d pontos de cada reserva" % SAMPLES, detail)
-	var crest: Array[Vector2] = [Vector2(0, 12.5), Vector2(-13.5, 0), Vector2(0, -12.5), Vector2(13.5, 0)]
+	var crest: Array[Vector2] = [Vector2(5, 12.5), Vector2(-5, 12.5), Vector2(5, -12.5), Vector2(-5, -12.5), Vector2(-13.5, 0), Vector2(13.5, 0)]
 	var crest_ok := true
 	for p: Vector2 in crest:
 		if not is_equal_approx(_map.get_height_at(p), 1.0):
 			crest_ok = false
 			detail = "%s = %.3f" % [p, _map.get_height_at(p)]
-	_check(crest_ok, "crista do muro em 1,0 (0, 12.5), (-13.5, 0), (0, -12.5), (13.5, 0)", detail)
+	_check(crest_ok, "crista do muro em 1,0 em (+-5, +-12.5) e (+-13.5, 0)", detail)
 	# Exterior a pelo menos 0,5 do muro e das escadas: 0,0.
 	var outside_ok := true
 	var outside_detail := ""
@@ -129,7 +135,7 @@ func _test_heights() -> void:
 
 ## Anda pelo eixo dos lances: só saltos de 0,25.
 func _test_stairs() -> void:
-	_check(_map.stairs.size() == 6, "6 trechos de escada (3 por lance, 2 lances)", str(_map.stairs.size()))
+	_check(_map.stairs.size() == 10, "10 trechos de escada (3 em cada portão e 2 em cada passagem)", str(_map.stairs.size()))
 	var terrace_rects: Array[Rect2] = []
 	for bench: MapBench in _map.benches:
 		terrace_rects.append(bench.terrace_rect)
@@ -148,12 +154,58 @@ func _test_stairs() -> void:
 	_check(_steps_ok(east, 0.25) and _expected_profile(east), "lance leste: mesmo perfil (rotação de 180°)", str(_unique(east)))
 	var west_flights: int = 0
 	var east_flights: int = 0
+	var passage_flights: int = 0
 	for stair: MapStair in _map.stairs:
-		if stair.rect.get_center().x < 0.0:
+		if absf(stair.rect.get_center().y) > 11.5:
+			passage_flights += 1
+		elif stair.rect.get_center().x < 0.0:
 			west_flights += 1
 		else:
 			east_flights += 1
-	_check(west_flights == 3 and east_flights == 3, "3 trechos no lance oeste e 3 no leste")
+	_check(west_flights == 3 and east_flights == 3 and passage_flights == 4,
+			"3 trechos no portão oeste, 3 no leste e 2 em cada passagem (sul e norte)")
+
+
+## Passagens sul e norte (spec 012, decisão 2): do terraço sobe a 0,75 e 1,0 dentro do muro e desce por fora
+## em 0,75, 0,5 e 0,25 até o chão. A reserva não é tocada. Os portões têm a crista em 1,0 no eixo do lance.
+func _test_passages() -> void:
+	var expected: Array = [[12.25, 0.75], [12.75, 1.0], [13.25, 0.75], [13.75, 0.5], [14.25, 0.25], [14.75, 0.0]]
+	var bad: Array[String] = []
+	for row: Array in expected:
+		for sgn: float in [1.0, -1.0]:
+			var p := Vector2(0.0, sgn * float(row[0]))
+			if absf(_map.get_height_at(p) - float(row[1])) > TOLERANCE:
+				bad.append("%s = %.3f (esperado %.2f)" % [p, _map.get_height_at(p), float(row[1])])
+	_check(bad.is_empty(), "passagens sul e norte: 0,75 / 1,0 / 0,75 / 0,5 / 0,25 / 0 de z 12,25 a 14,75 (e o simétrico)", str(bad))
+	_check(is_equal_approx(_map.get_height_at(Vector2(0, 11.5)), 0.5) and is_equal_approx(_map.get_height_at(Vector2(0, -11.5)), 0.5),
+			"a reserva em (0, +-11,5) continua em 0,5")
+	_check(is_equal_approx(_map.get_height_at(Vector2(-13.5, 4.5)), 1.0) and is_equal_approx(_map.get_height_at(Vector2(13.5, -4.5)), 1.0),
+			"crista dos portões em 1,0 em (-13,5; 4,5) e (13,5; -4,5)")
+	var south: Array[float] = _walk(Vector2(0.0, 11.0), Vector2(0, 1), 4.5)
+	var north: Array[float] = _walk(Vector2(0.0, -11.0), Vector2(0, -1), 4.5)
+	_check(_steps_ok(south, 0.25) and _steps_ok(north, 0.25), "passagens sul e norte: alturas mudam só em saltos de 0,25",
+			str(_unique(south)) + " / " + str(_unique(north)))
+	var crossing: Array[String] = []
+	for node: Node in _descendants(_layout):
+		var piece := node as KitPiece
+		if piece == null or not str(piece.scene_file_path).get_file().begins_with("wall_high_"):
+			continue
+		var foot: Rect2 = piece.get_footprint()
+		for rect: Rect2 in PASSAGES:
+			if foot.intersects(rect):
+				crossing.append("%s cruza %s" % [piece.name, rect])
+	_check(crossing.is_empty(), "nenhum wall_high_* com pegada cruzando os 4 lances", str(crossing))
+
+
+static func _descendants(root_node: Node) -> Array[Node]:
+	var out: Array[Node] = []
+	var stack: Array[Node] = [root_node]
+	while not stack.is_empty():
+		var node: Node = stack.pop_back()
+		out.append(node)
+		for child: Node in node.get_children():
+			stack.append(child)
+	return out
 
 
 func _walk(from: Vector2, dir: Vector2, length: float) -> Array[float]:
@@ -229,6 +281,8 @@ func _test_fairness() -> void:
 
 func _test_determinism() -> void:
 	var first: String = _map.fingerprint()
+	print("INFO: fingerprint do MapData: ", first)
+	_check(EXPECTED_FINGERPRINT == "" or first == EXPECTED_FINGERPRINT, "fingerprint igual ao registrado na spec 012", first)
 	var other := (load(MAP_PATH) as PackedScene).instantiate() as MapLayout
 	root.add_child(other)
 	await process_frame
@@ -300,9 +354,9 @@ func _test_arena_api() -> void:
 
 func _test_forbidden_code() -> void:
 	var hits: Array[String] = []
-	for dir_path: String in ["res://scripts/map", "res://tools/kit"]:
+	for dir_path: String in ["res://scripts/map", "res://scripts/match", "res://tools/kit"]:
 		_scan(dir_path, hits)
-	_check(hits.is_empty(), "scripts/map e tools/kit sem RandomNumberGenerator, FastNoiseLite, randi, randf, randomize", str(hits))
+	_check(hits.is_empty(), "scripts/map, scripts/match e tools/kit sem RandomNumberGenerator, FastNoiseLite, randi, randf, randomize", str(hits))
 	var old: Array[String] = []
 	for dir_path: String in ["res://scripts", "res://scenes"]:
 		_scan_old_names(dir_path, old)
