@@ -19,14 +19,18 @@ const ANCHORS: Array[Vector2] = [
 	Vector2(-6.8, 16.5), Vector2(-4.4, 17.0), Vector2(-2.2, 17.7),
 ]
 const WALL_RECT: Rect2 = Rect2(-14.0, -13.0, 28.0, 26.0)
-## Zonas da Tabela C: [nome, retângulo (x0, z0, largura, fundo), mínimo, máximo].
+## Zonas da Tabela C (f1): [nome, retângulo (x0, z0, largura, fundo), mínimo, máximo].
 const ZONES: Array = [
-	["noroeste", Rect2(-27.0, -23.0, 17.0, 18.0), 14, 20],
-	["oeste perto do portão", Rect2(-23.0, -5.0, 7.0, 8.0), 3, 5],
-	["nordeste", Rect2(10.0, -23.0, 9.0, 8.0), 4, 6],
-	["leste", Rect2(20.0, -25.0, 11.0, 21.0), 12, 18],
-	["frente leste", Rect2(16.0, -4.0, 6.0, 15.0), 5, 7],
+	["noroeste", Rect2(-27.0, -23.0, 17.0, 18.0), 24, 32],
+	["oeste perto do portão", Rect2(-23.0, -5.0, 7.0, 8.0), 4, 6],
+	["nordeste", Rect2(10.0, -23.0, 9.0, 8.0), 6, 9],
+	["leste", Rect2(20.0, -25.0, 11.0, 21.0), 18, 26],
+	["frente leste", Rect2(16.0, -4.0, 6.0, 15.0), 6, 8],
 ]
+const EAST_ZONE: Rect2 = Rect2(20.0, -25.0, 11.0, 21.0)
+## Faixa sul (f1): entre o muro sul e a borda; a passagem sul e o patamar ficam livres.
+const SOUTH_STRIP: Rect2 = Rect2(-16.0, 13.0, 32.0, 6.0)
+const SOUTH_KEEP_CLEAR: Array[Rect2] = [Rect2(-1.5, 12.0, 3.0, 2.5), Rect2(-2.5, 14.5, 5.0, 3.5)]
 ## Faixa norte central sem tronco e o norte central (1 ou 2 folhosas na ponta oeste).
 const NORTH_STRIP: Rect2 = Rect2(-8.0, -21.0, 18.0, 6.5)
 ## Lajes (patamar sul, patamar norte, plataforma oeste) e caminho nordeste: tronco a >= 0,75.
@@ -142,7 +146,7 @@ func _trees(map: Node3D) -> Array:
 
 func _test_forest(map: Node3D) -> void:
 	var trees: Array = _trees(map)
-	_check(trees.size() >= 40 and trees.size() <= 58, "de 40 a 58 árvores na ilha principal (%d)" % trees.size())
+	_check(trees.size() >= 60 and trees.size() <= 82, "de 60 a 82 árvores na ilha principal (%d)" % trees.size())
 	for zone: Array in ZONES:
 		var rect: Rect2 = zone[1]
 		var count: int = 0
@@ -150,6 +154,14 @@ func _test_forest(map: Node3D) -> void:
 			if rect.has_point(t[1]):
 				count += 1
 		_check(count >= int(zone[2]) and count <= int(zone[3]), "zona %s: de %d a %d árvores (%d)" % [zone[0], zone[2], zone[3], count])
+	var east_total: int = 0
+	var east_conifers: int = 0
+	for t: Array in trees:
+		if EAST_ZONE.has_point(t[1]):
+			east_total += 1
+			if str((t[0] as KitPiece).scene_file_path.get_file()).begins_with("conifer_"):
+				east_conifers += 1
+	_check(east_total > 0 and east_conifers * 3 >= east_total * 2, "leste: pelo menos 2/3 coníferas (%d de %d)" % [east_conifers, east_total])
 	var north_west_tip: int = 0
 	var in_strip: Array[String] = []
 	for t: Array in trees:
@@ -166,9 +178,10 @@ func _test_forest(map: Node3D) -> void:
 			var a: Array = trees[i]
 			var b: Array = trees[j]
 			var d: float = (a[1] as Vector2).distance_to(b[1])
-			if d < 0.8 * (float(a[2]) + float(b[2])):
-				overlaps.append("%s x %s (%.2f < %.2f)" % [(a[0] as Node).name, (b[0] as Node).name, d, 0.8 * (float(a[2]) + float(b[2]))])
-	_check(overlaps.is_empty(), "nenhuma copa encavalada (distância >= 0,8 x (ra + rb))", str(overlaps))
+			var need: float = maxf(1.2, 0.45 * (float(a[2]) + float(b[2])))
+			if d < need:
+				overlaps.append("%s x %s (%.2f < %.2f)" % [(a[0] as Node).name, (b[0] as Node).name, d, need])
+	_check(overlaps.is_empty(), "troncos a >= max(1,2; 0,45 x (ra + rb)) (copas encavalam até cerca da metade)", str(overlaps))
 	var too_close: Array[String] = []
 	var poly: PackedVector2Array = IslandTables.ISLAND_OUTLINE
 	var path: PackedVector2Array = IslandTables.PATH_NE
@@ -189,6 +202,43 @@ func _test_forest(map: Node3D) -> void:
 		if path_d - IslandTables.PATH_NE_WIDTH * 0.5 < 0.75:
 			too_close.append("%s: caminho %.2f" % [node_name, path_d - IslandTables.PATH_NE_WIDTH * 0.5])
 	_check(too_close.is_empty(), "troncos a >= 1,5 do muro, >= 0,75 das lajes e >= 1,0 da borda da ilha", str(too_close))
+	_test_south_strip(map)
+
+
+## Faixa sul (f1): 18 a 26 arbustos e 4 a 6 raízes de superfície fora da escada e do patamar; 6 a 10 cipós
+## na face externa do muro sul.
+func _test_south_strip(map: Node3D) -> void:
+	var bushes: int = 0
+	var roots: int = 0
+	var vines: int = 0
+	var blocked: Array[String] = []
+	for node: Node in _descendants(map):
+		var piece := node as KitPiece
+		if piece == null:
+			continue
+		var kind: String = str(piece.scene_file_path.get_file().get_basename())
+		var p := Vector2(piece.global_position.x, piece.global_position.z)
+		if kind.begins_with("bush_") and piece.get_parent().name == "Forest" and SOUTH_STRIP.has_point(p):
+			bushes += 1
+			var r: float = piece.size.x * 0.5 * piece.scale.x
+			for rect: Rect2 in SOUTH_KEEP_CLEAR:
+				if p.distance_to(p.clamp(rect.position, rect.end)) < r:
+					blocked.append(str(piece.name))
+		elif kind.begins_with("root_surface_"):
+			roots += 1
+			var chains: Array = IslandTables.SURFACE_ROOTS["abc".find(kind.right(1))]
+			for chain: Array in chains:
+				for v: Vector4 in chain:
+					var w: Vector3 = piece.global_transform * Vector3(v.x, v.y, v.z)
+					for rect: Rect2 in SOUTH_KEEP_CLEAR:
+						if rect.grow(v.w).has_point(Vector2(w.x, w.z)):
+							blocked.append(str(piece.name))
+		elif kind.begins_with("vine_hang_") and absf(piece.global_position.z - 13.0) < 0.2 and absf(piece.global_position.y - 1.0) < 0.1:
+			vines += 1
+	_check(bushes >= 18 and bushes <= 26, "faixa sul: de 18 a 26 arbustos (%d)" % bushes)
+	_check(roots >= 4 and roots <= 6, "faixa sul: de 4 a 6 raízes de superfície (%d)" % roots)
+	_check(vines >= 6 and vines <= 10, "faixa sul: de 6 a 10 cipós na face externa do muro (%d)" % vines)
+	_check(blocked.is_empty(), "faixa sul: nenhum arbusto ou raiz sobre a escada ou o patamar", str(blocked))
 
 
 # ---------------------------------------------------------------- fora da ilha
@@ -216,10 +266,43 @@ func _test_orbit_rule(map: Node3D) -> void:
 					if bad.size() < 6:
 						bad.append("%s em %s (r %.1f)" % [mi.get_parent().name, w, r])
 	_check(bad.is_empty(), "regra da órbita em %d vértices de Sky (r >= 55 ou y < 0,51 r - 4)" % checked, str(bad))
+	_test_horizon_ring(sky)
 	var cam := MapCamera.new()
 	var orbit: float = cam.max_distance * cos(deg_to_rad(27.0)) - 4.3
 	_check(orbit <= 50.0, "max_distance x cos 27° - 4,3 <= 50 (%.2f)" % orbit)
 	cam.free()
+
+
+## Anel de nuvens do horizonte (Tabela D, f1): de 10 a 16 aglomerados largos (>= 30 de largura) com o centro a
+## raio horizontal de 35 a 60 e o topo em y de -6 a -2, cobrindo o giro inteiro (nenhum vão maior que 60°).
+func _test_horizon_ring(sky: Node) -> void:
+	var angles: Array[float] = []
+	for child: Node in sky.get_children():
+		var piece := child as KitPiece
+		if piece == null or not str(piece.scene_file_path.get_file()).begins_with("cloud_"):
+			continue
+		var r: float = Vector2(piece.global_position.x, piece.global_position.z).length()
+		if r < 35.0 or r > 60.0:
+			continue
+		var box := AABB()
+		var first := true
+		for node: Node in _descendants(piece):
+			var mi := node as MeshInstance3D
+			if mi == null or mi.mesh == null:
+				continue
+			var b: AABB = mi.global_transform * mi.mesh.get_aabb()
+			box = b if first else box.merge(b)
+			first = false
+		if first or box.end.y < -6.0 or box.end.y > -2.0 or maxf(box.size.x, box.size.z) < 30.0:
+			continue
+		angles.append(fposmod(rad_to_deg(atan2(piece.global_position.x, piece.global_position.z)), 360.0))
+	angles.sort()
+	var widest: float = 0.0
+	for i in angles.size():
+		var next: float = angles[(i + 1) % angles.size()] + (360.0 if i == angles.size() - 1 else 0.0)
+		widest = maxf(widest, next - angles[i])
+	_check(angles.size() >= 10 and angles.size() <= 16 and widest <= 60.0,
+			"anel de nuvens do horizonte: de 10 a 16 aglomerados largos (%d), raio 35 a 60, topo de -6 a -2, maior vão %.0f°" % [angles.size(), widest])
 
 
 func _test_braziers(map: Node3D) -> void:

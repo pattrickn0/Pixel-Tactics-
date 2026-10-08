@@ -33,6 +33,8 @@ static func catalog() -> Array[Dictionary]:
 	out.append(_e("island_under", "island_under", Vector3(56, 17, 40), {"no_shadow": true}))
 	for i in IslandTables.ROOTS.size():
 		out.append(_e("root_hang_%s" % "abc"[i], "root", Vector3(1.5, 5.5, 1.5), {"variant": i}))
+	for i in IslandTables.SURFACE_ROOTS.size():
+		out.append(_e("root_surface_%s" % "abc"[i], "root_surface", Vector3(2.6, 0.4, 3.9), {"variant": i}))
 	for i in IslandTables.VINES.size():
 		out.append(_e("vine_hang_%s" % "ab"[i], "vine", Vector3(0.8, 3.5, 0.8), {"variant": i, "no_shadow": true}))
 	out.append(_e("island_high", "mass", Vector3(37, 30, 17), {"mass": "HIGH_ISLAND", "no_shadow": true}))
@@ -92,7 +94,9 @@ static func build(m: KitMesher, entry: Dictionary) -> bool:
 		"island_under":
 			island_under(m)
 		"root":
-			root_hang(m, v)
+			_root_chains(m, IslandTables.ROOTS[v])
+		"root_surface":
+			_root_chains(m, IslandTables.SURFACE_ROOTS[v])
 		"vine":
 			vine_hang(m, IslandTables.VINES[v])
 		"mass":
@@ -404,9 +408,9 @@ static func island_under(m: KitMesher) -> void:
 		_cone(m, "under_painted", pts, c.y, [], tip)
 
 
-## Raiz pendente: cadeias de tubos que afinam (pivô no topo da borda, +Z para fora).
-static func root_hang(m: KitMesher, variant: int) -> void:
-	for chain: Array in IslandTables.ROOTS[variant]:
+## Raiz (pendente ou de superfície): cadeias de tubos que afinam (pivô na borda ou no pé do muro, +Z para fora).
+static func _root_chains(m: KitMesher, chains: Array) -> void:
+	for chain: Array in chains:
 		for i in range(chain.size() - 1):
 			var a: Vector4 = chain[i]
 			var b: Vector4 = chain[i + 1]
@@ -606,9 +610,10 @@ static func waterfall(m: KitMesher) -> void:
 	var lip: float = IslandTables.WATERFALL_LIP
 	var z: float = IslandTables.WATERFALL_Z
 	var bottom: float = IslandTables.WATERFALL_BOTTOM
-	var fall: float = top - bottom
-	# Perfil: quina curva (do lábio para a frente) e queda reta.
-	var prof: Array[Vector2] = [Vector2(lip, top), Vector2(lip + 0.3, top - 0.25), Vector2(z, top - 0.8), Vector2(z, top - 4.0),
+	var river_y: float = IslandTables.HIGH_TOP_Y + 0.03
+	var fall: float = river_y - bottom
+	# Perfil: do rio (topo da ilha alta) desce pela quina curva até o lábio e cai reto.
+	var prof: Array[Vector2] = [Vector2(lip, river_y), Vector2(lip + 0.3, top - 0.05), Vector2(z, top - 0.6), Vector2(z, top - 4.0),
 			Vector2(z + 0.05, top - 9.0), Vector2(z + 0.1, bottom)]
 	for sheet: Array in IslandTables.WATERFALL_SHEETS:
 		var x0: float = float(sheet[0])
@@ -630,7 +635,7 @@ static func waterfall(m: KitMesher) -> void:
 	var rx1: float = float(river[1])
 	var back: float = float(river[2])
 	m.color = Color((rx1 - rx0) / 32.0, 1.0, 0.0, 1.0)
-	m.quad("water_fall", Vector3(rx0, top + 0.03, back), Vector3(rx1, top + 0.03, back), Vector3(rx1, top + 0.03, lip), Vector3(rx0, top + 0.03, lip),
+	m.quad("water_fall", Vector3(rx0, river_y, back), Vector3(rx1, river_y, back), Vector3(rx1, river_y, lip), Vector3(rx0, river_y, lip),
 			Vector3.UP, Vector2(0.0, 2.0), Vector2(rx1 - rx0, 2.0), Vector2(rx1 - rx0, 2.0 + lip - back), Vector2(0.0, 2.0 + lip - back))
 	m.color = Color.WHITE
 

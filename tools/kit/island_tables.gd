@@ -112,6 +112,18 @@ const ROOTS: Array = [
 	[[Vector4(0.0, -0.25, -0.3, 0.14), Vector4(0.2, -0.7, 0.15, 0.12), Vector4(0.15, -1.3, 0.42, 0.1), Vector4(-0.1, -1.9, 0.5, 0.08),
 		Vector4(-0.05, -2.6, 0.46, 0.06), Vector4(0.15, -3.1, 0.4, 0.04)]],
 ]
+## Raízes de superfície (f1, provisórias): cadeias Vector4(x, y, z, raio) grossas e quase enterradas na grama,
+## do pé do muro (pivô) para +Z até a borda, onde a ponta desce pelo penhasco. Até a borda: a = 3,2, b = 2,2, c = 1,6.
+const SURFACE_ROOTS: Array = [
+	[[Vector4(0.0, 0.06, -0.3, 0.27), Vector4(0.25, 0.08, 0.4, 0.25), Vector4(0.6, 0.07, 1.1, 0.22), Vector4(0.5, 0.06, 1.8, 0.19),
+		Vector4(0.15, 0.05, 2.5, 0.16), Vector4(0.25, 0.03, 3.2, 0.13), Vector4(0.35, -0.3, 3.5, 0.11), Vector4(0.38, -0.9, 3.65, 0.08)],
+		[Vector4(0.58, 0.06, 1.1, 0.12), Vector4(1.05, 0.05, 1.45, 0.1), Vector4(1.4, 0.04, 2.0, 0.07), Vector4(1.5, 0.0, 2.5, 0.05)]],
+	[[Vector4(0.0, 0.06, -0.3, 0.24), Vector4(-0.25, 0.07, 0.35, 0.22), Vector4(-0.6, 0.06, 0.95, 0.19), Vector4(-0.55, 0.05, 1.6, 0.16),
+		Vector4(-0.25, 0.04, 2.2, 0.13), Vector4(-0.2, -0.28, 2.5, 0.1), Vector4(-0.25, -0.8, 2.65, 0.07)],
+		[Vector4(-0.58, 0.06, 0.95, 0.11), Vector4(-1.05, 0.05, 1.25, 0.08), Vector4(-1.4, 0.02, 1.75, 0.05)]],
+	[[Vector4(0.0, 0.05, -0.25, 0.2), Vector4(0.25, 0.06, 0.4, 0.18), Vector4(0.15, 0.05, 1.0, 0.15), Vector4(-0.12, 0.04, 1.6, 0.12),
+		Vector4(-0.1, -0.25, 1.9, 0.09), Vector4(-0.05, -0.7, 2.0, 0.06)]],
+]
 ## Cipós pendentes: pontos Vector3 (pivô no topo); cada ponto leva 2 cartões de folha cruzados.
 const VINES: Array = [
 	[Vector3(0.0, 0.0, 0.1), Vector3(0.05, -0.45, 0.22), Vector3(0.0, -0.9, 0.3), Vector3(-0.08, -1.35, 0.32), Vector3(-0.05, -1.8, 0.3),
@@ -134,32 +146,28 @@ const HIGH_ISLAND: Dictionary = {
 	"bands": [[0.0, -1.0, 0.0], [-1.0, -2.6, 0.5], [-2.6, -4.2, 1.1], [-4.2, -6.0, 1.8]],
 	"jog": [0.0, 0.35, -0.2, 0.5, 0.1, -0.3, 0.25, 0.6, -0.1],
 	"rings": [
-		[-7.4, [
+		[-7.0, [
 			Vector2(-9.28, -58.32), Vector2(-7.13, -57.83), Vector2(-2.95, -58.26), Vector2(-0.85, -57.71), Vector2(2.76, -58.72), Vector2(5.78, -57.87),
 			Vector2(8.53, -58.11), Vector2(12.34, -57.81), Vector2(13.9, -58.2), Vector2(17.77, -58.87), Vector2(18.83, -61.66), Vector2(20.05, -64.67),
 			Vector2(16.78, -67.06), Vector2(16.27, -69.47), Vector2(11.57, -69.37), Vector2(9.46, -70.58), Vector2(6.09, -70.38), Vector2(3.08, -71.06),
 			Vector2(0.39, -69.66), Vector2(-3.1, -69.76), Vector2(-5.75, -68.51), Vector2(-8.99, -66.84), Vector2(-8.87, -64.08), Vector2(-11.68, -60.83),
 		]],
-		[-10.5, [
+		[-9.0, [
 			Vector2(-6.11, -58.73), Vector2(-1.64, -59.75), Vector2(0.81, -59.36), Vector2(4.11, -59.71), Vector2(7.51, -58.86), Vector2(9.91, -59.82),
 			Vector2(13.64, -59.36), Vector2(15.41, -61.79), Vector2(16.31, -64.9), Vector2(13.11, -67.13), Vector2(11.46, -68.92), Vector2(7.37, -68.51),
 			Vector2(4.55, -69.5), Vector2(1.5, -68.59), Vector2(-2.15, -68.54), Vector2(-3.91, -66.65), Vector2(-6.75, -64.45), Vector2(-7.08, -61.39),
 		]],
-		[-13.5, [
+		[-11.5, [
 			Vector2(-1.29, -60.82), Vector2(1.23, -60.45), Vector2(4.42, -60.92), Vector2(7.51, -60.58), Vector2(10.34, -60.46), Vector2(13.06, -62.27),
 			Vector2(11.8, -65.2), Vector2(10.56, -67.31), Vector2(6.78, -67.31), Vector2(4.04, -68.03), Vector2(1.17, -67.25), Vector2(-2.28, -66.71),
 			Vector2(-3.21, -64.28), Vector2(-4.24, -61.35),
 		]],
-		[-16.5, [
+		[-13.5, [
 			Vector2(-0.84, -61.7), Vector2(1.96, -61.84), Vector2(4.76, -61.64), Vector2(7.2, -61.85), Vector2(10.08, -62.87), Vector2(8.49, -65.32),
 			Vector2(6.45, -66.41), Vector2(3.62, -66.34), Vector2(0.67, -66.06), Vector2(-0.71, -64.16),
 		]],
-		[-19.5, [
-			Vector2(2.41, -62.91), Vector2(4.42, -62.7), Vector2(6.23, -62.93), Vector2(6.89, -64.65), Vector2(4.79, -65.23), Vector2(2.65, -65.23),
-			Vector2(1.4, -63.9),
-		]],
 	],
-	"apex": Vector3(4.0, -22.0, -64.0),
+	"apex": Vector3(4.0, -15.5, -64.0),
 }
 const HIGH_SPUR: Dictionary = {
 	"top": [
@@ -339,7 +347,10 @@ const ROCK_BIG: Dictionary = {
 ## Lâminas da cascata (medidas na referência): [x da esquerda, x da direita]; caem do lábio em
 ## y WATERFALL_TOP (z WATERFALL_LIP) até WATERFALL_BOTTOM, na frente da face (z WATERFALL_Z).
 const WATERFALL_SHEETS: Array = [[-9.0, -6.8], [-3.3, 5.6], [11.5, 14.1]]
-const WATERFALL_TOP: float = 8.0
+## Lábio da água (f1: y 6,3, v = 0,05 na câmera padrão) e o topo da ilha alta (a peça island_high fica em y
+## HIGH_TOP_Y na tabela de montagem); o rio corre no topo e desce até o lábio.
+const WATERFALL_TOP: float = 6.3
+const HIGH_TOP_Y: float = 6.5
 const WATERFALL_LIP: float = -56.9
 const WATERFALL_Z: float = -56.45
 const WATERFALL_BOTTOM: float = -13.0

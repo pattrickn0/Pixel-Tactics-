@@ -10,13 +10,14 @@ uniform vec4 color_deep : source_color = vec4(0.353, 0.494, 0.612, 1.0);
 uniform vec4 color_mid : source_color = vec4(0.498, 0.635, 0.745, 1.0);
 uniform vec4 color_light : source_color = vec4(0.714, 0.816, 0.890, 1.0);
 uniform vec4 color_foam : source_color = vec4(0.918, 0.965, 0.988, 1.0);
-// Velocidade da queda (unidades por segundo) e largura de cada lâmina (para apagar as bordas).
+// Velocidade da queda (unidades por segundo). A largura de cada lâmina e a altura da queda vêm da cor do
+// vértice (r = largura / 32, g = altura / 32), para cada lâmina apagar as próprias bordas.
 uniform float fall_speed = 3.0;
-uniform float sheet_width = 6.0;
-uniform float fall_height = 20.0;
 
 void fragment() {
 	vec2 p = UV;
+	float sheet_width = COLOR.r * 32.0;
+	float fall_height = COLOR.g * 32.0;
 	float streak = sn_noise2(vec2(p.x * 2.2, p.y * 0.12 - TIME * fall_speed * 0.12));
 	float fine = sn_noise2(vec2(p.x * 7.0, p.y * 0.35 - TIME * fall_speed * 0.35));
 	float v = streak * 0.65 + fine * 0.35;

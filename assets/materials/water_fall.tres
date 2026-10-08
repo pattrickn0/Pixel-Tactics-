@@ -10,5 +10,3 @@ shader_parameter/color_mid = null
 shader_parameter/color_light = null
 shader_parameter/color_foam = null
 shader_parameter/fall_speed = null
-shader_parameter/sheet_width = null
-shader_parameter/fall_height = null
