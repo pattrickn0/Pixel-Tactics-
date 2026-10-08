@@ -1,6 +1,6 @@
 # Direção de Arte: Pixel Chess (pixel art minimalista em 2.5D)
 
-**Status:** aprovada pelo usuário em 2026-10-06. (Reescrita em 2026-10-06; substitui a versão "HD-2D fiel ao Octopath". Atualizada em 2026-10-07 para o mapa feito à mão: specs `011` e `A06`.)
+**Status:** aprovada pelo usuário em 2026-10-06. **Atualização 2026-10-08:** muro alto com crista em 1,0, terraço de 3, plateia removida, e ilha flutuante com rio e nuvens (specs `012` e `A07`; os grupos de paleta novos, Água, Espuma, Nuvem, Folhagem outonal e Florada, estão na `A07`). (Reescrita em 2026-10-06; substitui a versão "HD-2D fiel ao Octopath". Atualizada em 2026-10-07 para o mapa feito à mão: specs `011` e `A06`.)
 
 Esta é a fonte única de estilo. Vale para o `artist` (scripts em `tools/art/`), para o código (placeholders, malhas, materiais, shaders, luz e pós-processamento) e para a revisão. O Antigravity/Gemini está pausado e não edita o projeto.
 Se algo aqui conflitar com uma spec de arte (`docs/specs/ANN-*.md`), vale a spec mais recente. Se conflitar com `CLAUDE.md`, vale o `CLAUDE.md`.
@@ -46,7 +46,7 @@ As referências antigas do Octopath (`153426`, `153547`, `160858`) foram removid
 |---|---|---|---|
 | Chão (nível 0, terraço, crista) | Planos com UV de mundo | Grama opaca 64×64 seamless, sem normal map | De cima |
 | Decalques de chão (terra, manchas, trilha) | Quads planos com alfa recortado, posicionados à mão em múltiplos de 1/32, rotação de 90° em 90° | Peças únicas com alfa binário e borda recortada em pixel | De cima |
-| Muro alto e degrau baixo | Faces verticais com UV de mundo (textura contínua entre peças) | Tiras longas de pedra seca (`wall_high_face` 1,5, `wall_low_face` 0,5) + normal map | De frente |
+| Muro alto e degrau baixo | Faces verticais com UV de mundo (textura contínua entre peças) | Tiras longas de pedra seca (`wall_high_face`, face externa de 1,0 desde 2026-10-08; `wall_low_face` 0,5) + normal map | De frente |
 | Capeamento e crista | Lajes individuais de contorno irregular, com beiral | Tiras de lajes com musgo + normal map | De cima |
 | Musgo caindo pela borda | Cartão alfa preso no beiral, pendendo sobre a face | Cartão 128×12, seamless na horizontal | De frente |
 | Quina do muro alto | Blocos de amarração alternando longo e curto, fechada | `wall_quoin` + `wall_crest_corner` | De frente / de cima |
@@ -174,7 +174,7 @@ Momento do dia: **dia claro**, fim de manhã.
 - **Desfoque bem sutil, só no fundo distante:** nada perto da câmera é desfocado. O anfiteatro inteiro e a mata em volta dele ficam nítidos; só o que está além da borda do mapa ganha um desfoque leve.
 - **Névoa azulada só ao fundo:** névoa de profundidade com cor `#A6C4CE`, começando depois da borda do mapa. A floresta do fundo puxa para azul-esverdeado claro, como no alto da referência.
 - **Sem vinheta.** **Sem color grading forte:** no máximo saturação 1,05 a 1,10 e contraste 1,0 a 1,05. O tonemap deve preservar as cores da paleta (a grama ao sol na tela fica perto de `#5B9C47`/`#73A949`).
-- **Fundo nunca vazio:** o chão e a mata continuam além do mapa e somem na névoa. Céu claro.
+- **Fundo nunca vazio:** desde a spec `012`, o mapa é uma **ilha flutuante**. Além da mata vêm a borda da ilha, o mar de nuvens, ilhotas ao longe e o céu claro, com a névoa azulada só além da borda. Nunca há chão vazio indo até o horizonte.
 - **Emissão:** só as runas (e, no futuro, efeitos das peças).
 - **Proibido na arte** (texturas e cartões): glow pintado, blur, névoa, vinheta, gradiente global, sombra projetada, semitransparência e anti-aliasing.
 
@@ -243,7 +243,7 @@ O layout é o da spec `011` (feito à mão, sem seed). Resumo visual:
 
 - **Mapa único feito à mão**, fiel à referência `Gemini_Generated_Image_6oy5mo6oy5mo6oy5.jpg`, montado com o kit em `scenes/map.tscn`. Nada de geração procedural.
 - **Arena 20 × 18 plana** no nível 0, grama da arena com a mancha de terra desenhada à mão.
-- **Anel:** degrau baixo de pedra (0,5) → terraço de grama (0,5, largura 4; as reservas ficam nele, nos lados compridos) → muro alto de pedra seca com capeamento de musgo (crista em 1,5; face interna 1,0, externa 1,5) → exterior no nível 0.
+- **Anel:** degrau baixo de pedra (0,5) → terraço de grama (0,5, largura 3; as reservas ficam nele, nos lados compridos) → muro alto de pedra seca com capeamento de musgo (crista em 1,0; face interna 0,5, externa 1,0; revisto em 2026-10-08) → exterior no nível 0.
 - **Duas escadas** largas nos lados curtos (oeste e leste) atravessam o anel; a trilha de lajes chega a elas pelo sudoeste e sai pelo nordeste.
 - **Plateia** (banco, caixote, pilha de lenha, troncos com musgo) no chão de fora, atrás do muro norte.
 - **Fora do anfiteatro:** floresta mista densa (coníferas e folhosas, cada modelo uma peça única), troncos caídos, tocos, cogumelos, arbustos, flores e névoa azulada ao fundo.
