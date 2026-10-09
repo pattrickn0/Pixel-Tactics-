@@ -14,6 +14,8 @@ extends SceneTree
 ## embaixo os recortes 2x (referência | captura) de M3, M6, M5, M4 e M7.
 ##   "$G" --headless --path . --script tools/dev/compare_images.gd -- --a=captura.png --b=docs/reference/ilha-flutuante.webp --clouds [--out=013-comparacao.png]
 ## Com --same, compara duas capturas (--a e --b) e imprime a diferença média de L em cada caixa M1-M8 (limite 0,5).
+## Com --turn (só --a), mede as vistas giradas da 013 no ar erodido da metade de cima: P10 <= 185, P90 >= 220,
+## S média de 0,06 a 0,20 e o tom P50 a <= 10% de #D6C4C5.
 
 ## Caixas da spec 012 (x0, y0, x1, y1 em 1280x720), alvo e limite (fração). Fase 3 = só informativas.
 const BOXES: Array = [
@@ -60,6 +62,11 @@ func _initialize() -> void:
 			else:
 				args[arg.substr(2, eq - 2)] = arg.substr(eq + 1)
 	var a := Image.load_from_file(str(args["a"]))
+	if args.has("turn"):
+		# Giros da spec 013 (sem referência): ar erodido da metade de cima do quadro.
+		a.convert(Image.FORMAT_RGBA8)
+		quit(0 if CloudMeasure.print_turn(a) else 1)
+		return
 	var b := Image.load_from_file(str(args["b"]))
 	if a == null or b == null or a.is_empty() or b.is_empty():
 		push_error("Não abriu as imagens")
@@ -72,6 +79,9 @@ func _initialize() -> void:
 		quit(0 if CloudMeasure.print_determinism(a, b) else 1)
 		return
 	if args.has("clouds"):
+		# As caixas da Tabela N1 são de 1280x720: a autoverificação (--a = a própria referência) amplia --a igual.
+		if a.get_size() != Vector2i(1280, 720):
+			a.resize(1280, 720, Image.INTERPOLATE_LANCZOS)
 		var ref_c := b.duplicate() as Image
 		ref_c.resize(a.get_width(), a.get_height(), Image.INTERPOLATE_LANCZOS)
 		CloudMeasure.print_report(a, ref_c)

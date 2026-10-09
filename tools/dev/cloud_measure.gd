@@ -46,7 +46,7 @@ const MARGIN: int = 22
 
 
 ## Dados de uma imagem numa janela: L, cor, ar erodido, L desfocado (6 e 1 px).
-class Window extends RefCounted:
+class MeasureWindow extends RefCounted:
 	var rect: Rect2i
 	var lum := PackedFloat32Array()
 	var rgb := PackedVector3Array()
@@ -58,8 +58,8 @@ class Window extends RefCounted:
 		return (y - rect.position.y) * rect.size.x + (x - rect.position.x)
 
 
-static func analyze(img: Image, box: Rect2i) -> Window:
-	var w := Window.new()
+static func analyze(img: Image, box: Rect2i) -> MeasureWindow:
+	var w := MeasureWindow.new()
 	var full := Rect2i(0, 0, img.get_width(), img.get_height())
 	w.rect = box.grow(MARGIN).intersection(full)
 	var data: PackedByteArray = img.get_data()
@@ -206,7 +206,7 @@ static func hex(c: Color) -> String:
 
 
 ## Medidas de uma janela na caixa (só a imagem): dicionário com ar, percentis, cor, iluminado, gradiente e tons.
-static func stats(w: Window, box: Rect2i) -> Dictionary:
+static func stats(w: MeasureWindow, box: Rect2i) -> Dictionary:
 	var lums := PackedFloat32Array()
 	var cols := PackedVector3Array()
 	var grads := PackedFloat32Array()
@@ -263,7 +263,7 @@ static func stats(w: Window, box: Rect2i) -> Dictionary:
 
 
 ## Medidas que comparam as duas imagens: estrutura, perfil, IoU do iluminado.
-static func pair_stats(wc: Window, wr: Window, box: Rect2i) -> Dictionary:
+static func pair_stats(wc: MeasureWindow, wr: MeasureWindow, box: Rect2i) -> Dictionary:
 	var a := PackedFloat32Array()
 	var b := PackedFloat32Array()
 	var inter: int = 0
@@ -326,8 +326,8 @@ static func print_report(cap: Image, ref: Image) -> void:
 		var mass_name: String = m[0]
 		var box: Rect2i = m[1]
 		var cls: int = m[2]
-		var wc: Window = analyze(cap, box)
-		var wr: Window = analyze(ref, box)
+		var wc: MeasureWindow = analyze(cap, box)
+		var wr: MeasureWindow = analyze(ref, box)
 		var sc: Dictionary = stats(wc, box)
 		var sr: Dictionary = stats(wr, box)
 		var ps: Dictionary = pair_stats(wc, wr, box)
@@ -457,3 +457,48 @@ static func print_determinism(a: Image, b: Image) -> bool:
 		ok = ok and mean <= 0.5
 		print("%s | diferença média de L | %.3f | <= 0,5 | %s" % [m[0], mean, _ok(mean <= 0.5)])
 	return ok
+
+
+## Vistas giradas (sem referência): ar erodido da metade de cima do quadro. P10 <= 185 e P90 >= 220 (volume com luz e
+## sombra), S média de 0,06 a 0,20 e o tom P50 (cor média a +-3 percentis do P50) a <= 10% de #D6C4C5.
+static func print_turn(img: Image) -> bool:
+	var box := Rect2i(0, 0, img.get_width(), img.get_height() / 2)
+	var w: MeasureWindow = analyze(img, box)
+	var lums := PackedFloat32Array()
+	var cols := PackedVector3Array()
+	var s_sum: float = 0.0
+	for y in range(box.position.y, box.end.y):
+		for x in range(box.position.x, box.end.x):
+			var i: int = w.idx(x, y)
+			if w.air[i] == 0:
+				continue
+			var c: Vector3 = w.rgb[i]
+			var mx: float = maxf(c.x, maxf(c.y, c.z))
+			s_sum += (mx - minf(c.x, minf(c.y, c.z))) / maxf(mx, 1.0)
+			lums.append(w.lum[i])
+			cols.append(c)
+	var n: int = lums.size()
+	if n == 0:
+		print("giro | sem ar na metade de cima | NAO")
+		return false
+	var p10: float = percentile(lums, 10.0)
+	var p90: float = percentile(lums, 90.0)
+	var s_mean: float = s_sum / float(n)
+	var lo: float = percentile(lums, 47.0)
+	var hi: float = percentile(lums, 53.0)
+	var acc := Vector3.ZERO
+	var k: int = 0
+	for j in n:
+		if lums[j] >= lo and lums[j] <= hi:
+			acc += cols[j]
+			k += 1
+	var tone: Color = to_color(acc / float(maxi(k, 1)))
+	var d: float = dist(tone, Color("#D6C4C5"))
+	var ok_l: bool = p10 <= 185.0 and p90 >= 220.0
+	var ok_s: bool = s_mean >= 0.06 and s_mean <= 0.20
+	var ok_t: bool = d <= 0.10
+	print("giro | ar erodido na metade de cima | %.0f%%" % (100.0 * float(n) / float(box.size.x * box.size.y)))
+	print("giro | L P10 / P90 | %.0f / %.0f | P10 <= 185, P90 >= 220 | %s" % [p10, p90, _ok(ok_l)])
+	print("giro | S média do ar | %.3f | 0,06 a 0,20 | %s" % [s_mean, _ok(ok_s)])
+	print("giro | tom P50 | %s | #D6C4C5 <= 10%% | %s (%.1f%%)" % [hex(tone), _ok(ok_t), 100.0 * d])
+	return ok_l and ok_s and ok_t

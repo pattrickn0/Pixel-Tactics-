@@ -1,7 +1,7 @@
 extends Node3D
 ## Liga os sistemas da cena principal: cria o MatchState (host local), conecta os
 ## sinais e lê os argumentos de linha de comando (depois de "--"):
-## --zoom=min|max|default, --yaw=graus, --distance=N, --overview, --capture=arquivo.png,
+## --zoom=min|max|default|reference, --yaw=graus, --distance=N, --overview, --capture=arquivo.png,
 ## --fx=off (desliga DOF, bloom, névoa e SSAO), --ssao=off, --merge=off (não junta as malhas do mapa),
 ## --hud=off (esconde o HUD; só para as capturas de comparação com a referência),
 ## --focus-offset=N (desloca o ponto mirado N unidades no sentido da vista; negativo = para a câmera).
@@ -9,6 +9,10 @@ extends Node3D
 ## Só captura (spec 013): --capture-frames=N (quadros de espera antes de salvar; o raymarch das nuvens no Vulkan
 ## por software é lento) e --cam-from=x,y,z --cam-to=x,y,z (câmera livre olhando de um ponto para outro).
 ## Na captura, o tempo das nuvens fica parado em 0 (imagem reproduzível).
+## Enquadramento das capturas: sem --zoom, --distance, --overview nem --cam-from, a captura usa a distância da
+## referência (MapCamera.REFERENCE_DISTANCE = 54), a mesma das medidas das specs 012 e 013. Para capturar o
+## zoom inicial do jogo (start_distance), passe --zoom=default. --yaw aceita qualquer ângulo (só captura);
+## no jogo o giro fica em ±max_yaw_degrees().
 
 ## Quadros de espera antes de medir (sombras, glow e DOF estabilizarem).
 const CAPTURE_DELAY_FRAMES: int = 60
@@ -40,6 +44,8 @@ func _ready() -> void:
 	_hud.rotate_left_requested.connect(_camera.rotate_left)
 	_hud.rotate_right_requested.connect(_camera.rotate_right)
 	_hud.reset_rotation_requested.connect(_camera.reset_to_default)
+	_camera.rotation_limits_changed.connect(_hud.set_rotation_limits)
+	_hud.set_rotation_limits(_camera.can_rotate_left(), _camera.can_rotate_right())
 	_camera.setup_effects(_world_env.environment, _world_env.camera_attributes as CameraAttributesPractical)
 	_camera.yaw_changed.connect(_atmosphere.on_camera_yaw_changed)
 
@@ -52,6 +58,8 @@ func _ready() -> void:
 
 	if args.has("zoom"):
 		_camera.set_zoom_preset(str(args["zoom"]))
+	elif args.has("capture") and not (args.has("distance") or args.has("overview") or args.has("cam-from")):
+		_camera.set_zoom_preset("reference")
 	if args.has("focus-offset"):
 		_camera.focus_forward_offset = float(args["focus-offset"])
 	if args.has("overview"):

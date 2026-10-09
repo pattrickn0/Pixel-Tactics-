@@ -112,26 +112,8 @@
 [ext_resource type="ArrayMesh" path="res://assets/models/clouds/M5.res" id="109_6ml5h"]
 [ext_resource type="Material" path="res://assets/materials/clouds/cloud_M6.tres" id="110_2txnj"]
 [ext_resource type="ArrayMesh" path="res://assets/models/clouds/M6.res" id="111_rxsn8"]
-[ext_resource type="Material" path="res://assets/materials/clouds/cloud_Ring_S1.tres" id="112_7upxd"]
 [ext_resource type="Material" path="res://assets/materials/clouds/cloud_Sea.tres" id="112_qitd0"]
 [ext_resource type="ArrayMesh" path="res://assets/models/clouds/Sea.res" id="113_clnm0"]
-[ext_resource type="ArrayMesh" path="res://assets/models/clouds/Ring_S1.res" id="113_noif7"]
-[ext_resource type="Material" path="res://assets/materials/clouds/cloud_Ring_S2.tres" id="114_sxfoa"]
-[ext_resource type="ArrayMesh" path="res://assets/models/clouds/Ring_S2.res" id="115_f8b38"]
-[ext_resource type="Material" path="res://assets/materials/clouds/cloud_Ring_W2.tres" id="116_b3noo"]
-[ext_resource type="ArrayMesh" path="res://assets/models/clouds/Ring_W2.res" id="117_gyc73"]
-[ext_resource type="Material" path="res://assets/materials/clouds/cloud_Ring_E2.tres" id="118_bbrc0"]
-[ext_resource type="ArrayMesh" path="res://assets/models/clouds/Ring_E2.res" id="119_6ml5h"]
-[ext_resource type="Material" path="res://assets/materials/clouds/cloud_Ring_FW.tres" id="120_2txnj"]
-[ext_resource type="ArrayMesh" path="res://assets/models/clouds/Ring_FW.res" id="121_rxsn8"]
-[ext_resource type="Material" path="res://assets/materials/clouds/cloud_Ring_FS.tres" id="122_qitd0"]
-[ext_resource type="ArrayMesh" path="res://assets/models/clouds/Ring_FS.res" id="123_clnm0"]
-[ext_resource type="Material" path="res://assets/materials/clouds/cloud_Ring_FE.tres" id="124_xb1vf"]
-[ext_resource type="ArrayMesh" path="res://assets/models/clouds/Ring_FE.res" id="125_we0su"]
-[ext_resource type="Material" path="res://assets/materials/clouds/cloud_Ring_FSW.tres" id="126_csj0d"]
-[ext_resource type="ArrayMesh" path="res://assets/models/clouds/Ring_FSW.res" id="127_ivt0i"]
-[ext_resource type="Material" path="res://assets/materials/clouds/cloud_Ring_FSE.tres" id="128_4ewnl"]
-[ext_resource type="ArrayMesh" path="res://assets/models/clouds/Ring_FSE.res" id="129_4v3bk"]
 
 [node name="Map" type="Node3D" unique_id=1174681232]
 script = ExtResource("1_m335s")
@@ -2289,14 +2271,14 @@ size = Vector3(1, 1.1, 1)
 [node name="Clouds" type="Node3D" parent="Sky" unique_id=1302391967]
 
 [node name="M3_R1" type="MeshInstance3D" parent="Sky/Clouds" unique_id=138634170]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -56, -2.2, -37)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -56, -1.59, -37)
 material_override = ExtResource("84_8imy6")
 cast_shadow = 0
 gi_mode = 0
 mesh = ExtResource("85_goal7")
 
 [node name="M3_R2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1049785172]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.8, -7.8, -20)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48.8, -8.49, -20)
 material_override = ExtResource("86_2nsuc")
 cast_shadow = 0
 gi_mode = 0
@@ -2317,21 +2299,21 @@ gi_mode = 0
 mesh = ExtResource("91_521t8")
 
 [node name="M7_R1" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1074542195]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54, -1, -35)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.5, -2, -35)
 material_override = ExtResource("94_y8qgh")
 cast_shadow = 0
 gi_mode = 0
 mesh = ExtResource("95_o6pjl")
 
 [node name="M7_R2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=841838714]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, -6.2, -22)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.9, -6.8, -22)
 material_override = ExtResource("96_dp2xw")
 cast_shadow = 0
 gi_mode = 0
 mesh = ExtResource("97_jvymk")
 
 [node name="M7_R3" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1772008433]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 51, -9.9, -14)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 51, -10.9, -14)
 material_override = ExtResource("98_nopys")
 cast_shadow = 0
 gi_mode = 0
@@ -2345,7 +2327,7 @@ gi_mode = 0
 mesh = ExtResource("101_rdlqv")
 
 [node name="M4" type="MeshInstance3D" parent="Sky/Clouds" unique_id=373277865]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.2, -22.1, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.8, -21.5, 1.2)
 material_override = ExtResource("92_8bpgt")
 cast_shadow = 0
 gi_mode = 0
@@ -2359,7 +2341,7 @@ gi_mode = 0
 mesh = ExtResource("103_noif7")
 
 [node name="M2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1786029586]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19, -6.7, -80)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.02, -6.7, -80)
 material_override = ExtResource("104_sxfoa")
 cast_shadow = 0
 gi_mode = 0
@@ -2373,81 +2355,18 @@ gi_mode = 0
 mesh = ExtResource("107_gyc73")
 
 [node name="M5" type="MeshInstance3D" parent="Sky/Clouds" unique_id=915661039]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, -10.7, -86)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.5, -12.2, -86)
 material_override = ExtResource("108_bbrc0")
 cast_shadow = 0
 gi_mode = 0
 mesh = ExtResource("109_6ml5h")
 
 [node name="M6" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1258648989]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65.2, -13.7, -95.5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 62.2, -14.26, -95.5)
 material_override = ExtResource("110_2txnj")
 cast_shadow = 0
 gi_mode = 0
 mesh = ExtResource("111_rxsn8")
-
-[node name="Ring_S1" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1665861693]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, -4, 40)
-material_override = ExtResource("112_7upxd")
-cast_shadow = 0
-gi_mode = 0
-mesh = ExtResource("113_noif7")
-
-[node name="Ring_S2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=533961055]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, -6, 32)
-material_override = ExtResource("114_sxfoa")
-cast_shadow = 0
-gi_mode = 0
-mesh = ExtResource("115_f8b38")
-
-[node name="Ring_W2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1057583440]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, -6, 14)
-material_override = ExtResource("116_b3noo")
-cast_shadow = 0
-gi_mode = 0
-mesh = ExtResource("117_gyc73")
-
-[node name="Ring_E2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=167442514]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, -6, 12)
-material_override = ExtResource("118_bbrc0")
-cast_shadow = 0
-gi_mode = 0
-mesh = ExtResource("119_6ml5h")
-
-[node name="Ring_FW" type="MeshInstance3D" parent="Sky/Clouds" unique_id=327068060]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -105, -9, -8)
-material_override = ExtResource("120_2txnj")
-cast_shadow = 0
-gi_mode = 0
-mesh = ExtResource("121_rxsn8")
-
-[node name="Ring_FS" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1781594250]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, -9, 105)
-material_override = ExtResource("122_qitd0")
-cast_shadow = 0
-gi_mode = 0
-mesh = ExtResource("123_clnm0")
-
-[node name="Ring_FE" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1109113667]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 105, -9, 10)
-material_override = ExtResource("124_xb1vf")
-cast_shadow = 0
-gi_mode = 0
-mesh = ExtResource("125_we0su")
-
-[node name="Ring_FSW" type="MeshInstance3D" parent="Sky/Clouds" unique_id=396545481]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -76, -10, 74)
-material_override = ExtResource("126_csj0d")
-cast_shadow = 0
-gi_mode = 0
-mesh = ExtResource("127_ivt0i")
-
-[node name="Ring_FSE" type="MeshInstance3D" parent="Sky/Clouds" unique_id=2142244579]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 76, -10, 76)
-material_override = ExtResource("128_4ewnl")
-cast_shadow = 0
-gi_mode = 0
-mesh = ExtResource("129_4v3bk")
 
 [node name="Sea" type="MeshInstance3D" parent="Sky/Clouds" unique_id=635515440]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -30, 0)
@@ -2455,6 +2374,174 @@ material_override = ExtResource("112_qitd0")
 cast_shadow = 0
 gi_mode = 0
 mesh = ExtResource("113_clnm0")
+
+[node name="Y90_M5b" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1959540820]
+transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, -88, -12.2, 48)
+material_override = ExtResource("108_bbrc0")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("109_6ml5h")
+
+[node name="Y90_M2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=470264612]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -80, -6.7, 19.02)
+material_override = ExtResource("104_sxfoa")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("105_f8b38")
+
+[node name="Y90_M5" type="MeshInstance3D" parent="Sky/Clouds" unique_id=718013960]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -86, -12.2, -31.5)
+material_override = ExtResource("108_bbrc0")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("109_6ml5h")
+
+[node name="Y90_M6" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1548591206]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -102.5, -14.26, -62.2)
+material_override = ExtResource("110_2txnj")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("111_rxsn8")
+
+[node name="Y180_M5b" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1570613527]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 48, -12.2, 88)
+material_override = ExtResource("108_bbrc0")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("109_6ml5h")
+
+[node name="Y180_M2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1924135679]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 19.02, -6.7, 80)
+material_override = ExtResource("104_sxfoa")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("105_f8b38")
+
+[node name="Y180_M5" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1930856765]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -31.5, -12.2, 86)
+material_override = ExtResource("108_bbrc0")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("109_6ml5h")
+
+[node name="Y180_M6" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1143001639]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -62.2, -14.26, 95.5)
+material_override = ExtResource("110_2txnj")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("111_rxsn8")
+
+[node name="Y270_M5b" type="MeshInstance3D" parent="Sky/Clouds" unique_id=2009858843]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 94, -12.2, -48)
+material_override = ExtResource("108_bbrc0")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("109_6ml5h")
+
+[node name="Y270_M2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=235377761]
+transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 80, -6.7, -19.02)
+material_override = ExtResource("104_sxfoa")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("105_f8b38")
+
+[node name="Y270_M5" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1259917642]
+transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 86, -12.2, 31.5)
+material_override = ExtResource("108_bbrc0")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("109_6ml5h")
+
+[node name="Y270_M6" type="MeshInstance3D" parent="Sky/Clouds" unique_id=61062230]
+transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 95.5, -14.26, 62.2)
+material_override = ExtResource("110_2txnj")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("111_rxsn8")
+
+[node name="SE_M3_R1" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1090197228]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 56, -1.59, 37)
+material_override = ExtResource("84_8imy6")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("85_goal7")
+
+[node name="SE_M3_R2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=2043081258]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 48.8, -8.49, 22)
+material_override = ExtResource("86_2nsuc")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("87_o8g4j")
+
+[node name="SE_M3_R3" type="MeshInstance3D" parent="Sky/Clouds" unique_id=575864945]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 54, -7.6, 21.2)
+material_override = ExtResource("88_0kbeg")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("89_pie5y")
+
+[node name="SE_M3_R4" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1505051165]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, 56, -12, 13)
+material_override = ExtResource("90_pfb0u")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("91_521t8")
+
+[node name="SW_M7_R1" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1289426548]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -52.5, -2, 35)
+material_override = ExtResource("94_y8qgh")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("95_o6pjl")
+
+[node name="SW_M7_R2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1342156316]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -54.9, -6.8, 22)
+material_override = ExtResource("96_dp2xw")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("97_jvymk")
+
+[node name="SW_M7_R3" type="MeshInstance3D" parent="Sky/Clouds" unique_id=242037217]
+transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -55, -10.9, 14)
+material_override = ExtResource("98_nopys")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("99_5g3sy")
+
+[node name="S_M3_R2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=765555694]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -20, -8.49, 48.8)
+material_override = ExtResource("86_2nsuc")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("87_o8g4j")
+
+[node name="S_M3_R3" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1084500792]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -16.2, -7.6, 48)
+material_override = ExtResource("88_0kbeg")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("89_pie5y")
+
+[node name="S_M3_R4" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1874489258]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, -7, -12, 45)
+material_override = ExtResource("90_pfb0u")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("91_521t8")
+
+[node name="S_M7_R2" type="MeshInstance3D" parent="Sky/Clouds" unique_id=943947139]
+transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 22, -6.8, 52.9)
+material_override = ExtResource("96_dp2xw")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("97_jvymk")
+
+[node name="S_M7_R3" type="MeshInstance3D" parent="Sky/Clouds" unique_id=1581823088]
+transform = Transform3D(1.1924881e-08, 0, -1, 0, 1, 0, 1, 0, 1.1924881e-08, 14, -10.9, 51)
+material_override = ExtResource("98_nopys")
+cast_shadow = 0
+gi_mode = 0
+mesh = ExtResource("99_5g3sy")
 
 [node name="Fx" type="Node3D" parent="." unique_id=458544898]
 

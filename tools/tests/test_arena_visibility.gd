@@ -2,8 +2,8 @@ extends SceneTree
 ## Visibilidade da arena e das reservas na câmera padrão (spec 011): para yaw 0, 90, 180 e 270,
 ## todo ponto de uma grade de 0,5 na arena (recuada 0,25) e nas reservas tem linha de visão
 ## até a câmera sem cruzar o terreno (get_height_at ao longo do raio); em yaw 45, 135, 225 e
-## 315 pelo menos 97%. A câmera sai dos @export padrão de MapCamera (inclinação, start_distance,
-## FOV, mira 4,3 à frente do centro; spec 012) e é testada na distância padrão e na máxima. Oclusores: o
+## 315 pelo menos 97%. A câmera sai dos @export padrão de MapCamera (inclinação, FOV, mira 4,3 à frente do
+## centro; spec 012) e é testada na distância da referência (54), na inicial do jogo (start_distance) e na máxima. Oclusores: o
 ## terreno e as peças com volume dos grupos Structures e Props (braseiros, pilares, pontes, bancos, troncos).
 ## As árvores, rochas e ilhotas têm dither (spec 011 Fase 2 e spec 012), então não contam.
 ## O raio do ponto até a câmera é percorrido célula a célula numa grade de 0,5 (o tamanho do
@@ -41,7 +41,7 @@ func _initialize() -> void:
 func _run() -> void:
 	_cam = MapCamera.new()
 	_pitch = _cam.pitch_degrees
-	_distance = _cam.start_distance
+	_distance = MapCamera.REFERENCE_DISTANCE
 	_fov = _cam.fov_degrees
 	print("INFO: câmera padrão: inclinação %.1f°, distância %.1f (máxima %.1f), FOV %.1f°, mira %.1f à frente, tela %.2f" % [
 			_pitch, _distance, _cam.max_distance, _fov, _cam.focus_forward_offset, ASPECT])
@@ -52,8 +52,11 @@ func _run() -> void:
 	_collect_boxes(layout)
 	print("INFO: %d peças com volume como oclusores" % _boxes.size())
 	var grid := HeightGrid.new(map)
-	_test_frustum(map)
-	for dist: float in [_cam.start_distance, _cam.max_distance]:
+	# Enquadramento: na distância da referência e no zoom inicial do jogo.
+	for dist: float in [MapCamera.REFERENCE_DISTANCE, _cam.start_distance]:
+		_distance = dist
+		_test_frustum(map)
+	for dist: float in [MapCamera.REFERENCE_DISTANCE, _cam.start_distance, _cam.max_distance]:
 		_distance = dist
 		_test_orthogonal(map, grid)
 		_test_diagonal(map, grid)
@@ -150,7 +153,7 @@ func _test_frustum(map: MapData) -> void:
 			if not _in_frustum(cam, p):
 				ok = false
 				detail += "yaw %.0f ponto %s; " % [yaw, p]
-	_check(ok, "câmera padrão (yaw 0 e 180): arena, reservas e face externa do muro sul dentro do frustum", detail)
+	_check(ok, "distância %.1f (yaw 0 e 180): arena, reservas e face externa do muro sul dentro do frustum" % _distance, detail)
 
 
 func _corners(rect: Rect2) -> Array[Vector2]:
@@ -244,7 +247,7 @@ func _test_orthogonal(map: MapData, grid: HeightGrid) -> void:
 			if share < 1.0:
 				ok = false
 				detail += "yaw %.0f reserva %d %.2f%%; " % [yaw, bench.team, share * 100.0]
-	_check(ok, "distância %.0f, yaw 0, 90, 180 e 270: 100%% da arena (recuada 0,25) e das reservas com linha de visão livre" % _distance, detail)
+	_check(ok, "distância %.1f, yaw 0, 90, 180 e 270: 100%% da arena (recuada 0,25) e das reservas com linha de visão livre" % _distance, detail)
 
 
 func _test_diagonal(map: MapData, grid: HeightGrid) -> void:
@@ -253,14 +256,14 @@ func _test_diagonal(map: MapData, grid: HeightGrid) -> void:
 	for yaw: float in [45.0, 135.0, 225.0, 315.0]:
 		var cam: Vector3 = _camera(map, yaw).origin
 		var arena_share: float = _visible_share(map, grid, map.arena_rect, 0.25, cam)
-		print("INFO: distância %.0f, yaw %3.0f: arena visível %.2f%%" % [_distance, yaw, arena_share * 100.0])
+		print("INFO: distância %.1f, yaw %3.0f: arena visível %.2f%%" % [_distance, yaw, arena_share * 100.0])
 		if arena_share < DIAGONAL_MIN:
 			ok = false
 			detail += "yaw %.0f arena %.2f%%; " % [yaw, arena_share * 100.0]
 		for bench: MapBench in map.benches:
 			var share: float = _visible_share(map, grid, bench.rect, 0.0, cam)
-			print("INFO: distância %.0f, yaw %3.0f: reserva %d visível %.2f%%" % [_distance, yaw, bench.team, share * 100.0])
+			print("INFO: distância %.1f, yaw %3.0f: reserva %d visível %.2f%%" % [_distance, yaw, bench.team, share * 100.0])
 			if share < DIAGONAL_MIN:
 				ok = false
 				detail += "yaw %.0f reserva %d %.2f%%; " % [yaw, bench.team, share * 100.0]
-	_check(ok, "distância %.0f, yaw 45, 135, 225 e 315: pelo menos 97%% da arena e das reservas com linha de visão livre" % _distance, detail)
+	_check(ok, "distância %.1f, yaw 45, 135, 225 e 315: pelo menos 97%% da arena e das reservas com linha de visão livre" % _distance, detail)

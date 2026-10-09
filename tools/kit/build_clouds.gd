@@ -37,8 +37,8 @@ func _initialize() -> void:
 			quit(1)
 			return
 		var box: AABB = mass["proxy"]
-		var mesh_err: Error = ResourceSaver.save(proxy_mesh(box), MODEL_DIR + mass_name + ".res")
-		var mat_err: Error = ResourceSaver.save(make_material(shader, mass), MATERIAL_DIR + "cloud_" + mass_name + ".tres")
+		var mesh_err: Error = save_stable(proxy_mesh(box), MODEL_DIR + mass_name + ".res")
+		var mat_err: Error = save_stable(make_material(shader, mass), MATERIAL_DIR + "cloud_" + mass_name + ".tres")
 		if mesh_err != OK or mat_err != OK:
 			push_error("Falha ao gravar a massa %s (%d, %d)" % [mass_name, mesh_err, mat_err])
 			quit(1)
@@ -48,6 +48,16 @@ func _initialize() -> void:
 	var err: Error = mask.save_png(ProjectSettings.globalize_path(MASK_PATH))
 	print("Nuvens: %d massas (proxy + material) e a máscara da sombra da ilha %dx%d (erro %d)" % [count, MASK_SIZE, MASK_SIZE, err])
 	quit(0 if err == OK else 1)
+
+
+## Grava com identificadores fixos: o Godot sorteia o id da malha principal (.res) e o do shader externo (.tres) a
+## cada gravação. Fixando os dois, duas gerações dão o mesmo arquivo (md5).
+static func save_stable(res: Resource, path: String) -> Error:
+	res.resource_scene_unique_id = "main"
+	var mat := res as ShaderMaterial
+	if mat != null and mat.shader != null:
+		mat.shader.set_id_for_path(ProjectSettings.localize_path(path), "1_shader")
+	return ResourceSaver.save(res, path)
 
 
 ## Caixa fechada com as faces para fora (o shader desenha as de trás: cull_front).

@@ -1,6 +1,6 @@
 extends SceneTree
-## Composição da câmera padrão (spec 012, Tabela E): com os @export padrão da MapCamera (yaw 0, distância
-## padrão, 1280x720), cada âncora do mundo projeta a <= 0,025 (em u e em v) da posição medida na referência
+## Composição do enquadramento da referência (spec 012, Tabela E): com os @export padrão da MapCamera (yaw 0,
+## distância MapCamera.REFERENCE_DISTANCE = 54, 1280x720; o jogo começa 10% mais perto, em start_distance), cada âncora do mundo projeta a <= 0,025 (em u e em v) da posição medida na referência
 ## docs/reference/ilha-flutuante.webp. Também confere os limites da câmera da spec (pitch, FOV, distância,
 ## mira à frente e a órbita máxima).
 ## Rodar depois do comando de validação 1:
@@ -58,12 +58,12 @@ func _run() -> void:
 	cam.fov = defaults.fov_degrees
 	cam.near = 0.3
 	cam.far = 400.0
-	cam.global_transform = defaults.transform_for(0.0, defaults.start_distance)
+	cam.global_transform = defaults.transform_for(0.0, MapCamera.REFERENCE_DISTANCE)
 	await process_frame
 	print("INFO: câmera padrão em %s, mirando %s" % [cam.global_position, defaults.focus_for(0.0)])
 	_check(is_equal_approx(defaults.pitch_degrees, 27.0) and is_equal_approx(defaults.fov_degrees, 37.0)
-			and is_equal_approx(defaults.start_distance, 54.0) and is_equal_approx(defaults.focus_forward_offset, 4.3),
-			"câmera padrão: pitch 27°, FOV 37°, distância 54, mira 4,3 à frente")
+			and is_equal_approx(MapCamera.REFERENCE_DISTANCE, 54.0) and is_equal_approx(defaults.focus_forward_offset, 4.3),
+			"câmera da referência: pitch 27°, FOV 37°, distância 54, mira 4,3 à frente")
 	var focus: Vector3 = defaults.focus_for(0.0)
 	_check(focus.is_equal_approx(Vector3(0.0, 0.0, -4.3)) and cam.global_position.distance_to(Vector3(0.0, 24.515, 43.814)) < 0.01,
 			"em yaw 0 a câmera fica em (0; 24,5; 43,8) e mira (0, 0, -4,3)", str(cam.global_position))

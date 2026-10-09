@@ -17,3 +17,9 @@ func _ready() -> void:
 	_rotate_left_button.pressed.connect(rotate_left_requested.emit)
 	_rotate_right_button.pressed.connect(rotate_right_requested.emit)
 	_reset_rotate_button.pressed.connect(reset_rotation_requested.emit)
+
+
+## Desabilita o botão de giro do lado que chegou ao limite (reage a MapCamera.rotation_limits_changed).
+func set_rotation_limits(can_rotate_left: bool, can_rotate_right: bool) -> void:
+	_rotate_left_button.disabled = not can_rotate_left
+	_rotate_right_button.disabled = not can_rotate_right

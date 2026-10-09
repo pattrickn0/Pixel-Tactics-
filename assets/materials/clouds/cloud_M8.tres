@@ -1,10 +1,10 @@
 [gd_resource type="ShaderMaterial" format=4]
 
-[ext_resource type="Shader" path="res://assets/materials/cloud_volume.gdshader" id="1_rjbjk"]
+[ext_resource type="Shader" path="res://assets/materials/cloud_volume.gdshader" id="1_shader"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_rjbjk")
+shader = ExtResource("1_shader")
 shader_parameter/lobes = PackedVector4Array(-10, -2.25, 0, 5, -3.33, -2.38, 1, 4.3, 3.33, -2.13, -0.75, 5.4, 10, -2.3, 0.5, 4.6, -10, -1.31, 1.55, 2.1, -5.79, -2.13, 0.58, 2.75, -4.08, -1.2, 1.62, 1.8, 0.5, -2.05, 1.25, 2.5, 2.96, -1.66, 1.85, 2.3, 7.67, -2.46, 0.8, 3, 9.12, -1.24, 1.55, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 shader_parameter/lobe_axes = PackedVector3Array(1, 0.45, 1, 1, 0.45, 1, 1, 0.45, 1, 1, 0.45, 1, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 shader_parameter/lobe_count = 11
@@ -26,6 +26,8 @@ shader_parameter/erosion_base = null
 shader_parameter/erosion_top = null
 shader_parameter/noise_offset = Vector3(11.1, 45.8, 48.405)
 shader_parameter/drift_speed = null
+shader_parameter/puff_gain = null
+shader_parameter/puff_bias = null
 shader_parameter/primary_steps = null
 shader_parameter/extinction = null
 shader_parameter/light_extinction = null
@@ -61,6 +63,7 @@ shader_parameter/aerial_color = null
 shader_parameter/aerial_max = null
 shader_parameter/aerial_distance = null
 shader_parameter/opacity = null
+shader_parameter/depth_alpha = null
 shader_parameter/compensate_tonemap = null
 shader_parameter/tonemap_exposure = null
 shader_parameter/tonemap_white = null

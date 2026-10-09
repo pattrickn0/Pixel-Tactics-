@@ -1,12 +1,19 @@
 class_name MapCamera
 extends Camera3D
 ## Câmera do mapa: órbita em perspectiva ao redor do centro da arena, inclinação fixa.
-## Mudam só o yaw (giro de 360°) e a distância (zoom), os dois com suavização.
-## Giro só pelo teclado (A/D) e pelos botões do HUD; Espaço volta ao padrão.
+## Mudam só o yaw (até max_yaw_steps passos de 45° para cada lado do padrão) e a distância (zoom),
+## os dois com suavização. Giro só pelo teclado (A/D) e pelos botões do HUD; Espaço volta ao padrão.
 ## Zoom pela roda do mouse. Nenhum botão do mouse gira a câmera (fica livre para as peças).
 
 ## Emitido sempre que o yaw (animado) muda; a atmosfera usa para o sol acompanhar a câmera.
 signal yaw_changed(yaw_degrees: float)
+## Emitido quando o yaw alvo muda; o HUD usa para desabilitar o botão do lado que chegou ao limite.
+signal rotation_limits_changed(can_rotate_left: bool, can_rotate_right: bool)
+
+## Distância do enquadramento da referência (docs/reference/ilha-flutuante.webp, specs 012 e 013):
+## em yaw 0 a câmera fica em (0; 24,52; 43,81) mirando (0, 0, -4,3). Só para as capturas de medida e
+## os testes que comparam com a referência; o jogo começa em start_distance (10% mais perto).
+const REFERENCE_DISTANCE: float = 54.0
 
 ## Inclinação para baixo, em graus (fixa).
 @export_range(15.0, 70.0, 0.5) var pitch_degrees: float = 27.0
@@ -16,7 +23,8 @@ signal yaw_changed(yaw_degrees: float)
 ## a órbita nunca chega na ilha alta nem nas ilhotas de fundo.
 @export var min_distance: float = 14.0
 @export var max_distance: float = 60.0
-@export var start_distance: float = 54.0
+## Zoom inicial e do Espaço: 10% mais perto que REFERENCE_DISTANCE (pedido do usuário, 2026-10-09).
+@export var start_distance: float = 48.6
 ## Quanto cada clique da roda muda a distância.
 @export var zoom_step: float = 3.0
 ## Suavização do zoom (0 = instantâneo).
@@ -25,6 +33,8 @@ signal yaw_changed(yaw_degrees: float)
 @export var rotation_smoothing: float = 12.0
 ## Ângulo de giro em graus por passo (teclas A/D ou botões do HUD).
 @export var rotation_step: float = 45.0
+## Quantos passos de giro o jogador pode dar para cada lado do yaw 0 (1 = yaw de -45° a +45°).
+@export_range(0, 4) var max_yaw_steps: int = 1
 ## O ponto mirado fica esta distância à frente do centro da arena, no sentido da vista
 ## (gira junto com o yaw). Só enquadramento: a órbita continua em volta do centro.
 @export var focus_forward_offset: float = 4.3
@@ -39,8 +49,8 @@ signal yaw_changed(yaw_degrees: float)
 
 var distance: float = 0.0
 var target_distance: float = 0.0
-## Yaw atual (animado) e alvo, em graus. O alvo fica sempre em [-180, 180); o atual
-## anda junto quando o alvo dá a volta, então a diferença (o caminho que falta) se mantém.
+## Yaw atual (animado) e alvo, em graus. Pelo jogador (A/D, HUD) o alvo fica em
+## [-max_yaw_degrees(), max_yaw_degrees()]; set_target_yaw (captura e testes) aceita qualquer ângulo.
 var yaw_degrees: float = 0.0
 var target_yaw_degrees: float = 0.0
 
@@ -103,13 +113,15 @@ static func _structure_bounds(map_data: MapData) -> Rect2:
 	return result
 
 
-## "min", "max" ou "default".
+## "min", "max", "reference" (REFERENCE_DISTANCE, só captura) ou "default".
 func set_zoom_preset(preset: String) -> void:
 	match preset:
 		"min":
 			set_target_distance(min_distance, true)
 		"max":
 			set_target_distance(max_distance, true)
+		"reference":
+			set_target_distance(REFERENCE_DISTANCE, true)
 		_:
 			set_target_distance(start_distance, true)
 
@@ -129,13 +141,29 @@ func rotate_right() -> void:
 	rotate_by(rotation_step)
 
 
-## Giro relativo: soma ao alvo (apertar D duas vezes seguidas gira 2 passos).
+## Giro relativo do jogador: soma ao alvo, preso entre -max_yaw_degrees() e +max_yaw_degrees().
+## No limite, o giro para o mesmo lado não faz nada.
 func rotate_by(delta_degrees: float, immediate: bool = false) -> void:
-	target_yaw_degrees += delta_degrees
+	var limit: float = max_yaw_degrees()
+	target_yaw_degrees = clampf(target_yaw_degrees + delta_degrees, -limit, limit)
 	_finish_yaw_change(immediate)
 
 
-## Yaw absoluto: vai pelo caminho mais curto (no máximo 180°) até o ângulo pedido.
+## Maior |yaw| que o jogador alcança (rotation_step × max_yaw_steps).
+func max_yaw_degrees() -> float:
+	return rotation_step * float(maxi(max_yaw_steps, 0))
+
+
+func can_rotate_left() -> bool:
+	return target_yaw_degrees > -max_yaw_degrees() + 0.001
+
+
+func can_rotate_right() -> bool:
+	return target_yaw_degrees < max_yaw_degrees() - 0.001
+
+
+## Yaw absoluto, sem o limite do jogador (captura --yaw e testes): vai pelo caminho mais curto
+## (no máximo 180°) até o ângulo pedido.
 func set_target_yaw(value_degrees: float, immediate: bool = false) -> void:
 	target_yaw_degrees = yaw_degrees + wrapf(value_degrees - yaw_degrees, -180.0, 180.0)
 	_finish_yaw_change(immediate)
@@ -153,6 +181,7 @@ func _finish_yaw_change(immediate: bool) -> void:
 	_wrap_yaw()
 	_apply_basis()
 	_apply_position()
+	rotation_limits_changed.emit(can_rotate_left(), can_rotate_right())
 
 
 ## Mantém o alvo em [-180, 180) somando o mesmo múltiplo de 360 no atual: o ângulo na

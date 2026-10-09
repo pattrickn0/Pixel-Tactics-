@@ -7,7 +7,8 @@ extends SceneTree
 ##   "$G" --headless --path . --script tools/kit/place_decor.gd -- --force
 ## (rodar depois de tools/kit/build_kit.gd e tools/kit/build_clouds.gd e, se o anel mudou, de
 ## tools/kit/gen_initial_map.gd -- --force)
-## Nuvens (spec 013): um nó por massa da tabela CloudTables em Sky/Clouds (proxy + material de build_clouds.gd).
+## Nuvens (spec 013): um nó por massa da tabela CloudTables em Sky/Clouds (proxy + material de build_clouds.gd),
+## mais um nó por cópia de CloudTables.INSTANCES (proxy e material da massa de origem, com posição, yaw e escala).
 
 const MAP_PATH: String = "res://scenes/map.tscn"
 const KIT_DIR: String = "res://scenes/kit/"
@@ -112,5 +113,23 @@ func _place_clouds(sky: Node3D, map_root: Node3D) -> int:
 		mi.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
 		clouds.add_child(mi)
 		mi.owner = map_root
+		placed += 1
+	# Cópias das massas prontas (vistas giradas): proxy e material da origem, outro lugar.
+	for inst: Array in CloudTables.INSTANCES:
+		var source: String = str(inst[1])
+		var copy := MeshInstance3D.new()
+		copy.name = str(inst[0])
+		copy.mesh = load(CLOUD_MODEL_DIR + source + ".res") as Mesh
+		copy.material_override = load(CLOUD_MATERIAL_DIR + "cloud_" + source + ".tres") as Material
+		if copy.mesh == null or copy.material_override == null or CloudTables.find_mass(source).is_empty():
+			push_error("Cópia de nuvem com origem inexistente: %s <- %s" % [copy.name, source])
+		copy.position = inst[2]
+		copy.rotation_degrees = Vector3(0.0, float(inst[3]), 0.0)
+		var s: float = float(inst[4])
+		copy.scale = Vector3(s, s, s)
+		copy.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		copy.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+		clouds.add_child(copy)
+		copy.owner = map_root
 		placed += 1
 	return placed

@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode unshaded, cull_front, blend_mix, depth_draw_never, depth_test_disabled, fog_disabled, shadows_disabled, specular_disabled, ambient_light_disabled;
+render_mode unshaded, cull_front, blend_mix, depth_draw_always, fog_disabled, shadows_disabled, specular_disabled, ambient_light_disabled;
 // Nuvem volumétrica (spec 013): raymarch próprio dentro de um volume-proxy (caixa desenhada por dentro, funciona
 // com a câmera dentro). A densidade é a união suave dos lóbulos da massa (elipsoides em espaço local, tabela
 // tools/kit/cloud_tables.gd) erodida por ruído 3D procedural (hash de constantes fixas). Cada amostra calcula a luz
@@ -33,7 +33,7 @@ uniform vec3 proxy_min = vec3(-10.0);
 uniform vec3 proxy_max = vec3(10.0);
 // Mistura entre lóbulos (união suave) e maciez da borda (unidades).
 uniform float blend_k = 1.2;
-uniform float edge_softness = 0.6;
+uniform float edge_softness = 0.4;
 // Base que some (y local) e topo da massa (para a altura relativa).
 uniform float base_height = -6.0;
 uniform float base_softness = 2.0;
@@ -41,17 +41,21 @@ uniform float top_height = 4.0;
 uniform float density = 1.2;
 // Ruído: escala (ciclos por unidade), força (deslocamento da superfície, unidades) e erosão por altura
 // (mais na base e nas bordas, menos na crista).
-uniform float noise_scale = 0.18;
-uniform float noise_strength = 1.0;
+uniform float noise_scale = 0.24;
+uniform float noise_strength = 1.6;
 uniform float erosion_base = 1.4;
 uniform float erosion_top = 0.6;
 uniform vec3 noise_offset = vec3(0.0);
 uniform float drift_speed = 0.12;
+// Peso de cada oitava menor das bolotas.
+uniform float puff_gain = 0.45;
+// Centro do ruído: abaixo dele a superfície afunda, acima cresce.
+uniform float puff_bias = 0.5;
 
 // ---- luz
 uniform int primary_steps : hint_range(16, 192) = 128;
-uniform float extinction = 1.6;
-uniform float light_extinction = 0.18;
+uniform float extinction = 3.0;
+uniform float light_extinction = 0.45;
 uniform float light_step = 0.6;
 uniform float light_growth = 1.55;
 uniform float sun_strength = 1.3;
@@ -59,7 +63,7 @@ uniform float phase_forward = 0.6;
 uniform float phase_back = -0.2;
 uniform float phase_mix = 0.5;
 uniform float powder_strength = 0.5;
-uniform float ms_floor = 0.3;
+uniform float ms_floor = 0.2;
 // Ambiente: luz do céu de cima, atenuada pela nuvem acima da amostra (3 amostras para cima) e pela altura na massa.
 uniform float ambient_bottom = 0.05;
 uniform float ambient_top = 0.45;
@@ -68,7 +72,7 @@ uniform float ambient_height_mix = 0.5;
 
 // ---- cor (rampa de tela, Tabela N2 "Todas"; linha da sombra da ilha, M8)
 uniform float light_lo = 0.25;
-uniform float light_hi = 2.4;
+uniform float light_hi = 2.0;
 uniform float light_gamma = 1.0;
 // Exposição da massa (multiplica o escalar de luz antes da rampa; calibração por massa, na tabela).
 uniform float exposure = 1.0;
@@ -90,6 +94,8 @@ uniform vec4 aerial_color : source_color = vec4(0.863, 0.839, 0.902, 1.0);
 uniform float aerial_max = 0.15;
 uniform float aerial_distance = 200.0;
 uniform float opacity = 1.0;
+// Alfa mínimo para a nuvem escrever a profundidade dela (abaixo disso, fica a profundidade do céu).
+uniform float depth_alpha = 0.35;
 // Desfaz o tonemap Filmic do WorldEnvironment (exposição e branco iguais aos da cena).
 uniform bool compensate_tonemap = true;
 uniform float tonemap_exposure = 1.25;
@@ -143,6 +149,46 @@ float billow(vec3 p, int octaves) {
 	return sum / norm;
 }
 
+vec3 hash33(vec3 p) {
+	p = fract(p * vec3(0.1031, 0.1030, 0.0973));
+	p += dot(p, p.yxz + 33.33);
+	return fract((p.xxy + p.yxx) * p.zyx);
+}
+
+// Distância até o ponto de célula mais próximo (Worley F1), de 0 a ~1.
+float worley(vec3 p) {
+	vec3 i = floor(p);
+	vec3 f = fract(p);
+	float d = 9.0;
+	for (int z = -1; z <= 1; z++) {
+		for (int y = -1; y <= 1; y++) {
+			for (int x = -1; x <= 1; x++) {
+				vec3 c = vec3(float(x), float(y), float(z));
+				vec3 r = c + hash33(i + c) - f;
+				d = min(d, dot(r, r));
+			}
+		}
+	}
+	return sqrt(d);
+}
+
+// Bolotas (couve-flor): Worley invertido, cada célula vira um domo redondo; oitavas menores na borda. De 0 a 1.
+float puffs(vec3 p, int octaves) {
+	float sum = 0.0;
+	float amp = 0.6;
+	float norm = 0.0;
+	for (int o = 0; o < 3; o++) {
+		if (o >= octaves) {
+			break;
+		}
+		sum += amp * clamp(1.0 - worley(p), 0.0, 1.0);
+		norm += amp;
+		amp *= puff_gain;
+		p = p * 2.07 + vec3(17.1, 5.3, 11.7);
+	}
+	return sum / norm;
+}
+
 // ---------------------------------------------------------------- forma
 float smin(float a, float b, float k) {
 	float h = max(k - abs(a - b), 0.0) / k;
@@ -180,8 +226,8 @@ float density_from(vec3 p, float sd, int octaves) {
 	float h = height01(p);
 	float ero = noise_strength * mix(erosion_base, erosion_top, h);
 	vec3 np = p * noise_scale + noise_offset + vec3(cloud_time * drift_speed * noise_scale, 0.0, cloud_time * drift_speed * 0.5 * noise_scale);
-	float n = billow(np, octaves);
-	float s = sd + ero * (0.55 - n) * 2.0;
+	float n = puffs(np, octaves);
+	float s = sd + ero * (puff_bias - n) * 2.0;
 	float d = smoothstep(0.0, edge_softness, -s);
 	d *= smoothstep(base_height - base_softness, base_height + base_softness, p.y);
 	return d * density;
@@ -363,4 +409,8 @@ void fragment() {
 	}
 	ALBEDO = col;
 	ALPHA = clamp(alpha * opacity, 0.0, 1.0);
+	// Profundidade escrita (depth_draw_always): o teste usa a profundidade da nuvem, e não a do proxy, e o
+	// desfoque de fundo da cena trata a massa na distância dela (e não na do céu atrás). Borda rala: fica a do céu.
+	vec4 clip = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(ro + rd * (acc_t / alpha), 1.0);
+	DEPTH = alpha > depth_alpha ? clip.z / clip.w : 0.0;
 }

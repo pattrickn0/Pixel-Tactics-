@@ -1,10 +1,10 @@
 [gd_resource type="ShaderMaterial" format=4]
 
-[ext_resource type="Shader" path="res://assets/materials/cloud_volume.gdshader" id="1_qbdy6"]
+[ext_resource type="Shader" path="res://assets/materials/cloud_volume.gdshader" id="1_shader"]
 
 [resource]
 render_priority = 0
-shader = ExtResource("1_qbdy6")
+shader = ExtResource("1_shader")
 shader_parameter/lobes = PackedVector4Array(-20, -6.6, 0, 6, -10, -6.22, 1.2, 5.16, 0, -6.77, -0.9, 6.48, 10, -6.34, 0.6, 5.52, 20, -6.68, -1.35, 6.24, -20, -1.57, 1.26, 2.52, -13.95, -2.56, 0.09, 3.3, -10.9, -1.44, 1.35, 2.16, -4.4, -2.46, 0.9, 3, -0.45, -1.99, 1.62, 2.76, 6.2, -2.95, 0.36, 3.6, 8.95, -1.49, 1.26, 2.4, 15, -1.99, 0.09, 2.52, 21.05, -2.26, 1.35, 3.3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 shader_parameter/lobe_axes = PackedVector3Array(1.25, 1.1, 0.6, 1.25, 1.1, 0.6, 1.25, 1.1, 0.6, 1.25, 1.1, 0.6, 1.25, 1.1, 0.6, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 0.8, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
 shader_parameter/lobe_count = 14
@@ -24,8 +24,10 @@ shader_parameter/noise_scale = null
 shader_parameter/noise_strength = null
 shader_parameter/erosion_base = null
 shader_parameter/erosion_top = null
-shader_parameter/noise_offset = Vector3(29.28, 49.538, 39.27)
+shader_parameter/noise_offset = Vector3(29.28, 49.6661, 39.27)
 shader_parameter/drift_speed = null
+shader_parameter/puff_gain = null
+shader_parameter/puff_bias = null
 shader_parameter/primary_steps = null
 shader_parameter/extinction = null
 shader_parameter/light_extinction = null
@@ -61,6 +63,7 @@ shader_parameter/aerial_color = null
 shader_parameter/aerial_max = null
 shader_parameter/aerial_distance = null
 shader_parameter/opacity = null
+shader_parameter/depth_alpha = null
 shader_parameter/compensate_tonemap = null
 shader_parameter/tonemap_exposure = null
 shader_parameter/tonemap_white = null

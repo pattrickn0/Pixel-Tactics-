@@ -42,6 +42,7 @@ func _run() -> void:
 	await _test_map_scene(main)
 	await _test_camera(main)
 	await _test_camera_rotation(main)
+	await _test_yaw_limit(main)
 	await _test_camera_aim(main)
 	await _test_hud_focus(main)
 	_test_hud_without_seed(main)
@@ -87,6 +88,10 @@ func _test_map_scene(main: Node) -> void:
 	_check(camera.pitch_degrees == 27.0, "câmera padrão com 27° de inclinação (spec 012)", str(camera.pitch_degrees))
 	var focus: Vector3 = camera.get_focus_point()
 	_check(focus.is_equal_approx(Vector3(0.0, 0.0, -4.3)), "em yaw 0 a câmera mira 4,3 à frente do centro da arena (0, 0, -4,3)", str(focus))
+	_check(is_equal_approx(camera.start_distance, 48.6) and is_equal_approx(camera.start_distance, 0.9 * MapCamera.REFERENCE_DISTANCE)
+			and is_equal_approx(camera.distance, camera.start_distance) and is_zero_approx(camera.yaw_degrees),
+			"zoom inicial 48,6 (10% mais perto que a referência 54), yaw 0",
+			"start %.2f, distância %.2f, yaw %.2f" % [camera.start_distance, camera.distance, camera.yaw_degrees])
 	var orphans: int = int(Performance.get_monitor(Performance.OBJECT_ORPHAN_NODE_COUNT))
 	_check(orphans == 0, "nenhum nó órfão", "%d órfãos" % orphans)
 
@@ -204,7 +209,7 @@ func _test_camera_rotation(main: Node) -> void:
 	for p: float in paths:
 		if p > 180.0 + 0.001:
 			paths_ok = false
-	_check(paths_ok and target_in_range, "reset depois de yaw 725 (e de 16 giros seguidos) percorre no máximo 180°",
+	_check(paths_ok and target_in_range, "reset depois de yaw 725 (captura) e de 16 giros seguidos percorre no máximo 180°",
 			"caminhos %s; alvo em [-180, 180): %s" % [str(paths), str(target_in_range)])
 	await _wait_camera(camera)
 
@@ -230,6 +235,75 @@ func _test_camera_rotation(main: Node) -> void:
 	await _frames(2)
 	_check(is_zero_approx(camera.yaw_degrees) and is_zero_approx(camera.target_yaw_degrees),
 			"botões do mouse não giram a câmera", "yaw %.2f" % camera.yaw_degrees)
+
+
+## Giro limitado (pedido do usuário, 2026-10-09): um passo para cada lado do padrão (yaw de -45° a +45°).
+## No limite, a tecla e o botão do mesmo lado não fazem nada (o botão fica desabilitado); o outro lado volta.
+func _test_yaw_limit(main: Node) -> void:
+	var camera := main.get_node("MapCamera") as MapCamera
+	var left_button := main.get_node("%RotateLeftButton") as Button
+	var right_button := main.get_node("%RotateRightButton") as Button
+	camera.reset_to_default(true)
+	await _frames(2)
+	var limit: float = camera.max_yaw_degrees()
+	_check(camera.max_yaw_steps == 1 and is_equal_approx(camera.rotation_step, 45.0) and is_equal_approx(limit, 45.0),
+			"giro limitado a 1 passo de 45° para cada lado (max_yaw_steps = 1)", "limite %.1f" % limit)
+	_check(not left_button.disabled and not right_button.disabled, "em yaw 0 os dois botões de giro ficam habilitados")
+
+	# Esquerda: A, A, A param em -45; o botão esquerdo desabilita e não gira; D volta a 0.
+	var left_ok := true
+	var detail := ""
+	for _i in 3:
+		_key(KEY_A, 97)
+		await _frames(1)
+	if not is_equal_approx(camera.target_yaw_degrees, -limit):
+		left_ok = false
+		detail += "3x A: alvo %.1f; " % camera.target_yaw_degrees
+	var buttons_left: bool = left_button.disabled and not right_button.disabled
+	left_button.pressed.emit()
+	await _frames(1)
+	if not is_equal_approx(camera.target_yaw_degrees, -limit):
+		left_ok = false
+		detail += "botão esquerdo no limite: alvo %.1f; " % camera.target_yaw_degrees
+	_key(KEY_D, 100)
+	await _frames(1)
+	if not is_zero_approx(camera.target_yaw_degrees):
+		left_ok = false
+		detail += "D depois do limite: alvo %.1f; " % camera.target_yaw_degrees
+	_check(left_ok, "A para em -45° (A e botão esquerdo no limite não fazem nada) e D volta a 0", detail)
+
+	# Direita: D, D, D param em +45; o botão direito desabilita; o botão esquerdo volta a 0.
+	var right_ok := true
+	detail = ""
+	for _i in 3:
+		_key(KEY_D, 100)
+		await _frames(1)
+	if not is_equal_approx(camera.target_yaw_degrees, limit):
+		right_ok = false
+		detail += "3x D: alvo %.1f; " % camera.target_yaw_degrees
+	var buttons_right: bool = right_button.disabled and not left_button.disabled
+	right_button.pressed.emit()
+	await _frames(1)
+	if not is_equal_approx(camera.target_yaw_degrees, limit):
+		right_ok = false
+		detail += "botão direito no limite: alvo %.1f; " % camera.target_yaw_degrees
+	left_button.pressed.emit()
+	await _frames(1)
+	if not is_zero_approx(camera.target_yaw_degrees):
+		right_ok = false
+		detail += "botão esquerdo depois do limite: alvo %.1f; " % camera.target_yaw_degrees
+	_check(right_ok, "D para em +45° (D e botão direito no limite não fazem nada) e o botão esquerdo volta a 0", detail)
+	_check(buttons_left and buttons_right and not left_button.disabled and not right_button.disabled,
+			"no limite, só o botão do mesmo lado fica desabilitado; de volta a 0, os dois habilitam",
+			"esq. no limite %s, dir. no limite %s" % [str(buttons_left), str(buttons_right)])
+
+	# Espaço no limite volta a yaw 0 e ao zoom inicial.
+	camera.rotate_by(limit, true)
+	camera.set_target_distance(camera.max_distance, true)
+	_key(KEY_SPACE, 32)
+	await _wait_camera(camera)
+	_check(is_zero_approx(camera.yaw_degrees) and is_equal_approx(camera.distance, 48.6),
+			"Espaço no limite volta a yaw 0 e distância 48,6", "yaw %.2f, distância %.2f" % [camera.yaw_degrees, camera.distance])
 
 
 ## (d) Em yaw 0, 90, 180 e 270, a câmera mira o ponto 4,3 à frente do centro da arena (gira com o yaw), orbita
