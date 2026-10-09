@@ -1,30 +1,30 @@
 [gd_resource type="ShaderMaterial" format=4]
 
-[ext_resource type="Shader" path="res://assets/materials/cloud_volume.gdshader" id="1_gvib3"]
+[ext_resource type="Shader" path="res://assets/materials/cloud_volume.gdshader" id="1_vmf4e"]
 
 [resource]
-render_priority = -1
-shader = ExtResource("1_gvib3")
-shader_parameter/lobes = PackedVector4Array(-0.47, 4.23, -2.82, 5.17, -3.29, 5.32, -2.82, 2.17, -4.28, 6.94, -1.62, 1.86, -2.69, 6.42, 0.3, 1.71, -7.99, 4.42, -1.88, 4.23, -7.99, 6.26, -1.88, 1.78, -9.96, 6.63, -0.9, 1.52, 5.17, 0.47, 0.94, 4.23, 5.17, 3.44, 0.94, 1.78, 6.99, 2.55, 2.43, 1.69, 3.2, 2.68, 1.92, 1.52, -0.94, -1.13, -1.88, 5.17, 1.41, -3.76, 5.64, 4.23, 0, -0.79, 5.64, 1.78, -1.97, -2.67, 6.62, 1.52, -0.66, -1.97, 8.19, 1.4, -5.64, -4.23, 5.64, 3.76, -5.64, -2.72, 5.64, 1.58, -7.39, -2.26, 6.51, 1.35, 5.64, -2.16, 5.64, 3.76, 5.64, -0.65, 5.64, 1.58, 7.26, -1.44, 6.96, 1.5, 8.46, -1.88, 3.76, 3.76, 0, -11.47, 5.64, 5.64, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-shader_parameter/lobe_axes = PackedVector3Array(1, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.85, 1, 1, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 0.85, 1, 1, 0.85, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
-shader_parameter/lobe_count = 24
+render_priority = 0
+shader = ExtResource("1_vmf4e")
+shader_parameter/lobes = PackedVector4Array(0, 0, 0, 10, 0, 7.02, 0, 3.36, -4.65, 5.23, 2.33, 2.88, 4.3, 4.93, 3.52, 3.2, -1.57, 4.23, 6.03, 2.64, -3.51, 2.11, 6.56, 2.56, 12, -2, 3, 8, 12, 3.62, 3, 2.69, 8.28, 2.19, 4.86, 2.3, 15.44, 1.94, 5.82, 2.56, -12, -2.5, -2, 8, -12, 3.12, -2, 2.69, -15.72, 1.69, -0.14, 2.3, -13.25, 0.88, 2.82, 2.11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+shader_parameter/lobe_axes = PackedVector3Array(1, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.9, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)
+shader_parameter/lobe_count = 14
 shader_parameter/layer_mode = null
 shader_parameter/layer_top = null
 shader_parameter/layer_amp = null
 shader_parameter/layer_cell = null
-shader_parameter/proxy_min = Vector3(-15.22, -16.16, -10.99)
-shader_parameter/proxy_max = Vector3(15.22, 11.880001, 14.280001)
-shader_parameter/blend_k = 1.2
+shader_parameter/proxy_min = Vector3(-23, -12.7, -13)
+shader_parameter/proxy_max = Vector3(23, 13.38, 14)
+shader_parameter/blend_k = 1.5
 shader_parameter/edge_softness = null
-shader_parameter/base_height = -13.16
+shader_parameter/base_height = -10.0
 shader_parameter/base_softness = null
-shader_parameter/top_height = 8.882999876737596
+shader_parameter/top_height = 10.379999999999999
 shader_parameter/density = null
 shader_parameter/noise_scale = null
 shader_parameter/noise_strength = null
 shader_parameter/erosion_base = null
 shader_parameter/erosion_top = null
-shader_parameter/noise_offset = Vector3(42.97, 48.593, 26.8)
+shader_parameter/noise_offset = Vector3(2.22, 48.11, 30.45)
 shader_parameter/drift_speed = null
 shader_parameter/primary_steps = null
 shader_parameter/extinction = null
@@ -43,8 +43,8 @@ shader_parameter/ambient_extinction = null
 shader_parameter/ambient_height_mix = null
 shader_parameter/light_lo = null
 shader_parameter/light_hi = null
-shader_parameter/light_gamma = 0.85
-shader_parameter/exposure = 1.35
+shader_parameter/light_gamma = null
+shader_parameter/exposure = null
 shader_parameter/ramp_p5 = null
 shader_parameter/ramp_p25 = null
 shader_parameter/ramp_p50 = null
